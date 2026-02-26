@@ -581,6 +581,180 @@ export type Database = {
           },
         ]
       }
+      credit_packs: {
+        Row: {
+          created_at: string
+          credits: number
+          display_name: string
+          id: string
+          is_active: boolean
+          is_featured: boolean
+          price_brl: number
+          size: Database["public"]["Enums"]["credit_pack_size"]
+          stripe_price_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          credits: number
+          display_name: string
+          id?: string
+          is_active?: boolean
+          is_featured?: boolean
+          price_brl: number
+          size: Database["public"]["Enums"]["credit_pack_size"]
+          stripe_price_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          credits?: number
+          display_name?: string
+          id?: string
+          is_active?: boolean
+          is_featured?: boolean
+          price_brl?: number
+          size?: Database["public"]["Enums"]["credit_pack_size"]
+          stripe_price_id?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      credit_purchases: {
+        Row: {
+          amount_paid_brl: number
+          created_at: string
+          credits_granted: number
+          id: string
+          org_id: string
+          pack_id: string
+          paid_at: string | null
+          status: string
+          stripe_checkout_session: string | null
+          stripe_payment_intent_id: string | null
+          user_id: string
+        }
+        Insert: {
+          amount_paid_brl: number
+          created_at?: string
+          credits_granted: number
+          id?: string
+          org_id: string
+          pack_id: string
+          paid_at?: string | null
+          status?: string
+          stripe_checkout_session?: string | null
+          stripe_payment_intent_id?: string | null
+          user_id: string
+        }
+        Update: {
+          amount_paid_brl?: number
+          created_at?: string
+          credits_granted?: number
+          id?: string
+          org_id?: string
+          pack_id?: string
+          paid_at?: string | null
+          status?: string
+          stripe_checkout_session?: string | null
+          stripe_payment_intent_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "credit_purchases_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "admin_billing_overview"
+            referencedColumns: ["org_id"]
+          },
+          {
+            foreignKeyName: "credit_purchases_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "admin_users_overview"
+            referencedColumns: ["org_id"]
+          },
+          {
+            foreignKeyName: "credit_purchases_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_purchases_pack_id_fkey"
+            columns: ["pack_id"]
+            isOneToOne: false
+            referencedRelation: "credit_packs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      credit_transactions: {
+        Row: {
+          amount: number
+          balance_after: number | null
+          created_at: string
+          description: string | null
+          id: string
+          is_bonus: boolean
+          org_id: string
+          origin: Database["public"]["Enums"]["credit_origin"]
+          reference_id: string | null
+          reference_type: string | null
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          balance_after?: number | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_bonus?: boolean
+          org_id: string
+          origin: Database["public"]["Enums"]["credit_origin"]
+          reference_id?: string | null
+          reference_type?: string | null
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          balance_after?: number | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_bonus?: boolean
+          org_id?: string
+          origin?: Database["public"]["Enums"]["credit_origin"]
+          reference_id?: string | null
+          reference_type?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "credit_transactions_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "admin_billing_overview"
+            referencedColumns: ["org_id"]
+          },
+          {
+            foreignKeyName: "credit_transactions_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "admin_users_overview"
+            referencedColumns: ["org_id"]
+          },
+          {
+            foreignKeyName: "credit_transactions_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       org_members: {
         Row: {
           accepted_at: string | null
@@ -635,6 +809,9 @@ export type Database = {
       }
       organizations: {
         Row: {
+          account_status: Database["public"]["Enums"]["account_status"]
+          bonus_credits_total: number
+          bonus_credits_used: number
           created_at: string
           id: string
           is_active: boolean
@@ -642,13 +819,22 @@ export type Database = {
           max_members: number
           monthly_token_limit: number
           name: string
+          plan_credits_reset_at: string | null
+          plan_credits_total: number
+          plan_credits_used: number
           plan_tier: Database["public"]["Enums"]["plan_tier"]
           slug: string
           stripe_customer_id: string | null
+          trial_ends_at: string | null
+          trial_expired_notified_at: string | null
+          trial_started_at: string | null
           updated_at: string
           website: string | null
         }
         Insert: {
+          account_status?: Database["public"]["Enums"]["account_status"]
+          bonus_credits_total?: number
+          bonus_credits_used?: number
           created_at?: string
           id?: string
           is_active?: boolean
@@ -656,13 +842,22 @@ export type Database = {
           max_members?: number
           monthly_token_limit?: number
           name: string
+          plan_credits_reset_at?: string | null
+          plan_credits_total?: number
+          plan_credits_used?: number
           plan_tier?: Database["public"]["Enums"]["plan_tier"]
           slug: string
           stripe_customer_id?: string | null
+          trial_ends_at?: string | null
+          trial_expired_notified_at?: string | null
+          trial_started_at?: string | null
           updated_at?: string
           website?: string | null
         }
         Update: {
+          account_status?: Database["public"]["Enums"]["account_status"]
+          bonus_credits_total?: number
+          bonus_credits_used?: number
           created_at?: string
           id?: string
           is_active?: boolean
@@ -670,9 +865,15 @@ export type Database = {
           max_members?: number
           monthly_token_limit?: number
           name?: string
+          plan_credits_reset_at?: string | null
+          plan_credits_total?: number
+          plan_credits_used?: number
           plan_tier?: Database["public"]["Enums"]["plan_tier"]
           slug?: string
           stripe_customer_id?: string | null
+          trial_ends_at?: string | null
+          trial_expired_notified_at?: string | null
+          trial_started_at?: string | null
           updated_at?: string
           website?: string | null
         }
@@ -875,6 +1076,162 @@ export type Database = {
             columns: ["session_id"]
             isOneToOne: false
             referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      referral_codes: {
+        Row: {
+          code: string
+          created_at: string
+          id: string
+          is_active: boolean
+          org_id: string
+          user_id: string
+          uses_limit: number | null
+          uses_total: number
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          org_id: string
+          user_id: string
+          uses_limit?: number | null
+          uses_total?: number
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          org_id?: string
+          user_id?: string
+          uses_limit?: number | null
+          uses_total?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "referral_codes_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "admin_billing_overview"
+            referencedColumns: ["org_id"]
+          },
+          {
+            foreignKeyName: "referral_codes_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "admin_users_overview"
+            referencedColumns: ["org_id"]
+          },
+          {
+            foreignKeyName: "referral_codes_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      referrals: {
+        Row: {
+          created_at: string
+          credits_to_invitee: number
+          credits_to_referrer: number
+          expires_at: string
+          id: string
+          invitee_email: string | null
+          invitee_org_id: string | null
+          invitee_user_id: string | null
+          referrer_code_id: string
+          referrer_org_id: string
+          referrer_user_id: string
+          rewarded_at: string | null
+          status: Database["public"]["Enums"]["referral_status"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          credits_to_invitee?: number
+          credits_to_referrer?: number
+          expires_at?: string
+          id?: string
+          invitee_email?: string | null
+          invitee_org_id?: string | null
+          invitee_user_id?: string | null
+          referrer_code_id: string
+          referrer_org_id: string
+          referrer_user_id: string
+          rewarded_at?: string | null
+          status?: Database["public"]["Enums"]["referral_status"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          credits_to_invitee?: number
+          credits_to_referrer?: number
+          expires_at?: string
+          id?: string
+          invitee_email?: string | null
+          invitee_org_id?: string | null
+          invitee_user_id?: string | null
+          referrer_code_id?: string
+          referrer_org_id?: string
+          referrer_user_id?: string
+          rewarded_at?: string | null
+          status?: Database["public"]["Enums"]["referral_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "referrals_invitee_org_id_fkey"
+            columns: ["invitee_org_id"]
+            isOneToOne: false
+            referencedRelation: "admin_billing_overview"
+            referencedColumns: ["org_id"]
+          },
+          {
+            foreignKeyName: "referrals_invitee_org_id_fkey"
+            columns: ["invitee_org_id"]
+            isOneToOne: false
+            referencedRelation: "admin_users_overview"
+            referencedColumns: ["org_id"]
+          },
+          {
+            foreignKeyName: "referrals_invitee_org_id_fkey"
+            columns: ["invitee_org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "referrals_referrer_code_id_fkey"
+            columns: ["referrer_code_id"]
+            isOneToOne: false
+            referencedRelation: "referral_codes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "referrals_referrer_org_id_fkey"
+            columns: ["referrer_org_id"]
+            isOneToOne: false
+            referencedRelation: "admin_billing_overview"
+            referencedColumns: ["org_id"]
+          },
+          {
+            foreignKeyName: "referrals_referrer_org_id_fkey"
+            columns: ["referrer_org_id"]
+            isOneToOne: false
+            referencedRelation: "admin_users_overview"
+            referencedColumns: ["org_id"]
+          },
+          {
+            foreignKeyName: "referrals_referrer_org_id_fkey"
+            columns: ["referrer_org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]
@@ -1159,6 +1516,29 @@ export type Database = {
         }
         Returns: undefined
       }
+      consume_credit: {
+        Args: { p_org_id: string; p_session_id: string; p_user_id: string }
+        Returns: string
+      }
+      generate_referral_code: {
+        Args: { p_org_id: string; p_user_id: string }
+        Returns: string
+      }
+      get_credit_balance: {
+        Args: { p_org_id: string }
+        Returns: {
+          account_status: string
+          bonus_remaining: number
+          bonus_total: number
+          bonus_used: number
+          plan_remaining: number
+          plan_total: number
+          plan_used: number
+          reset_at: string
+          total_remaining: number
+          trial_ends_at: string
+        }[]
+      }
       get_few_shot_examples: {
         Args: { p_categoria?: string; p_limit?: number; p_org_id: string }
         Returns: {
@@ -1193,8 +1573,30 @@ export type Database = {
       get_user_org_ids: { Args: never; Returns: string[] }
       is_org_admin: { Args: { p_org_id: string }; Returns: boolean }
       is_super_admin: { Args: never; Returns: boolean }
+      process_credit_purchase: {
+        Args: { p_purchase_id: string; p_stripe_pi_id: string }
+        Returns: undefined
+      }
+      process_referral: {
+        Args: { p_code: string; p_invitee_org: string; p_invitee_user: string }
+        Returns: string
+      }
+      reset_monthly_credits: { Args: { p_org_id: string }; Returns: undefined }
     }
     Enums: {
+      account_status:
+        | "active"
+        | "trial"
+        | "trial_expired"
+        | "suspended"
+        | "churned"
+      credit_origin:
+        | "purchase"
+        | "referral_gave"
+        | "referral_got"
+        | "bonus"
+        | "plan_reset"
+      credit_pack_size: "pack_5" | "pack_15" | "pack_40"
       destination_platform:
         | "lovable"
         | "chatgpt"
@@ -1205,6 +1607,7 @@ export type Database = {
         | "outro"
       member_role: "owner" | "admin" | "member" | "viewer"
       plan_tier: "free" | "starter" | "pro" | "enterprise"
+      referral_status: "pending" | "completed" | "rewarded" | "expired"
       session_mode: "prompt" | "saas" | "misto"
       subscription_status:
         | "trialing"
@@ -1342,6 +1745,21 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      account_status: [
+        "active",
+        "trial",
+        "trial_expired",
+        "suspended",
+        "churned",
+      ],
+      credit_origin: [
+        "purchase",
+        "referral_gave",
+        "referral_got",
+        "bonus",
+        "plan_reset",
+      ],
+      credit_pack_size: ["pack_5", "pack_15", "pack_40"],
       destination_platform: [
         "lovable",
         "chatgpt",
@@ -1353,6 +1771,7 @@ export const Constants = {
       ],
       member_role: ["owner", "admin", "member", "viewer"],
       plan_tier: ["free", "starter", "pro", "enterprise"],
+      referral_status: ["pending", "completed", "rewarded", "expired"],
       session_mode: ["prompt", "saas", "misto"],
       subscription_status: [
         "trialing",
