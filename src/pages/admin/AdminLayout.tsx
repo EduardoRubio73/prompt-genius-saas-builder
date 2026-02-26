@@ -67,7 +67,7 @@ export default function AdminLayout() {
           <div>
             <div className="text-[13px] font-semibold leading-tight">Admin Master</div>
             <div className="text-[10px] font-medium uppercase tracking-widest text-orange-400">
-              Prompt Genius
+              Prompt Genius SaaS Builder
             </div>
           </div>
         </div>

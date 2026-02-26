@@ -51,10 +51,8 @@ export default function Login() {
     <div className="noise-overlay relative flex min-h-screen items-center justify-center px-4">
       <div className="relative z-10 w-full max-w-sm space-y-6">
         <div className="text-center">
-          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-primary font-heading text-lg font-bold text-primary-foreground">
-            PG
-          </div>
-          <h1 className="font-heading text-2xl font-bold">Prompt Genius</h1>
+          <img src={logo} alt="Prompt Genius SaaS Builder" className="mx-auto mb-4 h-20 w-auto" />
+          <h1 className="font-heading text-2xl font-bold">Prompt Genius SaaS Builder</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             {isSignUp ? "Crie sua conta" : "Entre na sua conta"}
           </p>
