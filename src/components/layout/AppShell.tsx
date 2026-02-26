@@ -1,5 +1,6 @@
 import { Moon, Sun, LogOut } from "lucide-react";
 import { useTheme } from "@/hooks/useTheme";
+import logo from "@/assets/logo.png";
 import { UsageBar } from "@/components/dashboard/UsageBar";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
