@@ -1,6 +1,9 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { PlanBadge, SubStatusBadge } from "@/components/admin/Badges";
+import { Button } from "@/components/ui/button";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 export default function AdminBilling() {
   const [tab, setTab] = useState<"subscriptions" | "invoices">("subscriptions");
@@ -65,16 +68,8 @@ export default function AdminBilling() {
               {subs?.map((s) => (
                 <tr key={s.subscription_id} className="border-b border-white/[0.06] last:border-0 hover:bg-[#16161F] transition">
                   <td className="px-5 py-3 text-[13px] font-medium">{s.org_name || "—"}</td>
-                  <td className="px-5 py-3">
-                    <span className="rounded-md border border-white/10 bg-white/[0.05] px-2 py-0.5 text-[11px]">{s.plan_tier}</span>
-                  </td>
-                  <td className="px-5 py-3">
-                    <span className={`rounded-md px-2 py-0.5 text-[11px] font-medium ${
-                      s.status === "active" ? "bg-green-500/12 text-green-400" :
-                      s.status === "trialing" ? "bg-blue-500/12 text-blue-400" :
-                      "bg-red-500/12 text-red-400"
-                    }`}>{s.status}</span>
-                  </td>
+                  <td className="px-5 py-3"><PlanBadge tier={s.plan_tier} /></td>
+                  <td className="px-5 py-3"><SubStatusBadge status={s.status || "—"} /></td>
                   <td className="px-5 py-3 text-[12px]" style={mono}>
                     {s.unit_amount ? `R$${(s.unit_amount / 100).toFixed(2)}` : "—"}/{s.recurring_interval || "—"}
                   </td>
@@ -84,6 +79,9 @@ export default function AdminBilling() {
                   <td className="px-5 py-3 text-[10px] text-white/30" style={mono}>{s.subscription_id?.slice(0, 20) || "—"}</td>
                 </tr>
               ))}
+              {(!subs || subs.length === 0) && (
+                <tr><td colSpan={6} className="px-5 py-10 text-center text-[12px] text-white/30">Nenhuma assinatura</td></tr>
+              )}
             </tbody>
           </table>
         )}
@@ -102,9 +100,7 @@ export default function AdminBilling() {
                 <tr key={inv.id} className="border-b border-white/[0.06] last:border-0 hover:bg-[#16161F] transition">
                   <td className="px-5 py-3 text-[11px] text-white/50" style={mono}>{inv.id.slice(0, 20)}</td>
                   <td className="px-5 py-3">
-                    <span className={`rounded-md px-2 py-0.5 text-[11px] font-medium ${
-                      inv.status === "paid" ? "bg-green-500/12 text-green-400" : "bg-yellow-500/12 text-yellow-400"
-                    }`}>{inv.status}</span>
+                    <SubStatusBadge status={inv.status === "paid" ? "active" : inv.status} />
                   </td>
                   <td className="px-5 py-3 text-[12px]" style={mono}>R${(inv.amount_due / 100).toFixed(2)}</td>
                   <td className="px-5 py-3 text-[11px] text-white/40" style={mono}>
@@ -117,6 +113,9 @@ export default function AdminBilling() {
                   </td>
                 </tr>
               ))}
+              {(!invoices || invoices.length === 0) && (
+                <tr><td colSpan={5} className="px-5 py-10 text-center text-[12px] text-white/30">Nenhuma fatura</td></tr>
+              )}
             </tbody>
           </table>
         )}

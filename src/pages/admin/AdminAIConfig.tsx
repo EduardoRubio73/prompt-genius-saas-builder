@@ -1,14 +1,15 @@
 import { useState } from "react";
-import { useAdminSettings, useUpsertSetting, useAdminFeatureFlags, useToggleFeatureFlag } from "@/hooks/admin/useAdminData";
+import { useAdminSettings, useUpsertSetting } from "@/hooks/admin/useAdminData";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Flag } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 
 export default function AdminAIConfig() {
+  const navigate = useNavigate();
   const { data: settings, isLoading } = useAdminSettings();
-  const { data: flags } = useAdminFeatureFlags();
   const upsertSetting = useUpsertSetting();
-  const toggleFlag = useToggleFeatureFlag();
   const { toast } = useToast();
   const [editingKey, setEditingKey] = useState<string | null>(null);
   const [editValue, setEditValue] = useState("");
@@ -26,15 +27,6 @@ export default function AdminAIConfig() {
       await upsertSetting.mutateAsync({ p_key: editingKey, p_value: editValue });
       toast({ title: "Salvo", description: `${editingKey} atualizado.` });
       setEditingKey(null);
-    } catch (err: any) {
-      toast({ title: "Erro", description: err.message, variant: "destructive" });
-    }
-  };
-
-  const handleToggle = async (flag: string, currentEnabled: boolean) => {
-    try {
-      await toggleFlag.mutateAsync({ flag, enabled: !currentEnabled });
-      toast({ title: "Flag atualizada" });
     } catch (err: any) {
       toast({ title: "Erro", description: err.message, variant: "destructive" });
     }
@@ -98,33 +90,21 @@ export default function AdminAIConfig() {
         </div>
       </div>
 
-      <h2 className="text-lg font-semibold">Feature Flags</h2>
-
-      <div className="overflow-hidden rounded-[10px] border border-white/[0.06] bg-[#0F0F17]">
-        <div className="divide-y divide-white/[0.06]">
-          {flags?.map((f) => (
-            <div key={f.id} className="flex items-center justify-between px-5 py-3.5">
-              <div>
-                <div className="text-[13px] font-medium">{f.label}</div>
-                <div className="text-[12px] text-white/40 mt-0.5">{f.description || f.flag}</div>
-              </div>
-              <button
-                onClick={() => handleToggle(f.flag, f.enabled)}
-                className={`relative h-[22px] w-10 shrink-0 rounded-full transition-colors ${
-                  f.enabled ? "bg-green-500" : "border border-white/10 bg-[#1C1C28]"
-                }`}
-              >
-                <div
-                  className={`absolute top-[3px] h-4 w-4 rounded-full bg-white shadow transition-[left] ${
-                    f.enabled ? "left-[21px]" : "left-[3px]"
-                  }`}
-                />
-              </button>
-            </div>
-          ))}
-          {(!flags || flags.length === 0) && (
-            <div className="px-5 py-8 text-center text-[12px] text-white/30">Nenhuma flag configurada</div>
-          )}
+      {/* Feature Flags shortcut */}
+      <div className="rounded-[10px] border border-white/[0.06] bg-[#0F0F17] px-5 py-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-[13px] font-medium">Feature Flags</p>
+            <p className="text-[12px] text-white/40 mt-0.5">Gerencie os feature flags na página dedicada</p>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => navigate("/admin/flags")}
+            className="gap-2 border-white/10 bg-transparent text-[12px] text-white/65 hover:bg-[#16161F] hover:text-orange-400"
+          >
+            <Flag className="h-4 w-4" /> Gerenciar Flags
+          </Button>
         </div>
       </div>
     </div>

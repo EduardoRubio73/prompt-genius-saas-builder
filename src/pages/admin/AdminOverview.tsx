@@ -8,6 +8,8 @@ import { useAdminSettings, useAdminFeatureFlags } from "@/hooks/admin/useAdminDa
 import { useNavigate } from "react-router-dom";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { PlanBadge, StatusBadge } from "@/components/admin/Badges";
+import { cn } from "@/lib/utils";
 
 const kpiConfig = [
   { key: "total_users", label: "Usuários Total", color: "#22C55E", delta: (d: any) => d ? `+${d.new_users_today ?? 0} hoje` : "" },
@@ -23,21 +25,6 @@ function getActivityDotClass(action: string) {
   if (action.includes("delete")) return "bg-red-500 shadow-[0_0_6px_#EF4444]";
   if (action.includes("billing")) return "bg-orange-500 shadow-[0_0_6px_#F97316]";
   return "bg-white/40";
-}
-
-function PlanBadge({ tier }: { tier: string | null }) {
-  const styles: Record<string, string> = {
-    pro: "bg-purple-500/15 text-purple-400 border-purple-500/30",
-    starter: "bg-blue-500/12 text-blue-400 border-blue-500/25",
-    enterprise: "bg-orange-500/12 text-orange-400 border-orange-500/25",
-    free: "bg-white/[0.08] text-white/65 border-white/10",
-  };
-  const t = tier || "free";
-  return (
-    <span className={`inline-flex items-center rounded-md border px-2 py-0.5 text-[11px] font-medium ${styles[t] ?? styles.free}`}>
-      {t}
-    </span>
-  );
 }
 
 export default function AdminOverview() {
@@ -110,15 +97,7 @@ export default function AdminOverview() {
                   <td className="px-5 py-3"><PlanBadge tier={u.plan_tier} /></td>
                   <td className="px-5 py-3 text-[11px] text-white/65" style={mono}>{u.total_prompts ?? 0}</td>
                   <td className="px-5 py-3">
-                    {u.org_active !== false ? (
-                      <span className="inline-flex items-center gap-1 rounded-md border border-green-500/20 bg-green-500/12 px-2 py-0.5 text-[11px] font-medium text-green-400">
-                        ● ativo
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1 rounded-md border border-red-500/25 bg-red-500/12 px-2 py-0.5 text-[11px] font-medium text-red-400">
-                        ✕ inativo
-                      </span>
-                    )}
+                    <StatusBadge active={u.org_active !== false} labelTrue="ativo" labelFalse="inativo" />
                   </td>
                 </tr>
               ))}
@@ -209,29 +188,51 @@ export default function AdminOverview() {
             </div>
           </div>
 
-          {/* Mini chart */}
+          {/* Mini chart with tooltips */}
           <div className="overflow-hidden rounded-[10px] border border-white/[0.06] bg-[#0F0F17]">
             <div className="border-b border-white/[0.06] px-5 py-4">
               <span className="text-[13px] font-semibold">Sessões (7 dias)</span>
             </div>
             <div className="px-5 py-4">
-              <div className="flex items-end gap-1.5" style={{ height: 60 }}>
-                {chartData?.map((d, i) => {
-                  const max = Math.max(...(chartData?.map((x) => x.count) ?? [1]), 1);
-                  const h = (d.count / max) * 100;
-                  const isToday = i === (chartData?.length ?? 0) - 1;
-                  return (
-                    <div
-                      key={d.day}
-                      className="flex-1 rounded-t transition-colors"
-                      style={{
-                        height: `${Math.max(h, 4)}%`,
-                        background: isToday ? "#F97316" : "rgba(249,115,22,0.2)",
-                      }}
-                      title={`${d.day}: ${d.count}`}
-                    />
-                  );
-                })}
+              <div className="relative">
+                <div className="flex items-end gap-1.5" style={{ height: 80 }}>
+                  {chartData?.map((d, i) => {
+                    const max = Math.max(...(chartData?.map((x) => x.count) ?? [1]), 1);
+                    const h = (d.count / max) * 100;
+                    const isToday = i === (chartData?.length ?? 0) - 1;
+                    return (
+                      <div key={d.day} className="flex-1 relative group/bar">
+                        {/* Tooltip */}
+                        <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 hidden group-hover/bar:flex flex-col items-center z-10 pointer-events-none">
+                          <div className="bg-[#1C1C28] border border-white/10 rounded-md px-2 py-1 text-[10px] shadow-md whitespace-nowrap" style={mono}>
+                            <span className="font-semibold text-orange-400">{d.count}</span> sessões
+                            <br />
+                            <span className="text-white/40">{d.day}</span>
+                          </div>
+                        </div>
+                        <div
+                          className={cn(
+                            "w-full rounded-t transition-all duration-500 cursor-pointer hover:opacity-80",
+                            isToday ? "bg-orange-500" : "bg-orange-500/20 hover:bg-orange-500/40"
+                          )}
+                          style={{ height: `${Math.max(h, 4)}%` }}
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+                {/* Y-axis hints */}
+                <div className="absolute left-0 top-0 bottom-0 flex flex-col justify-between pointer-events-none -ml-1">
+                  {[0, 1, 2].map((i) => {
+                    const max = Math.max(...(chartData?.map((x) => x.count) ?? [0]), 1);
+                    const val = Math.round(max * (1 - i / 2));
+                    return (
+                      <span key={i} className="text-[8px] text-white/30 -translate-x-full pr-1" style={mono}>
+                        {val}
+                      </span>
+                    );
+                  })}
+                </div>
               </div>
               <div className="mt-1.5 flex justify-between text-[10px] text-white/40" style={mono}>
                 <span>{chartData?.[0]?.day}</span>

@@ -70,6 +70,9 @@ export function useToggleFeatureFlag() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-feature-flags"] });
     },
+    onError: (error: Error) => {
+      console.error("Toggle feature flag failed:", error);
+    },
   });
 }
 
@@ -95,6 +98,9 @@ export function useUpsertSetting() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-settings"] });
+    },
+    onError: (error: Error) => {
+      console.error("Upsert setting failed:", error);
     },
   });
 }

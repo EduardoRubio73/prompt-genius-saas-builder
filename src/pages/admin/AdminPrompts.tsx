@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useAdminPrompts } from "@/hooks/admin/useAdminData";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Download, ChevronLeft, ChevronRight } from "lucide-react";
 
 export default function AdminPrompts() {
   const [page, setPage] = useState(0);
@@ -9,6 +10,7 @@ export default function AdminPrompts() {
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const { data: prompts, isLoading } = useAdminPrompts(page, debouncedSearch);
   const mono = { fontFamily: "'IBM Plex Mono', monospace" };
+  const perPage = 20;
 
   const handleSearch = (v: string) => {
     setSearch(v);
@@ -19,16 +21,50 @@ export default function AdminPrompts() {
     }, 300);
   };
 
+  const handleExport = () => {
+    if (!prompts?.length) return;
+    const headers = ["ID", "Usuário", "Email", "Especialidade", "Destino", "Rating", "Tokens", "Criado em"];
+    const rows = prompts.map((p) => [
+      p.id,
+      p.user_name || "",
+      p.user_email,
+      p.especialidade || "",
+      p.destino || "",
+      p.rating || "",
+      p.tokens_consumed || 0,
+      p.created_at ? new Date(p.created_at).toLocaleDateString("pt-BR") : "",
+    ]);
+    const csv = [headers, ...rows].map((r) => r.join(",")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `prompts_${new Date().toISOString().split("T")[0]}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="space-y-5 animate-in fade-in">
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold">Prompts e Specs</h2>
-        <Input
-          placeholder="Buscar tarefa ou especialidade..."
-          value={search}
-          onChange={(e) => handleSearch(e.target.value)}
-          className="w-64 border-white/10 bg-[#16161F] text-[13px] text-[#E8E6F0] placeholder:text-white/30"
-        />
+        <div className="flex items-center gap-3">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleExport}
+            disabled={!prompts?.length}
+            className="gap-2 border-white/10 bg-transparent text-[12px] text-white/65 hover:bg-[#16161F]"
+          >
+            <Download className="h-3.5 w-3.5" /> Exportar CSV
+          </Button>
+          <Input
+            placeholder="Buscar tarefa ou especialidade..."
+            value={search}
+            onChange={(e) => handleSearch(e.target.value)}
+            className="w-64 border-white/10 bg-[#16161F] text-[13px] text-[#E8E6F0] placeholder:text-white/30"
+          />
+        </div>
       </div>
 
       <div className="overflow-hidden rounded-[10px] border border-white/[0.06] bg-[#0F0F17]">
@@ -69,12 +105,23 @@ export default function AdminPrompts() {
         </table>
       </div>
 
-      <div className="flex items-center justify-center gap-3">
-        <Button variant="outline" size="sm" disabled={page === 0} onClick={() => setPage((p) => p - 1)}
-          className="border-white/10 bg-transparent text-[12px] text-white/65 hover:bg-[#16161F]">← Anterior</Button>
-        <span className="text-[12px] text-white/40" style={mono}>Página {page + 1}</span>
-        <Button variant="outline" size="sm" disabled={!prompts || prompts.length < 20} onClick={() => setPage((p) => p + 1)}
-          className="border-white/10 bg-transparent text-[12px] text-white/65 hover:bg-[#16161F]">Próximo →</Button>
+      <div className="flex items-center justify-between pt-2">
+        <p className="text-[11px] text-white/40">
+          Mostrando{" "}
+          <span className="font-medium text-white/65">{page * perPage + 1}–{page * perPage + (prompts?.length ?? 0)}</span>
+          {" "}registros
+        </p>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" disabled={page === 0} onClick={() => setPage((p) => p - 1)}
+            className="h-7 border-white/10 bg-transparent text-[12px] text-white/65 hover:bg-[#16161F]">
+            <ChevronLeft className="h-3.5 w-3.5" />
+          </Button>
+          <span className="text-[11px] text-white/40" style={mono}>Pág. {page + 1}</span>
+          <Button variant="outline" size="sm" disabled={!prompts || prompts.length < perPage} onClick={() => setPage((p) => p + 1)}
+            className="h-7 border-white/10 bg-transparent text-[12px] text-white/65 hover:bg-[#16161F]">
+            <ChevronRight className="h-3.5 w-3.5" />
+          </Button>
+        </div>
       </div>
     </div>
   );

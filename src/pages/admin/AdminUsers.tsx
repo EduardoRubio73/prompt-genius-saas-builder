@@ -2,21 +2,8 @@ import { useState } from "react";
 import { useAdminUsers } from "@/hooks/admin/useAdminData";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-
-function PlanBadge({ tier }: { tier: string | null }) {
-  const styles: Record<string, string> = {
-    pro: "bg-purple-500/15 text-purple-400 border-purple-500/30",
-    starter: "bg-blue-500/12 text-blue-400 border-blue-500/25",
-    enterprise: "bg-orange-500/12 text-orange-400 border-orange-500/25",
-    free: "bg-white/[0.08] text-white/65 border-white/10",
-  };
-  const t = tier || "free";
-  return (
-    <span className={`inline-flex rounded-md border px-2 py-0.5 text-[11px] font-medium ${styles[t] ?? styles.free}`}>
-      {t}
-    </span>
-  );
-}
+import { PlanBadge, StatusBadge } from "@/components/admin/Badges";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 export default function AdminUsers() {
   const [page, setPage] = useState(0);
@@ -24,6 +11,7 @@ export default function AdminUsers() {
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const { data: users, isLoading } = useAdminUsers(page, debouncedSearch);
   const mono = { fontFamily: "'IBM Plex Mono', monospace" };
+  const perPage = 20;
 
   const handleSearch = (v: string) => {
     setSearch(v);
@@ -62,7 +50,7 @@ export default function AdminUsers() {
               <tr><td colSpan={7} className="px-5 py-10 text-center text-[12px] text-white/30">Carregando...</td></tr>
             )}
             {users?.map((u) => (
-              <tr key={u.user_id} className="border-b border-white/[0.06] last:border-0 hover:bg-[#16161F] transition">
+              <tr key={u.user_id} className="group border-b border-white/[0.06] last:border-0 hover:bg-[#16161F] transition">
                 <td className="px-5 py-3">
                   <div className="text-[13px] font-medium">{u.full_name || "—"}</div>
                   <div className="text-[11px] text-white/40" style={mono}>{u.email}</div>
@@ -75,11 +63,7 @@ export default function AdminUsers() {
                   {u.registered_at ? new Date(u.registered_at).toLocaleDateString("pt-BR") : "—"}
                 </td>
                 <td className="px-5 py-3">
-                  {u.org_active !== false ? (
-                    <span className="inline-flex rounded-md border border-green-500/20 bg-green-500/12 px-2 py-0.5 text-[11px] font-medium text-green-400">● ativo</span>
-                  ) : (
-                    <span className="inline-flex rounded-md border border-red-500/25 bg-red-500/12 px-2 py-0.5 text-[11px] font-medium text-red-400">✕ inativo</span>
-                  )}
+                  <StatusBadge active={u.org_active !== false} labelTrue="ativo" labelFalse="inativo" />
                 </td>
               </tr>
             ))}
@@ -87,26 +71,32 @@ export default function AdminUsers() {
         </table>
       </div>
 
-      <div className="flex items-center justify-center gap-3">
-        <Button
-          variant="outline"
-          size="sm"
-          disabled={page === 0}
-          onClick={() => setPage((p) => p - 1)}
-          className="border-white/10 bg-transparent text-[12px] text-white/65 hover:bg-[#16161F]"
-        >
-          ← Anterior
-        </Button>
-        <span className="text-[12px] text-white/40" style={mono}>Página {page + 1}</span>
-        <Button
-          variant="outline"
-          size="sm"
-          disabled={!users || users.length < 20}
-          onClick={() => setPage((p) => p + 1)}
-          className="border-white/10 bg-transparent text-[12px] text-white/65 hover:bg-[#16161F]"
-        >
-          Próximo →
-        </Button>
+      {/* Improved pagination */}
+      <div className="flex items-center justify-between pt-2">
+        <p className="text-[11px] text-white/40">
+          Mostrando{" "}
+          <span className="font-medium text-white/65">{page * perPage + 1}–{page * perPage + (users?.length ?? 0)}</span>
+          {" "}registros
+        </p>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline" size="sm"
+            disabled={page === 0}
+            onClick={() => setPage((p) => p - 1)}
+            className="h-7 border-white/10 bg-transparent text-[12px] text-white/65 hover:bg-[#16161F]"
+          >
+            <ChevronLeft className="h-3.5 w-3.5" />
+          </Button>
+          <span className="text-[11px] text-white/40" style={mono}>Pág. {page + 1}</span>
+          <Button
+            variant="outline" size="sm"
+            disabled={!users || users.length < perPage}
+            onClick={() => setPage((p) => p + 1)}
+            className="h-7 border-white/10 bg-transparent text-[12px] text-white/65 hover:bg-[#16161F]"
+          >
+            <ChevronRight className="h-3.5 w-3.5" />
+          </Button>
+        </div>
       </div>
     </div>
   );
