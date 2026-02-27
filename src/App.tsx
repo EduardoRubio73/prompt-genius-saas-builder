@@ -18,6 +18,7 @@ import AdminBilling from "./pages/admin/AdminBilling";
 import AdminAIConfig from "./pages/admin/AdminAIConfig";
 import AdminAuditLogs from "./pages/admin/AdminAuditLogs";
 import AdminFlags from "./pages/admin/AdminFlags";
+import MistoMode from "./pages/misto/MistoMode";
 
 const queryClient = new QueryClient();
 
@@ -44,7 +45,11 @@ const App = () => (
           />
           <Route
             path="/mixed"
-            element={<AuthGuard><PlaceholderPage title="Modo Misto" /></AuthGuard>}
+            element={<AuthGuard><MistoMode /></AuthGuard>}
+          />
+          <Route
+            path="/misto"
+            element={<AuthGuard><MistoMode /></AuthGuard>}
           />
           {/* Admin routes */}
           <Route
