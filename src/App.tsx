@@ -18,6 +18,7 @@ import AdminBilling from "./pages/admin/AdminBilling";
 import AdminAIConfig from "./pages/admin/AdminAIConfig";
 import AdminAuditLogs from "./pages/admin/AdminAuditLogs";
 import AdminFlags from "./pages/admin/AdminFlags";
+import MistoMode from "./pages/misto/MistoMode";
 
 const queryClient = new QueryClient();
 
