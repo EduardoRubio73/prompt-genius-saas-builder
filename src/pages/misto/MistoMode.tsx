@@ -14,6 +14,7 @@ import { MistoRefining } from "@/components/misto/MistoRefining";
 import { MistoSpecLoading } from "@/components/misto/MistoSpecLoading";
 import { MistoResults } from "@/components/misto/MistoResults";
 import { CreditModal } from "@/components/misto/CreditModal";
+import { UnifiedMemorySidebar } from "@/components/UnifiedMemorySidebar";
 
 import "./misto.css";
 
