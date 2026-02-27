@@ -6,30 +6,37 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY")!;
-const GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent";
+const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY")!;
+const GATEWAY_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
 
-async function callGemini(systemPrompt: string, userPrompt: string): Promise<string> {
-  const res = await fetch(`${GEMINI_URL}?key=${GEMINI_API_KEY}`, {
+async function callLLM(systemPrompt: string, userPrompt: string): Promise<string> {
+  const res = await fetch(GATEWAY_URL, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${LOVABLE_API_KEY}`,
+    },
     body: JSON.stringify({
-      contents: [
-        { role: "user", parts: [{ text: userPrompt }] },
+      model: "google/gemini-3-flash-preview",
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt },
       ],
-      systemInstruction: { parts: [{ text: systemPrompt }] },
-      generationConfig: { temperature: 0.7, maxOutputTokens: 4096 },
+      temperature: 0.7,
+      max_tokens: 4096,
     }),
   });
 
   if (!res.ok) {
     const err = await res.text();
-    console.error("Gemini error:", err);
-    throw new Error("Gemini API error");
+    console.error("AI Gateway error:", res.status, err);
+    if (res.status === 429) throw new Error("Rate limit exceeded, please try again later.");
+    if (res.status === 402) throw new Error("Payment required, please add credits.");
+    throw new Error("AI Gateway error");
   }
 
   const data = await res.json();
-  return data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+  return data.choices?.[0]?.message?.content || "";
 }
 
 function parseJsonFromLLM(text: string): Record<string, unknown> {
