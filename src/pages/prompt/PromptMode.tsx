@@ -12,6 +12,7 @@ import { PromptInput } from "@/components/prompt/PromptInput";
 import { MistoRefining } from "@/components/misto/MistoRefining";
 import { MistoResults } from "@/components/misto/MistoResults";
 import { CreditModal } from "@/components/misto/CreditModal";
+import { UnifiedMemorySidebar } from "@/components/UnifiedMemorySidebar";
 import type { MistoFields } from "@/pages/misto/MistoMode";
 
 import "../misto/misto.css";
