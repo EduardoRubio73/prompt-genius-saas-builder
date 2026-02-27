@@ -51,7 +51,7 @@ export default function PromptMode() {
   const [genStatus, setGenStatus] = useState<"distributing" | "refining">("distributing");
   const startTime = useRef(0);
   const [timeElapsed, setTimeElapsed] = useState(0);
-
+  const [memoryRefreshKey, setMemoryRefreshKey] = useState(0);
   const fetchBalance = useCallback(async () => {
     if (!orgId) return null;
     const { data, error } = await supabase.rpc("get_credit_balance", { p_org_id: orgId });
