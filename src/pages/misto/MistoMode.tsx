@@ -171,6 +171,7 @@ export default function MistoMode() {
       if (specErr) throw specErr;
 
       setIsSaved(true);
+      setMemoryRefreshKey(k => k + 1);
       toast.success("Sessão salva com sucesso!");
     } catch (err: any) {
       toast.error("Erro ao salvar: " + (err.message || ""));
