@@ -116,10 +116,10 @@ export function AppShell({
                   )}
                 </div>
 
-                <DropdownMenuItem className="gap-2 text-sm cursor-pointer">
+                <DropdownMenuItem onClick={() => navigate("/profile")} className="gap-2 text-sm cursor-pointer">
                   <User className="h-4 w-4" /> Meu perfil
                 </DropdownMenuItem>
-                <DropdownMenuItem className="gap-2 text-sm cursor-pointer">
+                <DropdownMenuItem onClick={() => navigate("/profile?tab=notifications")} className="gap-2 text-sm cursor-pointer">
                   <Settings className="h-4 w-4" /> Configurações
                 </DropdownMenuItem>
 

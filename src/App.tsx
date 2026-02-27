@@ -55,6 +55,18 @@ const App = () => (
             path="/misto"
             element={<AuthGuard><MistoMode /></AuthGuard>}
           />
+          <Route
+            path="/memory"
+            element={<AuthGuard><MemoryPage /></AuthGuard>}
+          />
+          <Route
+            path="/history"
+            element={<AuthGuard><HistoryPage /></AuthGuard>}
+          />
+          <Route
+            path="/profile"
+            element={<AuthGuard><ProfilePage /></AuthGuard>}
+          />
           {/* Admin routes */}
           <Route
             path="/admin"
