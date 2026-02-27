@@ -32,6 +32,7 @@ export function AppShell({
   onSignOut,
 }: AppShellProps) {
   const { theme, toggleTheme } = useTheme();
+  const navigate = useNavigate();
 
   const initials = userName
     ? userName.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()
