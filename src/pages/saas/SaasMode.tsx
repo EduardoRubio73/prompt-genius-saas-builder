@@ -45,8 +45,8 @@ const emptyAnswers: SaasAnswers = {
   prazo: "", prioridades: [],
 };
 
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || "https://pcaebfncvuvdguyjmyxm.supabase.co";
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBjYWViZm5jdnV2ZGd1eWpteXhtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIxMTM5ODAsImV4cCI6MjA4NzY4OTk4MH0.7pDeOmLlWzPoVKJKIRepxGKtMAD0PPJiyXHG8AYhy34";
 
 type SaasStep = 1 | 2 | 3 | 4 | 5 | 6 | 7 | "generating" | "results";
 
