@@ -10,7 +10,7 @@ import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 const kpiConfig = [
-  { key: "total_users", label: "Usuários Total", color: "#22C55E", delta: (d: any) => `+${d.new_users_today} hoje` },
+  { key: "total_users", label: "Usuários Total", color: "#22C55E", delta: (d: any) => d ? `+${d.new_users_today ?? 0} hoje` : "" },
   { key: "total_orgs", label: "Orgs Ativas", color: "#3B82F6", delta: () => "" },
   { key: "mrr_brl", label: "MRR", color: "#F97316", format: (v: number) => `R$${(v / 100).toLocaleString("pt-BR")}`, delta: () => "" },
   { key: "total_prompts", label: "Prompts Gerados", color: "#7C5CFC", delta: () => "total" },
