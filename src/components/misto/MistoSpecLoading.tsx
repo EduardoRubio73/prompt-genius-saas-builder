@@ -28,7 +28,7 @@ export function MistoSpecLoading() {
         <div className="misto-prog-track">
           <div className="misto-prog-fill" />
         </div>
-        <div style={{ fontSize: "12px", color: "rgba(237,240,255,.42)" }}>
+        <div style={{ fontSize: "12px", color: "hsl(var(--mode-text-muted))" }}>
           Analisando stack, arquitetura e requisitos...
         </div>
         <div className="misto-prog-steps">

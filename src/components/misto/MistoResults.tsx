@@ -174,17 +174,10 @@ export function MistoResults({
         <div className="misto-result-panel">
           <div className="misto-compare-grid">
             <div>
-              <div className="misto-compare-label" style={{ color: "rgba(237,240,255,.42)" }}>
+              <div className="misto-compare-label" style={{ color: "hsl(var(--mode-text-muted))" }}>
                 Input Original
               </div>
-              <div
-                className="misto-compare-box"
-                style={{
-                  color: "rgba(237,240,255,.42)",
-                  background: "hsl(240 15% 8%)",
-                  border: "1px solid rgba(255,255,255,.06)",
-                }}
-              >
+              <div className="misto-compare-box">
                 {userInput}
               </div>
             </div>
@@ -192,32 +185,16 @@ export function MistoResults({
               <div className="misto-compare-label" style={{ color: "hsl(195 100% 50%)" }}>
                 ✨ Prompt Gerado
               </div>
-              <div
-                className="misto-compare-box"
-                style={{
-                  fontSize: 12,
-                  color: "rgba(237,240,255,.42)",
-                  background: "rgba(0,200,255,.04)",
-                  border: "1px solid rgba(0,200,255,.15)",
-                }}
-              >
-                6 campos estruturados + instrução de destino otimizada. Especialidade definida, persona detalhada, tarefa precisa, objetivo mensurável.
+              <div className="misto-compare-box" style={{ fontSize: 12 }}>
+                {promptGerado ? promptGerado.slice(0, 300) + (promptGerado.length > 300 ? "..." : "") : "6 campos estruturados + instrução de destino otimizada."}
               </div>
             </div>
             <div>
               <div className="misto-compare-label" style={{ color: "hsl(var(--primary))" }}>
                 🏗️ Spec Gerada
               </div>
-              <div
-                className="misto-compare-box"
-                style={{
-                  fontSize: 12,
-                  color: "rgba(237,240,255,.42)",
-                  background: "rgba(168,85,247,.04)",
-                  border: "1px solid rgba(168,85,247,.15)",
-                }}
-              >
-                Stack completa definida, funcionalidades core detalhadas, requisitos de segurança mapeados, plano de deploy estruturado.
+              <div className="misto-compare-box" style={{ fontSize: 12 }}>
+                {specMarkdown ? specMarkdown.slice(0, 300) + (specMarkdown.length > 300 ? "..." : "") : "Stack completa definida, funcionalidades core detalhadas."}
               </div>
             </div>
           </div>
