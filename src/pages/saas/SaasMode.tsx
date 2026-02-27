@@ -67,6 +67,7 @@ export default function SaasMode() {
   const [creditBalance, setCreditBalance] = useState<number | null>(null);
   const startTime = useRef(0);
   const [timeElapsed, setTimeElapsed] = useState(0);
+  const [memoryRefreshKey, setMemoryRefreshKey] = useState(0);
 
   const fetchBalance = useCallback(async () => {
     if (!orgId) return null;
