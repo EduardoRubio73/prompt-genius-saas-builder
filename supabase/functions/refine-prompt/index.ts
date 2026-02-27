@@ -125,7 +125,7 @@ Responda APENAS com JSON: {"spec_md": "...o markdown completo aqui..."}`;
 Campos estruturados:
 ${JSON.stringify(promptFields, null, 2)}`;
 
-  const result = await callGemini(system, userMsg);
+  const result = await callLLM(system, userMsg);
   const parsed = parseJsonFromLLM(result);
 
   // If the LLM returned the markdown directly instead of JSON
