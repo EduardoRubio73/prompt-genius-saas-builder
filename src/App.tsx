@@ -8,7 +8,6 @@ import { SuperAdminGuard } from "@/components/guards/SuperAdminGuard";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import LandingPage from "./pages/landing/LandingPage";
-import PlaceholderPage from "./pages/PlaceholderPage";
 import NotFound from "./pages/NotFound";
 import AdminLayout from "./pages/admin/AdminLayout";
 import AdminOverview from "./pages/admin/AdminOverview";
@@ -19,6 +18,8 @@ import AdminAIConfig from "./pages/admin/AdminAIConfig";
 import AdminAuditLogs from "./pages/admin/AdminAuditLogs";
 import AdminFlags from "./pages/admin/AdminFlags";
 import MistoMode from "./pages/misto/MistoMode";
+import PromptMode from "./pages/prompt/PromptMode";
+import SaasMode from "./pages/saas/SaasMode";
 
 const queryClient = new QueryClient();
 
@@ -37,11 +38,11 @@ const App = () => (
           />
           <Route
             path="/prompt"
-            element={<AuthGuard><PlaceholderPage title="Modo Prompt" /></AuthGuard>}
+            element={<AuthGuard><PromptMode /></AuthGuard>}
           />
           <Route
             path="/saas-spec"
-            element={<AuthGuard><PlaceholderPage title="Modo SaaS Spec" /></AuthGuard>}
+            element={<AuthGuard><SaasMode /></AuthGuard>}
           />
           <Route
             path="/mixed"

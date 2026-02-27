@@ -1,8 +1,10 @@
 import { useState, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import { Sun, Moon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
+import { useTheme } from "@/hooks/useTheme";
 import { toast } from "sonner";
 import type { Enums } from "@/integrations/supabase/types";
 
@@ -33,6 +35,7 @@ export default function MistoMode() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { data: profile } = useProfile(user?.id);
+  const { theme, toggleTheme } = useTheme();
   const orgId = profile?.personal_org_id ?? undefined;
 
   // State
@@ -75,41 +78,21 @@ export default function MistoMode() {
       return;
     }
 
-    // Check credits
     const balance = await fetchBalance();
-    if (!balance) {
-      toast.error("Erro ao verificar cotas");
-      return;
-    }
-    if (balance.account_status === "trial_expired") {
-      setCreditModal("trial_expired");
-      return;
-    }
-    if (balance.account_status === "suspended") {
-      setCreditModal("suspended");
-      return;
-    }
-    if (balance.total_remaining <= 0) {
-      setCreditModal("no_credits");
-      return;
-    }
+    if (!balance) { toast.error("Erro ao verificar cotas"); return; }
+    if (balance.account_status === "trial_expired") { setCreditModal("trial_expired"); return; }
+    if (balance.account_status === "suspended") { setCreditModal("suspended"); return; }
+    if (balance.total_remaining <= 0) { setCreditModal("no_credits"); return; }
 
     startTime.current = Date.now();
     const headers = await getAuthHeaders();
 
     try {
-      // Step 1: Distribute
       setStep("distributing");
       const distributeRes = await fetch(`${SUPABASE_URL}/functions/v1/refine-prompt`, {
-        method: "POST",
-        headers,
-        body: JSON.stringify({
-          action: "distribute",
-          freeText: userInput,
-          destino,
-        }),
+        method: "POST", headers,
+        body: JSON.stringify({ action: "distribute", freeText: userInput, destino }),
       });
-
       if (!distributeRes.ok) throw new Error("Falha na distribuição");
       const distributeData = await distributeRes.json();
       const extractedFields: MistoFields = {
@@ -122,22 +105,13 @@ export default function MistoMode() {
       };
       setFields(extractedFields);
 
-      // Step 2: Refine
       setStep("refining");
       const refineRes = await fetch(`${SUPABASE_URL}/functions/v1/refine-prompt`, {
-        method: "POST",
-        headers,
-        body: JSON.stringify({
-          action: "refine",
-          fields: extractedFields,
-          destino,
-        }),
+        method: "POST", headers,
+        body: JSON.stringify({ action: "refine", fields: extractedFields, destino }),
       });
-
       if (!refineRes.ok) throw new Error("Falha no refinamento");
       const refineData = await refineRes.json();
-      
-      // Update fields with refined versions
       const refinedFields: MistoFields = {
         especialidade: refineData.especialidade || extractedFields.especialidade,
         persona: refineData.persona || extractedFields.persona,
@@ -149,36 +123,20 @@ export default function MistoMode() {
       setFields(refinedFields);
       setPromptGerado(refineData.prompt_gerado || "");
 
-      // Consume credit
       const tempSessionId = crypto.randomUUID();
-      await supabase.rpc("consume_credit", {
-        p_org_id: orgId,
-        p_user_id: user.id,
-        p_session_id: tempSessionId,
-      });
+      await supabase.rpc("consume_credit", { p_org_id: orgId, p_user_id: user.id, p_session_id: tempSessionId });
 
-      // Step 3: Generate Spec
       setStep("generating-spec");
       const specRes = await fetch(`${SUPABASE_URL}/functions/v1/refine-prompt`, {
-        method: "POST",
-        headers,
-        body: JSON.stringify({
-          action: "saas-spec",
-          promptFields: refinedFields,
-          originalInput: userInput,
-          destino,
-        }),
+        method: "POST", headers,
+        body: JSON.stringify({ action: "saas-spec", promptFields: refinedFields, originalInput: userInput, destino }),
       });
-
       if (!specRes.ok) throw new Error("Falha na geração da spec");
       const specData = await specRes.json();
       setSpecMarkdown(specData.spec_md || "");
 
-      // Done
       setTimeElapsed((Date.now() - startTime.current) / 1000);
       setStep("results");
-      
-      // Refresh balance
       fetchBalance();
     } catch (err: any) {
       toast.error(err.message || "Erro ao processar. Tente novamente.");
@@ -186,57 +144,27 @@ export default function MistoMode() {
     }
   }, [orgId, user, userInput, destino, fetchBalance]);
 
-  // Save session
   const handleSave = useCallback(async () => {
     if (!orgId || !user || !fields) return;
-
     try {
-      // 1. Create session
       const { data: session, error: sessErr } = await supabase
-        .from("sessions")
-        .insert({
-          org_id: orgId,
-          user_id: user.id,
-          mode: "misto" as const,
-          tokens_total: 0,
-        })
-        .select()
-        .single();
+        .from("sessions").insert({ org_id: orgId, user_id: user.id, mode: "misto" as const, tokens_total: 0 })
+        .select().single();
       if (sessErr) throw sessErr;
 
-      // 2. Save prompt
       const { data: promptRecord, error: promptErr } = await supabase
-        .from("prompt_memory")
-        .insert({
-          session_id: session.id,
-          org_id: orgId,
-          user_id: user.id,
-          especialidade: fields.especialidade,
-          persona: fields.persona,
-          tarefa: fields.tarefa,
-          objetivo: fields.objetivo,
-          contexto: fields.contexto,
-          destino: destino,
-          prompt_gerado: promptGerado,
-          rating: promptRating || null,
-          categoria: "misto",
-        })
-        .select()
-        .single();
+        .from("prompt_memory").insert({
+          session_id: session.id, org_id: orgId, user_id: user.id,
+          especialidade: fields.especialidade, persona: fields.persona,
+          tarefa: fields.tarefa, objetivo: fields.objetivo, contexto: fields.contexto,
+          destino, prompt_gerado: promptGerado, rating: promptRating || null, categoria: "misto",
+        }).select().single();
       if (promptErr) throw promptErr;
 
-      // 3. Save spec
       const { error: specErr } = await supabase.from("saas_specs").insert({
-        session_id: session.id,
-        org_id: orgId,
-        user_id: user.id,
-        prompt_memory_id: promptRecord.id,
-        spec_md: specMarkdown,
-        rating: specRating || null,
-        answers: {
-          original_input: userInput,
-          destino,
-        },
+        session_id: session.id, org_id: orgId, user_id: user.id,
+        prompt_memory_id: promptRecord.id, spec_md: specMarkdown,
+        rating: specRating || null, answers: { original_input: userInput, destino },
       });
       if (specErr) throw specErr;
 
@@ -248,83 +176,47 @@ export default function MistoMode() {
   }, [orgId, user, fields, promptGerado, specMarkdown, promptRating, specRating, userInput, destino]);
 
   const handleNewSession = () => {
-    setStep("input");
-    setUserInput("");
-    setFields(null);
-    setPromptGerado("");
-    setSpecMarkdown("");
-    setPromptRating(0);
-    setSpecRating(0);
-    setIsSaved(false);
-    setTimeElapsed(0);
+    setStep("input"); setUserInput(""); setFields(null);
+    setPromptGerado(""); setSpecMarkdown("");
+    setPromptRating(0); setSpecRating(0);
+    setIsSaved(false); setTimeElapsed(0);
   };
 
   const isGenerating = step !== "input" && step !== "results";
 
   return (
-    <div className="noise-overlay relative min-h-screen" style={{ background: "hsl(240 20% 3%)" }}>
-      {/* Header */}
+    <div className="noise-overlay relative min-h-screen bg-background">
       <div className="misto-header">
-        <button className="misto-back-btn" onClick={() => navigate("/dashboard")}>
-          ← Dashboard
-        </button>
-        <div className="misto-mode-badge">
-          <span className="misto-badge-pulse" />
-          ⚡ Modo Misto
-        </div>
-        <div className="misto-credits-pill">
-          <strong>{creditBalance ?? "—"}</strong> cotas restantes
+        <button className="misto-back-btn" onClick={() => navigate("/dashboard")}>← Dashboard</button>
+        <div className="misto-mode-badge"><span className="misto-badge-pulse" /> ⚡ Modo Misto</div>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <button className="misto-theme-toggle" onClick={toggleTheme} aria-label="Alternar tema">
+            {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+          </button>
+          <div className="misto-credits-pill"><strong>{creditBalance ?? "—"}</strong> cotas restantes</div>
         </div>
       </div>
 
-      {/* Stepper */}
       <MistoStepper currentStep={step} />
 
-      {/* Content */}
       <div className="misto-content">
         {step === "input" && (
-          <MistoInput
-            userInput={userInput}
-            onInputChange={setUserInput}
-            destino={destino}
-            onDestinoChange={setDestino}
-            onGenerate={handleGenerate}
-            isGenerating={isGenerating}
-          />
+          <MistoInput userInput={userInput} onInputChange={setUserInput} destino={destino}
+            onDestinoChange={setDestino} onGenerate={handleGenerate} isGenerating={isGenerating} />
         )}
-
         {(step === "distributing" || step === "refining") && (
-          <MistoRefining
-            fields={fields}
-            promptPreview={promptGerado}
-            status={step}
-          />
+          <MistoRefining fields={fields} promptPreview={promptGerado} status={step} />
         )}
-
         {step === "generating-spec" && <MistoSpecLoading />}
-
         {step === "results" && fields && (
-          <MistoResults
-            fields={fields}
-            promptGerado={promptGerado}
-            specMarkdown={specMarkdown}
-            userInput={userInput}
-            timeElapsed={timeElapsed}
-            promptRating={promptRating}
-            specRating={specRating}
-            onPromptRating={setPromptRating}
-            onSpecRating={setSpecRating}
-            onNewSession={handleNewSession}
-            onSave={handleSave}
-            isSaved={isSaved}
-          />
+          <MistoResults fields={fields} promptGerado={promptGerado} specMarkdown={specMarkdown}
+            userInput={userInput} timeElapsed={timeElapsed} promptRating={promptRating}
+            specRating={specRating} onPromptRating={setPromptRating} onSpecRating={setSpecRating}
+            onNewSession={handleNewSession} onSave={handleSave} isSaved={isSaved} />
         )}
       </div>
 
-      {/* Credit Modal */}
-      {creditModal && (
-        <CreditModal type={creditModal} onClose={() => setCreditModal(null)} />
-      )}
+      {creditModal && <CreditModal type={creditModal} onClose={() => setCreditModal(null)} />}
     </div>
   );
 }

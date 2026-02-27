@@ -45,6 +45,21 @@
 
     --font-heading: 'Plus Jakarta Sans', sans-serif;
     --font-body: 'Plus Jakarta Sans', sans-serif;
+
+    /* Mode page tokens — Light */
+    --mode-bg: 40 14% 95%;
+    --mode-surface: 0 0% 100%;
+    --mode-elevated: 40 20% 97%;
+    --mode-input-bg: 40 10% 93%;
+    --mode-border: 40 10% 82%;
+    --mode-border-subtle: 40 10% 88%;
+    --mode-text-primary: 240 10% 10%;
+    --mode-text-secondary: 240 5% 35%;
+    --mode-text-muted: 240 5% 55%;
+    --mode-shadow: 0 4px 24px -4px hsla(240, 10%, 10%, 0.08);
+    --mode-glow-secondary: hsla(160, 100%, 45%, 0.12);
+    --mode-glow-accent: hsla(195, 100%, 50%, 0.1);
+    --mode-glow-primary: hsla(254, 96%, 67%, 0.1);
   }
 
   .dark {
@@ -84,6 +99,21 @@
     --sidebar-accent-foreground: 40 14% 90%;
     --sidebar-border: 240 10% 14%;
     --sidebar-ring: 254 96% 67%;
+
+    /* Mode page tokens — Dark */
+    --mode-bg: 240 20% 3%;
+    --mode-surface: 240 20% 5%;
+    --mode-elevated: 240 15% 8%;
+    --mode-input-bg: 240 15% 8%;
+    --mode-border: 240 10% 14%;
+    --mode-border-subtle: 0 0% 100% / 0.06;
+    --mode-text-primary: 237 30% 97%;
+    --mode-text-secondary: 237 20% 72%;
+    --mode-text-muted: 237 10% 55%;
+    --mode-shadow: 0 4px 24px -4px hsla(0, 0%, 0%, 0.4);
+    --mode-glow-secondary: hsla(160, 100%, 45%, 0.3);
+    --mode-glow-accent: hsla(195, 100%, 50%, 0.15);
+    --mode-glow-primary: hsla(254, 96%, 67%, 0.15);
   }
 }
 
