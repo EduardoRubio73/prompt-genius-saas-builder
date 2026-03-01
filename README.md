@@ -1,6 +1,6 @@
 # Prompt Genius — SaaS Builder
 
-**Plataforma SaaS de geração e refinamento de prompts com IA**, construída com React + Supabase. Oferece três modos de operação (Prompt, SaaS Spec, Misto), painel administrativo completo, sistema de créditos/billing e memória de prompts.
+**Plataforma SaaS de geração e refinamento de prompts com IA**, construída com React + Supabase. Oferece quatro modos de operação (Prompt, SaaS Spec, Misto, BUILD), painel administrativo completo, sistema de créditos/billing, memória de prompts e tooltips contextuais globais.
 
 ---
 
@@ -16,6 +16,7 @@
 - [Rotas da Aplicação](#rotas-da-aplicação)
 - [Painel Administrativo](#painel-administrativo)
 - [Sistema de Créditos e Billing](#sistema-de-créditos-e-billing)
+- [Sistema de Tooltips](#sistema-de-tooltips)
 - [Design System](#design-system)
 - [Scripts Disponíveis](#scripts-disponíveis)
 - [Deploy](#deploy)
@@ -24,13 +25,14 @@
 
 ## Visão Geral
 
-O **Prompt Genius** é uma plataforma que ajuda usuários a criar prompts otimizados para diversas plataformas de IA (Lovable, ChatGPT, Claude, Gemini, Cursor, V0). Possui três modos:
+O **Prompt Genius** é uma plataforma que ajuda usuários a criar prompts otimizados para diversas plataformas de IA (Lovable, ChatGPT, Claude, Gemini, Cursor, V0). Possui quatro modos:
 
-| Modo | Descrição |
-|------|-----------|
-| **Prompt** (`/prompt`) | Geração rápida de prompts a partir de campos estruturados |
-| **SaaS Spec** (`/saas-spec`) | Wizard de 7 etapas para gerar especificações completas de SaaS |
-| **Misto** (`/misto`) | Combina prompt + spec com refinamento iterativo via IA |
+| Modo | Rota | Descrição |
+|------|------|-----------|
+| **Prompt** | `/prompt` | Geração rápida de prompts a partir de campos estruturados |
+| **SaaS Spec** | `/saas-spec` | Wizard de 7 etapas para gerar especificações completas de SaaS |
+| **Misto** | `/misto` | Combina prompt + spec com refinamento iterativo via IA |
+| **BUILD** | `/build` | Wizard de 10 etapas para gerar projeto SaaS completo (PRD, SQL, Deploy) |
 
 ---
 
@@ -49,6 +51,7 @@ O **Prompt Genius** é uma plataforma que ajuda usuários a criar prompts otimiz
 | **Backend** | Supabase (Auth, Database, Edge Functions, RLS) |
 | **Ícones** | Lucide React |
 | **Animações** | tailwindcss-animate |
+| **ZIP Export** | JSZip |
 | **Testes** | Vitest + Testing Library |
 
 ---
@@ -86,13 +89,14 @@ src/
 ├── components/
 │   ├── admin/               # Badges, componentes admin compartilhados
 │   ├── auth/                # AuthGuard
+│   ├── build/               # BuildStepper, BuildStep1–10, BuildResults, BuildExportZip
 │   ├── dashboard/           # ModeCard, UsageBar
 │   ├── guards/              # SuperAdminGuard
 │   ├── layout/              # AppShell (sidebar principal)
 │   ├── misto/               # CreditModal, MistoInput, Results, Stepper...
 │   ├── prompt/              # PromptInput
 │   ├── saas/                # SaasStep1–7, SaasStepper
-│   └── ui/                  # shadcn/ui components (50+)
+│   └── ui/                  # shadcn/ui components (50+) + InfoTooltip
 ├── hooks/
 │   ├── admin/               # useAdminData, useAdminOverview
 │   ├── useAuth.ts           # Autenticação
@@ -108,6 +112,7 @@ src/
 │   └── utils.ts             # cn() e utilitários
 ├── pages/
 │   ├── admin/               # AdminLayout, Overview, Users, Prompts, Billing, AIConfig, AuditLogs, Flags
+│   ├── build/               # BuildMode + wizard de 10 etapas
 │   ├── landing/             # LandingPage + landing.css
 │   ├── misto/               # MistoMode + misto.css
 │   ├── prompt/              # PromptMode
@@ -123,11 +128,12 @@ src/
 supabase/
 ├── config.toml              # project_id + config de functions
 ├── functions/
-│   └── refine-prompt/       # Edge function para refinamento de prompts
+│   └── refine-prompt/       # Edge function para refinamento de prompts e BUILD
 └── migrations/              # Migrações SQL (read-only)
 
 docs/
-└── ADMIN_ANALISE_MELHORIAS.md  # Documento de melhorias do admin
+├── ADMIN_ANALISE_MELHORIAS.md  # Documento de melhorias do admin
+└── INTEGRATION_GUIDE.md        # Guia de integração
 ```
 
 ---
@@ -172,9 +178,10 @@ cp .env.example .env
 | `profiles` | Perfis de usuário (vinculados ao auth.users) |
 | `organizations` | Organizações com plano, créditos e configurações |
 | `org_members` | Membros da organização (roles: owner, admin, member, viewer) |
-| `sessions` | Sessões de uso (mode: prompt, saas, misto) |
+| `sessions` | Sessões de uso (mode: prompt, saas, misto, build) |
 | `prompt_memory` | Prompts gerados com metadados (rating, tags, destino) |
 | `saas_specs` | Especificações SaaS geradas |
+| `build_projects` | Projetos BUILD com answers, outputs e branding (jsonb) |
 | `billing_subscriptions` | Assinaturas Stripe |
 | `billing_invoices` | Faturas |
 | `billing_token_usage` | Uso de tokens por período |
@@ -229,7 +236,7 @@ cp .env.example .env
 |------|---------|
 | `plan_tier` | free, starter, pro, enterprise |
 | `account_status` | active, trial, trial_expired, suspended, churned |
-| `session_mode` | prompt, saas, misto |
+| `session_mode` | prompt, saas, misto, build |
 | `member_role` | owner, admin, member, viewer |
 | `destination_platform` | lovable, chatgpt, claude, gemini, cursor, v0, outro |
 | `subscription_status` | trialing, active, incomplete, incomplete_expired, past_due, canceled, unpaid, paused |
@@ -241,7 +248,7 @@ cp .env.example .env
 
 Todas as tabelas possuem RLS habilitado:
 - **Dados do usuário**: `profiles` → somente o próprio usuário
-- **Dados da org**: `sessions`, `prompt_memory`, `saas_specs` → membros da org (`get_user_org_ids()`)
+- **Dados da org**: `sessions`, `prompt_memory`, `saas_specs`, `build_projects` → membros da org (`get_user_org_ids()`)
 - **Dados admin**: `admin_*` → somente super admins (`is_super_admin()`)
 - **Dados públicos**: `billing_products`, `billing_prices`, `platform_configs`, `credit_packs` → leitura pública
 
@@ -252,7 +259,14 @@ Todas as tabelas possuem RLS habilitado:
 ### `refine-prompt`
 - **Localização**: `supabase/functions/refine-prompt/index.ts`
 - **JWT**: Desabilitado (`verify_jwt = false`)
-- **Função**: Refinamento iterativo de prompts via IA
+- **Ações suportadas**:
+
+| Action | Descrição |
+|--------|-----------|
+| `distribute` | Extrai campos estruturados de texto livre |
+| `refine` | Refina campos e gera prompt otimizado |
+| `saas-spec` | Gera especificação técnica SaaS em Markdown |
+| `build` | Gera projeto completo (PRD, ERD, RBAC, SQL, Prompt, Deploy Guide) |
 
 ---
 
@@ -267,6 +281,7 @@ Todas as tabelas possuem RLS habilitado:
 | `/saas-spec` | SaasMode | Autenticado |
 | `/misto` | MistoMode | Autenticado |
 | `/mixed` | MistoMode (alias) | Autenticado |
+| `/build` | BuildMode | Autenticado |
 | `/memory` | MemoryPage | Autenticado |
 | `/history` | HistoryPage | Autenticado |
 | `/profile` | ProfilePage | Autenticado |
@@ -330,6 +345,47 @@ O painel admin (`/admin/*`) é protegido por `SuperAdminGuard` e inclui:
 
 ---
 
+## Sistema de Tooltips
+
+A aplicação possui um sistema global de tooltips contextuais utilizando **Radix UI / shadcn** com as seguintes características:
+
+### Componentes
+
+| Componente | Localização | Descrição |
+|-----------|------------|-----------|
+| `Tooltip` | `src/components/ui/tooltip.tsx` | Componente base aprimorado com backdrop-blur, seta e auto-flip |
+| `InfoTooltip` | `src/components/ui/info-tooltip.tsx` | Wrapper reutilizável com ícone `HelpCircle` |
+
+### Características
+- **Acessibilidade**: Ativação por hover e foco (teclado), roles ARIA (`tooltip`/`describedby`)
+- **Design**: Fundo escuro semi-transparente (`bg-gray-900/95 backdrop-blur`), seta indicativa, bordas arredondadas
+- **Posicionamento inteligente**: Auto-flip via `collisionPadding` para nunca sair da viewport
+- **Micro-animações**: Fade-in + scale-up na entrada
+- **Delay configurável**: `delayDuration={300}` global, `skipDelayDuration={100}`
+
+### Cobertura
+- **Login**: Dicas de formato e validação para email/senha
+- **Perfil**: Explicações para campos de segurança e notificações
+- **Prompt Mode**: Orientações para cada campo (persona, tarefa, objetivo, contexto)
+- **Misto Mode**: Dicas de formato e limites de caracteres
+- **SaaS Steps 1-7**: Contextual help para cada etapa do wizard
+- **BUILD Steps 1-10**: Dicas técnicas para infra, auth, multi-tenant, branding
+- **Dashboard**: Tooltips nos cards de estatísticas e modos
+
+### Uso
+
+```tsx
+import { InfoTooltip } from "@/components/ui/info-tooltip";
+
+// Ao lado de um label
+<label>
+  Nome do Produto
+  <InfoTooltip content="Nome comercial. Ex: 'TaskFlow Pro'" side="top" />
+</label>
+```
+
+---
+
 ## Design System
 
 ### Tokens CSS (HSL)
@@ -347,7 +403,7 @@ O painel admin (`/admin/*`) é protegido por `SuperAdminGuard` e inclui:
 - Body: **Plus Jakarta Sans**
 
 ### Componentes shadcn/ui
-50+ componentes instalados: Accordion, Alert, Avatar, Badge, Button, Card, Carousel, Checkbox, Command, Dialog, Drawer, Dropdown, Form, Input, Label, Popover, Progress, ScrollArea, Select, Separator, Sheet, Sidebar, Skeleton, Slider, Switch, Table, Tabs, Textarea, Toast, Toggle, Tooltip, etc.
+50+ componentes instalados: Accordion, Alert, Avatar, Badge, Button, Card, Carousel, Checkbox, Command, Dialog, Drawer, Dropdown, Form, Input, Label, Popover, Progress, ScrollArea, Select, Separator, Sheet, Sidebar, Skeleton, Slider, Switch, Table, Tabs, Textarea, Toast, Toggle, Tooltip, InfoTooltip, etc.
 
 ---
 
