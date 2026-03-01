@@ -3,7 +3,7 @@ import { ChevronDown, ChevronUp, Sparkles, FileCode, Layers, CheckCircle, Clock,
 import { AppShell } from "@/components/layout/AppShell";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
-import { useTokenBudget } from "@/hooks/useOrgStats";
+import { useProfile } from "@/hooks/useProfile";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
