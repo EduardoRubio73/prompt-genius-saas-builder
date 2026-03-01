@@ -517,7 +517,7 @@ export default function LandingPage() {
           </div>
 
           <div className="cost-note rv" style={{ marginTop: 40 }}>
-            <strong>📊 Transparência de custos:</strong> usamos Gemini Flash (~R$0,0005/1k tokens). Um prompt consome ~700 tokens = <strong>R$0,00035</strong>. Um Modo Misto consome ~1.200 tokens = <strong>R$0,0006</strong>. O plano Pro (120 criações) nos custa ~<strong>R$0,05</strong>.
+            <strong>📊 Transparência de custos:</strong> Cada cota equivale a ~R$0,87 (pacote de 15). Um <strong>BUILD Engine</strong> (5 cotas ≈ R$4,35) substitui trabalho manual que custaria <strong>R$25–60</strong>. Um Prompt (1 cota ≈ R$0,87) substitui ~R$8 de trabalho manual.
           </div>
         </div>
       </section>
