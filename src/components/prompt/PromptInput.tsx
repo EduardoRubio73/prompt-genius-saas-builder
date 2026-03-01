@@ -1,5 +1,6 @@
 import type { Enums } from "@/integrations/supabase/types";
 import type { MistoFields } from "@/pages/misto/MistoMode";
+import { InfoTooltip } from "@/components/ui/info-tooltip";
 
 const platforms: { label: string; value: Enums<"destination_platform"> }[] = [
   { label: "Lovable", value: "lovable" },
@@ -11,12 +12,12 @@ const platforms: { label: string; value: Enums<"destination_platform"> }[] = [
 ];
 
 const fieldDefs = [
-  { key: "especialidade" as const, icon: "🎓", label: "Especialidade", placeholder: "Ex: Engenheiro de Software Sênior" },
-  { key: "persona" as const, icon: "👤", label: "Persona", placeholder: "Ex: Técnico e direto ao ponto" },
-  { key: "tarefa" as const, icon: "✅", label: "Tarefa", placeholder: "Ex: Criar arquitetura de microserviços" },
-  { key: "objetivo" as const, icon: "🎯", label: "Objetivo", placeholder: "Ex: Sistema escalável e performante" },
-  { key: "contexto" as const, icon: "🌐", label: "Contexto", placeholder: "Ex: Startup com 10 devs, stack Node.js" },
-  { key: "destino" as const, icon: "🚀", label: "Destino (override)", placeholder: "Deixe vazio para usar a seleção abaixo" },
+  { key: "especialidade" as const, icon: "🎓", label: "Especialidade", placeholder: "Ex: Engenheiro de Software Sênior", tip: "Qual o perfil técnico da IA? Ex: Dev Backend, Designer UX, PM" },
+  { key: "persona" as const, icon: "👤", label: "Persona", placeholder: "Ex: Técnico e direto ao ponto", tip: "Tom e estilo da resposta. Ex: Didático, Conciso, Criativo" },
+  { key: "tarefa" as const, icon: "✅", label: "Tarefa", placeholder: "Ex: Criar arquitetura de microserviços", tip: "O que a IA deve fazer? Seja específico na ação desejada" },
+  { key: "objetivo" as const, icon: "🎯", label: "Objetivo", placeholder: "Ex: Sistema escalável e performante", tip: "Resultado esperado. Ex: Código limpo, Documentação completa" },
+  { key: "contexto" as const, icon: "🌐", label: "Contexto", placeholder: "Ex: Startup com 10 devs, stack Node.js", tip: "Informações de fundo: stack, equipe, restrições, domínio" },
+  { key: "destino" as const, icon: "🚀", label: "Destino (override)", placeholder: "Deixe vazio para usar a seleção abaixo", tip: "Sobrescreve a plataforma selecionada abaixo, se preenchido" },
 ];
 
 interface PromptInputProps {
@@ -61,7 +62,10 @@ export function PromptInput({
         {/* Left panel: free text */}
         {inputMode === "free" && (
           <div className="prompt-panel">
-            <div className="misto-input-label">💡 Descreva o que precisa</div>
+            <div className="misto-input-label" style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              💡 Descreva o que precisa
+              <InfoTooltip content="Descreva em linguagem natural. A IA extrai automaticamente especialidade, persona, tarefa e outros campos. Mínimo 30 caracteres." />
+            </div>
             <textarea
               className="misto-textarea"
               placeholder="Descreva o que você precisa em texto livre. A IA vai extrair os campos automaticamente e gerar o prompt otimizado..."
@@ -83,7 +87,10 @@ export function PromptInput({
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
               {fieldDefs.map((f) => (
                 <div key={f.key} className="prompt-field-group">
-                  <div className="prompt-field-label">{f.icon} {f.label}</div>
+                  <div className="prompt-field-label" style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    {f.icon} {f.label}
+                    <InfoTooltip content={f.tip} />
+                  </div>
                   <input
                     className="prompt-field-input"
                     placeholder={f.placeholder}
@@ -103,7 +110,10 @@ export function PromptInput({
 
       {/* Platform selector */}
       <div style={{ marginTop: 20 }}>
-        <div className="misto-destino-label">🚀 Plataforma de destino</div>
+        <div className="misto-destino-label" style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          🚀 Plataforma de destino
+          <InfoTooltip content="Escolha onde o prompt será usado. Cada plataforma tem otimizações específicas de formato e linguagem." />
+        </div>
         <div className="misto-destino-pills">
           {platforms.map((p) => (
             <button key={p.value} className={`misto-dp ${destino === p.value ? "sel" : ""}`}

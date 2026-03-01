@@ -1,4 +1,5 @@
 import type { SaasAnswers } from "@/pages/saas/SaasMode";
+import { InfoTooltip } from "@/components/ui/info-tooltip";
 
 interface Props {
   answers: SaasAnswers;
@@ -30,7 +31,10 @@ export function SaasStep7({ answers, onChange, onGenerate, onPrev, canNext }: Pr
   return (
     <div className="misto-step-enter">
       <div className="saas-wizard-card">
-        <div className="saas-step-title">7. Prazo e Prioridades</div>
+        <div className="saas-step-title" style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          7. Prazo e Prioridades
+          <InfoTooltip content="O prazo define a complexidade do MVP gerado. Prioridades ajudam a IA a focar nos requisitos não-funcionais mais importantes." />
+        </div>
         <div className="saas-step-desc">Defina o timeline e o que é mais importante para o projeto.</div>
 
         <div className="prompt-field-label" style={{ marginBottom: 12 }}>⏰ Prazo estimado</div>
@@ -47,7 +51,10 @@ export function SaasStep7({ answers, onChange, onGenerate, onPrev, canNext }: Pr
         ))}
 
         <div style={{ marginTop: 20 }}>
-          <div className="prompt-field-label">🎯 Prioridades (selecione as mais importantes)</div>
+          <div className="prompt-field-label" style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            🎯 Prioridades (selecione as mais importantes)
+            <InfoTooltip content="Selecione até 3 prioridades. A IA vai otimizar a spec para esses atributos de qualidade." />
+          </div>
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 8 }}>
             {prioridadeOpts.map(p => (
               <button key={p} className={`saas-chip ${answers.prioridades.includes(p) ? "sel" : ""}`}

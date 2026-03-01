@@ -1,4 +1,5 @@
 import type { SaasAnswers } from "@/pages/saas/SaasMode";
+import { InfoTooltip } from "@/components/ui/info-tooltip";
 
 interface Props {
   answers: SaasAnswers;
@@ -19,7 +20,10 @@ export function SaasStep2({ answers, onChange, onNext, onPrev, canNext }: Props)
         <div className="saas-step-desc">Quem vai usar seu SaaS? Entender o público ajuda a definir a experiência certa.</div>
 
         <div className="prompt-field-group">
-          <div className="prompt-field-label">🏢 Segmento</div>
+          <div className="prompt-field-label" style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            🏢 Segmento
+            <InfoTooltip content="Nicho de mercado. Ex: Agências, Clínicas, Startups. Defina o setor para a IA personalizar a spec." />
+          </div>
           <input className="prompt-field-input" placeholder="Ex: Pequenas empresas de consultoria"
             value={answers.segmento} onChange={(e) => onChange({ segmento: e.target.value })} />
           <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 8 }}>
@@ -31,13 +35,19 @@ export function SaasStep2({ answers, onChange, onNext, onPrev, canNext }: Props)
         </div>
 
         <div className="prompt-field-group">
-          <div className="prompt-field-label">👤 Cargo / Perfil</div>
+          <div className="prompt-field-label" style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            👤 Cargo / Perfil
+            <InfoTooltip content="Quem é o usuário final? Ex: CEO, Gerente de Projetos, Desenvolvedor. Isso define a complexidade do UX." />
+          </div>
           <input className="prompt-field-input" placeholder="Ex: CEO, Gerente de Projetos"
             value={answers.cargo} onChange={(e) => onChange({ cargo: e.target.value })} />
         </div>
 
         <div className="prompt-field-group">
-          <div className="prompt-field-label">😣 Principal Dor</div>
+          <div className="prompt-field-label" style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            😣 Principal Dor
+            <InfoTooltip content="Qual o maior problema do seu público? Ex: Perdem horas com planilhas. A dor guia o design da solução." />
+          </div>
           <input className="prompt-field-input" placeholder="Ex: Perdem horas com planilhas manuais"
             value={answers.dor} onChange={(e) => onChange({ dor: e.target.value })} />
           <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 8 }}>

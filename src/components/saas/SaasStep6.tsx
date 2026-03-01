@@ -1,4 +1,5 @@
 import type { SaasAnswers } from "@/pages/saas/SaasMode";
+import { InfoTooltip } from "@/components/ui/info-tooltip";
 
 interface Props {
   answers: SaasAnswers;
@@ -27,7 +28,10 @@ export function SaasStep6({ answers, onChange, onNext, onPrev }: Props) {
   return (
     <div className="misto-step-enter">
       <div className="saas-wizard-card">
-        <div className="saas-step-title">6. Integrações</div>
+        <div className="saas-step-title" style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          6. Integrações
+          <InfoTooltip content="Selecione serviços externos que seu SaaS precisa. Isso impacta a arquitetura e o custo operacional." />
+        </div>
         <div className="saas-step-desc">Selecione as integrações que seu SaaS precisa. Você pode adicionar outras manualmente.</div>
 
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 16 }}>
@@ -40,7 +44,10 @@ export function SaasStep6({ answers, onChange, onNext, onPrev }: Props) {
         </div>
 
         <div className="prompt-field-group">
-          <div className="prompt-field-label">✏️ Outras integrações</div>
+          <div className="prompt-field-label" style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            ✏️ Outras integrações
+            <InfoTooltip content="Adicione integrações não listadas acima. Separe por vírgula. Ex: Slack, Zapier, WhatsApp API" />
+          </div>
           <input className="prompt-field-input" placeholder="Ex: Slack, Zapier, WhatsApp API..."
             value={answers.integracoesCustom} onChange={(e) => onChange({ integracoesCustom: e.target.value })} />
         </div>

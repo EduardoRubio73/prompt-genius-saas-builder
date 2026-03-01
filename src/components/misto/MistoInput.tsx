@@ -1,4 +1,5 @@
 import type { Enums } from "@/integrations/supabase/types";
+import { InfoTooltip } from "@/components/ui/info-tooltip";
 
 const platforms: { label: string; value: Enums<"destination_platform"> }[] = [
   { label: "Lovable", value: "lovable" },
@@ -32,7 +33,10 @@ export function MistoInput({
   return (
     <div className="misto-step-enter">
       <div className="misto-input-card">
-        <div className="misto-input-label">💡 Descreva sua ideia ou projeto</div>
+        <div className="misto-input-label" style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          💡 Descreva sua ideia ou projeto
+          <InfoTooltip content="Descreva seu projeto com detalhes: o que faz, pra quem é, e qual problema resolve. Mín. 50, máx. 800 caracteres." />
+        </div>
         <textarea
           className="misto-textarea"
           placeholder="Descreva seu projeto ou ideia... Ex: Quero criar um SaaS de gestão de contratos com IA para pequenas empresas, com assinatura digital, lembretes automáticos e dashboard de vencimentos."
@@ -44,7 +48,10 @@ export function MistoInput({
           {len} / 800 caracteres {len < 50 && `(mín. 50)`}
         </div>
 
-        <div className="misto-destino-label">🚀 Plataforma de destino</div>
+        <div className="misto-destino-label" style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          🚀 Plataforma de destino
+          <InfoTooltip content="Escolha onde o prompt será usado. Cada plataforma tem otimizações específicas." />
+        </div>
         <div className="misto-destino-pills">
           {platforms.map((p) => (
             <button

@@ -1,4 +1,5 @@
 import type { SaasAnswers } from "@/pages/saas/SaasMode";
+import { InfoTooltip } from "@/components/ui/info-tooltip";
 
 interface Props {
   answers: SaasAnswers;
@@ -13,7 +14,10 @@ export function SaasStep1({ answers, onChange, onNext, canNext }: Props) {
   return (
     <div className="misto-step-enter">
       <div className="saas-wizard-card">
-        <div className="saas-step-title">1. Qual problema seu SaaS resolve?</div>
+        <div className="saas-step-title" style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          1. Qual problema seu SaaS resolve?
+          <InfoTooltip content="Inclua quem sofre o problema, como é resolvido hoje e por que sua solução seria melhor. Quanto mais contexto, melhor a spec." />
+        </div>
         <div className="saas-step-desc">
           Descreva o problema ou a ideia central do seu produto. Quanto mais detalhes, melhor será a spec gerada.
         </div>

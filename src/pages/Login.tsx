@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect } from "react";
+import { InfoTooltip } from "@/components/ui/info-tooltip";
 import logo from "@/assets/logo.png";
 
 export default function Login() {
@@ -60,7 +61,10 @@ export default function Login() {
 
         <form onSubmit={handleSubmit} className="glass-card space-y-4 p-6">
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+            <div className="flex items-center gap-1.5">
+              <Label htmlFor="email">Email</Label>
+              <InfoTooltip content="Use o e-mail cadastrado. Formato: nome@dominio.com" />
+            </div>
             <Input
               id="email"
               type="email"
@@ -71,7 +75,10 @@ export default function Login() {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="password">Senha</Label>
+            <div className="flex items-center gap-1.5">
+              <Label htmlFor="password">Senha</Label>
+              <InfoTooltip content="Mínimo 6 caracteres. Combine letras, números e símbolos para mais segurança." />
+            </div>
             <Input
               id="password"
               type="password"

@@ -1,4 +1,5 @@
 import type { SaasAnswers } from "@/pages/saas/SaasMode";
+import { InfoTooltip } from "@/components/ui/info-tooltip";
 
 interface Props {
   answers: SaasAnswers;
@@ -41,7 +42,10 @@ export function SaasStep3({ answers, onChange, onNext, onPrev, canNext }: Props)
   return (
     <div className="misto-step-enter">
       <div className="saas-wizard-card">
-        <div className="saas-step-title">3. Funcionalidades Core</div>
+        <div className="saas-step-title" style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          3. Funcionalidades Core
+          <InfoTooltip content="Liste as funcionalidades essenciais do MVP. Foque no que diferencia seu produto. Mín. 3, máx. 8 features." />
+        </div>
         <div className="saas-step-desc">Liste as funcionalidades essenciais do seu SaaS (mínimo 3, máximo 8).</div>
 
         <div className="saas-feature-list">

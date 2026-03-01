@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Skeleton } from "@/components/ui/skeleton";
+import { InfoTooltip } from "@/components/ui/info-tooltip";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -84,13 +85,19 @@ function ProfileTab({ userId, profile, onRefresh }: { userId: string; profile: a
 
       {/* Name */}
       <div className="space-y-2">
-        <Label htmlFor="fullName">Nome completo</Label>
+        <div className="flex items-center gap-1.5">
+          <Label htmlFor="fullName">Nome completo</Label>
+          <InfoTooltip content="Como será exibido no app e para outros membros da organização. Ex: João Silva" />
+        </div>
         <Input id="fullName" value={fullName} onChange={(e) => setFullName(e.target.value)} />
       </div>
 
       {/* Email readonly */}
       <div className="space-y-2">
-        <Label>E-mail</Label>
+        <div className="flex items-center gap-1.5">
+          <Label>E-mail</Label>
+          <InfoTooltip content="Não editável. Vinculado à autenticação da conta. Para alterar, entre em contato com o suporte." />
+        </div>
         <Input value={profile?.email ?? ""} disabled className="opacity-60" />
       </div>
 
@@ -125,11 +132,17 @@ function SecurityTab() {
   return (
     <div className="space-y-6 max-w-lg">
       <div className="space-y-2">
-        <Label htmlFor="newPw">Nova senha</Label>
+        <div className="flex items-center gap-1.5">
+          <Label htmlFor="newPw">Nova senha</Label>
+          <InfoTooltip content="Mínimo 8 caracteres. Use letras maiúsculas, minúsculas, números e símbolos para mais segurança." />
+        </div>
         <Input id="newPw" type="password" value={newPw} onChange={(e) => setNewPw(e.target.value)} placeholder="Mínimo 8 caracteres" />
       </div>
       <div className="space-y-2">
-        <Label htmlFor="confirmPw">Confirmar senha</Label>
+        <div className="flex items-center gap-1.5">
+          <Label htmlFor="confirmPw">Confirmar senha</Label>
+          <InfoTooltip content="Repita a mesma senha digitada acima para confirmar." />
+        </div>
         <Input id="confirmPw" type="password" value={confirmPw} onChange={(e) => setConfirmPw(e.target.value)} />
       </div>
       <button
@@ -155,10 +168,10 @@ function NotificationsTab() {
   const toggle = (key: keyof typeof prefs) => setPrefs((p) => ({ ...p, [key]: !p[key] }));
 
   const items = [
-    { key: "weeklyDigest" as const, label: "Resumo semanal por e-mail", desc: "Receba um resumo das suas atividades toda semana" },
-    { key: "usageAlerts" as const, label: "Alertas de consumo (80%)", desc: "Aviso quando atingir 80% do limite de tokens" },
-    { key: "productNews" as const, label: "Novidades do produto", desc: "Receba atualizações sobre novas funcionalidades" },
-    { key: "sessionComplete" as const, label: "Sessão longa concluída", desc: "Notificação ao concluir sessões demoradas" },
+    { key: "weeklyDigest" as const, label: "Resumo semanal por e-mail", desc: "Receba um resumo das suas atividades toda semana", tip: "Enviado toda segunda-feira com métricas de uso, prompts e specs da semana." },
+    { key: "usageAlerts" as const, label: "Alertas de consumo (80%)", desc: "Aviso quando atingir 80% do limite de tokens", tip: "Notificação por e-mail quando seu consumo de tokens atingir 80% do limite." },
+    { key: "productNews" as const, label: "Novidades do produto", desc: "Receba atualizações sobre novas funcionalidades", tip: "Newsletter mensal com novas features, dicas e melhorias da plataforma." },
+    { key: "sessionComplete" as const, label: "Sessão longa concluída", desc: "Notificação ao concluir sessões demoradas", tip: "Alerta quando uma sessão de geração que demorou mais de 30s for finalizada." },
   ];
 
   return (
@@ -166,7 +179,10 @@ function NotificationsTab() {
       {items.map((item) => (
         <div key={item.key} className="flex items-center justify-between rounded-xl border border-border/60 p-4">
           <div>
-            <p className="text-sm font-medium text-foreground">{item.label}</p>
+            <div className="flex items-center gap-1.5">
+              <p className="text-sm font-medium text-foreground">{item.label}</p>
+              <InfoTooltip content={item.tip} />
+            </div>
             <p className="text-xs text-muted-foreground">{item.desc}</p>
           </div>
           <Switch checked={prefs[item.key]} onCheckedChange={() => toggle(item.key)} />
