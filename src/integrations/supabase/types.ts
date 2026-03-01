@@ -581,6 +581,83 @@ export type Database = {
           },
         ]
       }
+      build_projects: {
+        Row: {
+          answers: Json
+          branding: Json
+          created_at: string
+          id: string
+          is_favorite: boolean
+          org_id: string
+          outputs: Json
+          project_name: string | null
+          rating: number | null
+          rating_comment: string | null
+          session_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          answers?: Json
+          branding?: Json
+          created_at?: string
+          id?: string
+          is_favorite?: boolean
+          org_id: string
+          outputs?: Json
+          project_name?: string | null
+          rating?: number | null
+          rating_comment?: string | null
+          session_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          answers?: Json
+          branding?: Json
+          created_at?: string
+          id?: string
+          is_favorite?: boolean
+          org_id?: string
+          outputs?: Json
+          project_name?: string | null
+          rating?: number | null
+          rating_comment?: string | null
+          session_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "build_projects_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "admin_billing_overview"
+            referencedColumns: ["org_id"]
+          },
+          {
+            foreignKeyName: "build_projects_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "admin_users_overview"
+            referencedColumns: ["org_id"]
+          },
+          {
+            foreignKeyName: "build_projects_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "build_projects_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       credit_packs: {
         Row: {
           created_at: string
@@ -1608,7 +1685,7 @@ export type Database = {
       member_role: "owner" | "admin" | "member" | "viewer"
       plan_tier: "free" | "starter" | "pro" | "enterprise"
       referral_status: "pending" | "completed" | "rewarded" | "expired"
-      session_mode: "prompt" | "saas" | "misto"
+      session_mode: "prompt" | "saas" | "misto" | "build"
       subscription_status:
         | "trialing"
         | "active"
@@ -1772,7 +1849,7 @@ export const Constants = {
       member_role: ["owner", "admin", "member", "viewer"],
       plan_tier: ["free", "starter", "pro", "enterprise"],
       referral_status: ["pending", "completed", "rewarded", "expired"],
-      session_mode: ["prompt", "saas", "misto"],
+      session_mode: ["prompt", "saas", "misto", "build"],
       subscription_status: [
         "trialing",
         "active",
