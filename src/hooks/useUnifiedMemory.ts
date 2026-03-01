@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
-export type MemoryMode = "prompt" | "saas" | "mixed";
+export type MemoryMode = "prompt" | "saas" | "mixed" | "build";
 
 export interface UnifiedMemoryEntry {
   id: string;

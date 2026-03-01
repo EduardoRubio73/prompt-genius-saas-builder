@@ -58,12 +58,14 @@ const TYPE_COLORS: Record<MemoryMode, string> = {
   prompt: "text-primary bg-primary/10 border-primary/20",
   saas: "text-accent bg-accent/10 border-accent/20",
   mixed: "text-secondary bg-secondary/10 border-secondary/20",
+  build: "text-orange-500 bg-orange-500/10 border-orange-500/20",
 };
 
 const TYPE_ICONS: Record<MemoryMode, React.ElementType> = {
   prompt: Sparkles,
   saas: FileCode,
   mixed: Layers,
+  build: Rocket,
 };
 
 // ── Sub-components ────────────────────────────────────────────────────────────
