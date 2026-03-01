@@ -1,4 +1,5 @@
 import { Sparkles, FileCode, Layers, Zap, TrendingUp, Clock, Star, ArrowRight, BarChart3, Crown, Rocket } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { AppShell } from "@/components/layout/AppShell";
 import { ModeCard } from "@/components/dashboard/ModeCard";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -72,6 +73,7 @@ function StatCard({
   accent = false,
   loading = false,
   sub,
+  tip,
 }: {
   label: string;
   value: string | number;
@@ -79,8 +81,9 @@ function StatCard({
   accent?: boolean;
   loading?: boolean;
   sub?: string;
+  tip?: string;
 }) {
-  return (
+  const card = (
     <div className={cn(
       "glass-card flex flex-col gap-3 p-5",
       accent && "border-primary/30 bg-primary/5"
@@ -105,6 +108,15 @@ function StatCard({
         </div>
       )}
     </div>
+  );
+
+  if (!tip) return card;
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>{card}</TooltipTrigger>
+      <TooltipContent><p className="text-xs">{tip}</p></TooltipContent>
+    </Tooltip>
   );
 }
 
@@ -265,6 +277,7 @@ export default function Dashboard() {
           icon={Sparkles}
           loading={isLoading}
           sub={`${stats?.total_prompts ?? 0} total`}
+          tip="Total de prompts gerados em todos os modos (Prompt, Misto, BUILD)"
         />
         <StatCard
           label="Specs criadas"
@@ -272,6 +285,7 @@ export default function Dashboard() {
           icon={FileCode}
           loading={isLoading}
           sub={`${stats?.total_saas_specs ?? 0} total`}
+          tip="Documentações técnicas SaaS geradas no modo SaaS Spec e Misto"
         />
         <StatCard
           label="Total de ações"
@@ -280,6 +294,7 @@ export default function Dashboard() {
           accent
           loading={isLoading}
           sub="prompts + specs"
+          tip="Soma de todas as gerações: prompts + specs técnicas"
         />
         <StatCard
           label="Média de rating"
@@ -287,6 +302,7 @@ export default function Dashboard() {
           icon={Star}
           loading={isLoading}
           sub={`${stats?.total_sessions ?? 0} sessões`}
+          tip="Média das avaliações (1-5 estrelas) que você deu para os resultados gerados"
         />
       </section>
 

@@ -1,4 +1,5 @@
 import type { SaasAnswers } from "@/pages/saas/SaasMode";
+import { InfoTooltip } from "@/components/ui/info-tooltip";
 
 interface Props {
   answers: SaasAnswers;
@@ -20,7 +21,10 @@ export function SaasStep4({ answers, onChange, onNext, onPrev, canNext }: Props)
   return (
     <div className="misto-step-enter">
       <div className="saas-wizard-card">
-        <div className="saas-step-title">4. Modelo de Negócio</div>
+        <div className="saas-step-title" style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          4. Modelo de Negócio
+          <InfoTooltip content="Como seu SaaS vai gerar receita? Escolha o modelo que melhor se encaixa no seu público e proposta de valor." />
+        </div>
         <div className="saas-step-desc">Como seu SaaS vai monetizar? Selecione o modelo principal.</div>
 
         {modelos.map(m => (
@@ -37,7 +41,10 @@ export function SaasStep4({ answers, onChange, onNext, onPrev, canNext }: Props)
 
         {answers.modelo && (
           <div className="prompt-field-group" style={{ marginTop: 16 }}>
-            <div className="prompt-field-label">💰 Faixa de preço (opcional)</div>
+            <div className="prompt-field-label" style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              💰 Faixa de preço (opcional)
+              <InfoTooltip content="Informe os valores dos planos. Ex: R$ 49/mês, R$ 99/mês. Ajuda a IA a projetar a estrutura de billing." />
+            </div>
             <input className="prompt-field-input" placeholder="Ex: R$ 49/mês, R$ 99/mês, R$ 199/mês"
               value={answers.pricing} onChange={(e) => onChange({ pricing: e.target.value })} />
           </div>
