@@ -194,7 +194,7 @@ Prioridades: ${answers.prioridades.join(", ") || "Não definidas"}
   const handleNewSession = () => {
     setStep(1); setAnswers(emptyAnswers);
     setSpecMarkdown(""); setSpecRating(0);
-    setIsSaved(false); setTimeElapsed(0);
+    setIsSaved(false); setTimeElapsed(0); setSessionId(null);
   };
 
   const numericStep = typeof step === "number" ? step : step === "generating" ? 8 : 9;

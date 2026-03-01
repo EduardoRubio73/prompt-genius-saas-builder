@@ -187,7 +187,7 @@ export default function MistoMode() {
     setStep("input"); setUserInput(""); setFields(null);
     setPromptGerado(""); setSpecMarkdown("");
     setPromptRating(0); setSpecRating(0);
-    setIsSaved(false); setTimeElapsed(0);
+    setIsSaved(false); setTimeElapsed(0); setSessionId(null);
   };
 
   const isGenerating = step !== "input" && step !== "results";

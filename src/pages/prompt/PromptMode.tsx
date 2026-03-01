@@ -184,7 +184,7 @@ export default function PromptMode() {
   const handleNewSession = () => {
     setStep("input"); setFreeText(""); setFields(null);
     setManualFields({ especialidade: "", persona: "", tarefa: "", objetivo: "", contexto: "", destino: "" });
-    setPromptGerado(""); setPromptRating(0); setIsSaved(false); setTimeElapsed(0);
+    setPromptGerado(""); setPromptRating(0); setIsSaved(false); setTimeElapsed(0); setSessionId(null);
   };
 
   const isGenerating = step === "generating";

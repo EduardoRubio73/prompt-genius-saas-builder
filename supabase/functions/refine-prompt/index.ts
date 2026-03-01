@@ -191,7 +191,8 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json();
-    const { action, freeText, fields, destino, promptFields, originalInput, answers } = body;
+    const { action, freeText, fields, destino, promptFields, originalInput, answers, sessionId } = body;
+    console.log(`Action: ${action}, sessionId: ${sessionId}, user: ${user.id}`);
 
     let result: Record<string, unknown>;
 
