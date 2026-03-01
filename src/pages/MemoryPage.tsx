@@ -4,7 +4,6 @@ import { Search, Brain, Heart, Filter, Sparkles, FileCode, Layers, Crown, Trash2
 import { AppShell } from "@/components/layout/AppShell";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
-import { useProfile } from "@/hooks/useProfile";
 import { useUnifiedMemory, type UnifiedMemoryEntry } from "@/hooks/useUnifiedMemory";
 import { UnifiedMemoryDetailDialog } from "@/components/UnifiedMemoryDetailDialog";
 import { Skeleton } from "@/components/ui/skeleton";
