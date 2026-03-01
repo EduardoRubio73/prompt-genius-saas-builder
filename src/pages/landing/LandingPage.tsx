@@ -542,7 +542,7 @@ export default function LandingPage() {
           <h2 className="sh" style={{ margin: "0 auto" }}>Perguntas <TypeWriter words={["frequentes", "importantes", "respondidas"]} /></h2>
         </div>
         <div className="faq-wrap">
-          <FaqItem q='O que conta como uma "cota"?' a='Cada geração de IA consome 1 cota: 1 prompt = 1 cota, 1 spec = 1 cota, 1 sessão Modo Misto = 1 cota. Refinar texto <strong>não</strong> consome cota adicional.' />
+          <FaqItem q='O que conta como uma "cota"?' a='Cada ação consome cotas diferenciadas: <strong>Prompt = 1 cota</strong>, <strong>SaaS Spec = 2 cotas</strong>, <strong>Modo Misto = 3 cotas</strong>, <strong>BUILD Engine = 5 cotas</strong>. Refinar texto <strong>não</strong> consome cota adicional.' />
           <FaqItem q="As cotas adicionais realmente nunca expiram?" a="Sim. Cotas compradas e cotas ganhas por indicação são permanentes e se acumulam indefinidamente." />
           <FaqItem q="O que acontece quando o trial de 7 dias termina?" a="No dia 6 você recebe um aviso. No dia 8 a conta é bloqueada. Para retomar, assine qualquer plano ou compre cotas avulsas." />
           <FaqItem q="Tem limite de indicações?" a="Não. Você pode indicar quantas pessoas quiser. Cada indicação válida = 5 cotas permanentes para você e o indicado." />
