@@ -502,13 +502,14 @@ export default function LandingPage() {
                 <div className="lrow"><span className="ll">✨ Prompts</span><span className="lv g">Ilimitado</span></div>
                 <div className="lrow"><span className="ll">🏗️ SaaS Specs</span><span className="lv g">Ilimitado</span></div>
                 <div className="lrow"><span className="ll">⚡ Modo Misto</span><span className="lv g">Ilimitado</span></div>
+                <div className="lrow"><span className="ll">⚙️ BUILD Engine</span><span className="lv g">Ilimitado</span></div>
                 <div className="lrow"><span className="ll">👥 Membros</span><span className="lv g">Até 10</span></div>
               </div>
               <ul className="pc-feats">
                 <li>Tudo do Pro</li>
                 <li>Multi-usuário (10 seats)</li>
                 <li>Admin dashboard</li>
-                <li>API access (em breve)</li>
+                <li>BUILD Engine ilimitado</li>
                 <li>Onboarding dedicado</li>
               </ul>
               <button className="pc-btn pc-btn-o" onClick={() => navigate("/login")}>Assinar Enterprise</button>
