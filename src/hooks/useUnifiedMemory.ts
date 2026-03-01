@@ -199,6 +199,8 @@ export function useUnifiedMemory({
       all: promptEntries.length + saasEntries.length,
       prompt: promptEntries.length,
       saas: saasEntries.length,
+      mixed: 0,
+      build: 0,
       favorites: [...promptEntries, ...saasEntries].filter((e) => e.is_favorite).length,
     }),
     [promptEntries, saasEntries]

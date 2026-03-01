@@ -269,25 +269,27 @@ export function UnifiedMemorySidebar({
           <>
             {/* ── Mode tabs ── */}
             <div className="px-2 pt-2 pb-1 border-b border-border shrink-0">
-              <div className="flex gap-0.5 p-0.5 rounded-lg bg-secondary/50">
+              <div className="flex gap-1 p-0.5 rounded-lg bg-secondary/50 overflow-x-auto">
                 {MODE_TABS.map(({ value, label, icon: Icon }) => {
                   const count = value === "all" ? counts.all
                     : value === "prompt" ? counts.prompt
                     : value === "saas" ? counts.saas
+                    : value === "mixed" ? (counts as any).mixed ?? 0
+                    : value === "build" ? (counts as any).build ?? 0
                     : 0;
                   return (
                     <button
                       key={value}
                       onClick={() => setActiveMode(value)}
                       className={cn(
-                        "flex-1 flex items-center justify-center gap-1 py-1.5 px-1 rounded-md text-[9px] font-semibold transition-all duration-150",
+                        "shrink-0 flex items-center justify-center gap-1 py-1.5 px-2 rounded-md text-[9px] font-semibold whitespace-nowrap transition-all duration-150",
                         activeMode === value
                           ? "bg-card text-foreground shadow-sm"
                           : "text-muted-foreground hover:text-foreground"
                       )}
                     >
                       <Icon className="w-3 h-3 shrink-0" />
-                      <span className="hidden sm:inline truncate">{label}</span>
+                      <span>{label}</span>
                       {count > 0 && (
                         <span className="text-[8px] opacity-60 tabular-nums">({count})</span>
                       )}
