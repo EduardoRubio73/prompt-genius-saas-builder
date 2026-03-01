@@ -1,4 +1,4 @@
-import { Sparkles, FileCode, Layers, Zap, TrendingUp, Clock, Star, ArrowRight, BarChart3, Crown } from "lucide-react";
+import { Sparkles, FileCode, Layers, Zap, TrendingUp, Clock, Star, ArrowRight, BarChart3, Crown, Rocket } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { ModeCard } from "@/components/dashboard/ModeCard";
 import { Skeleton } from "@/components/ui/skeleton";
