@@ -270,8 +270,6 @@ export default function ProfilePage() {
       userName={profile?.full_name}
       userEmail={profile?.email}
       avatarUrl={profile?.avatar_url}
-      tokenConsumed={budget?.consumed ?? 0}
-      tokenTotal={budget?.limit_total ?? 10000}
       onSignOut={signOut}
     >
       <section className="mb-6">

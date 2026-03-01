@@ -1,9 +1,9 @@
 import { useState } from "react";
-import { Search, Brain, Star, Heart, Filter, Sparkles, FileCode, Layers, Crown, Trash2 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Search, Brain, Heart, Filter, Sparkles, FileCode, Layers, Crown, Trash2, ArrowLeft, Hammer } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
-import { useTokenBudget } from "@/hooks/useOrgStats";
 import { useUnifiedMemory, type UnifiedMemoryEntry } from "@/hooks/useUnifiedMemory";
 import { UnifiedMemoryDetailDialog } from "@/components/UnifiedMemoryDetailDialog";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -16,19 +16,22 @@ const MODE_META: Record<string, { label: string; icon: React.ElementType; cls: s
   prompt: { label: "Prompt", icon: Sparkles, cls: "bg-primary/10 text-primary border-primary/20" },
   saas: { label: "Spec", icon: FileCode, cls: "bg-accent/10 text-accent border-accent/20" },
   mixed: { label: "Misto", icon: Layers, cls: "bg-secondary/10 text-secondary border-secondary/20" },
+  build: { label: "Build", icon: Hammer, cls: "bg-warning/10 text-warning border-warning/20" },
 };
+
+interface MemoryCardProps {
+  entry: UnifiedMemoryEntry;
+  onToggleFavorite: (e: UnifiedMemoryEntry) => void;
+  onDelete: (e: UnifiedMemoryEntry) => void;
+  onClick: () => void;
+}
 
 function MemoryCard({
   entry,
   onToggleFavorite,
   onDelete,
   onClick,
-}: {
-  entry: UnifiedMemoryEntry;
-  onToggleFavorite: (e: UnifiedMemoryEntry) => void;
-  onDelete: (e: UnifiedMemoryEntry) => void;
-  onClick: () => void;
-}) {
+}: MemoryCardProps) {
   const meta = MODE_META[entry.type] ?? MODE_META.prompt;
   const Icon = meta.icon;
   const timeAgo = entry.created_at
@@ -40,7 +43,6 @@ function MemoryCard({
       onClick={onClick}
       className="group relative flex flex-col gap-2 rounded-xl border border-border/60 bg-card/80 p-4 text-left transition-all hover:border-border hover:bg-card hover:shadow-md"
     >
-      {/* Top row */}
       <div className="flex items-start justify-between gap-2">
         <span className={cn("inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider", meta.cls)}>
           <Icon className="h-3 w-3" /> {meta.label}
@@ -55,14 +57,8 @@ function MemoryCard({
           <span className="ml-1">{timeAgo}</span>
         </div>
       </div>
-
-      {/* Title */}
       <p className="text-sm font-semibold text-foreground line-clamp-1">{entry.title}</p>
-
-      {/* Preview */}
       <p className="text-xs text-muted-foreground font-mono line-clamp-2">{entry.preview}</p>
-
-      {/* Tags */}
       {entry.tags && entry.tags.length > 0 && (
         <div className="flex flex-wrap gap-1 mt-1">
           {entry.tags.slice(0, 3).map((tag, i) => (
@@ -70,8 +66,6 @@ function MemoryCard({
           ))}
         </div>
       )}
-
-      {/* Hover actions */}
       <div className="absolute top-3 right-3 hidden gap-1 group-hover:flex">
         <span
           role="button"
@@ -94,12 +88,13 @@ function MemoryCard({
 }
 
 export default function MemoryPage() {
+  const navigate = useNavigate();
   const { user, signOut } = useAuth();
   const { data: profile } = useProfile(user?.id);
   const orgId = profile?.personal_org_id ?? undefined;
-  const { data: budget } = useTokenBudget(orgId);
+  
 
-  const [activeMode, setActiveMode] = useState<"all" | "prompt" | "saas" | "mixed">("all");
+  const [activeMode, setActiveMode] = useState<"all" | "prompt" | "saas" | "mixed" | "build">("all");
   const [filter, setFilter] = useState<"all" | "gold" | "favorites">("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [refreshKey, setRefreshKey] = useState(0);
@@ -128,9 +123,10 @@ export default function MemoryPage() {
     { key: "all", label: "Todos", icon: "🧠", count: counts.all },
     { key: "prompt", label: "Prompts", icon: "✨", count: counts.prompt },
     { key: "saas", label: "Specs", icon: "📄", count: counts.saas },
+    { key: "build", label: "Build", icon: "🏗️", count: (counts as any).build ?? 0 },
   ];
 
-  const filterPills: { key: typeof filter; label: string; icon?: React.ElementType }[] = [
+  const filterPills: { key: typeof filter; label: string }[] = [
     { key: "all", label: "Todos" },
     { key: "gold", label: "⭐ 5 estrelas" },
     { key: "favorites", label: "❤️ Favoritos" },
@@ -141,16 +137,23 @@ export default function MemoryPage() {
       userName={profile?.full_name}
       userEmail={profile?.email}
       avatarUrl={profile?.avatar_url}
-      tokenConsumed={budget?.consumed ?? 0}
-      tokenTotal={budget?.limit_total ?? 10000}
       onSignOut={signOut}
     >
       {/* Header */}
       <section className="mb-6">
         <div className="flex items-center justify-between flex-wrap gap-3">
-          <div>
-            <h1 className="font-heading text-2xl font-bold tracking-tight sm:text-3xl">Memória</h1>
-            <p className="text-sm text-muted-foreground mt-1">Todos os seus prompts e specs salvos</p>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => navigate("/dashboard")}
+              className="flex h-8 w-8 items-center justify-center rounded-lg border border-border/60 bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+              aria-label="Voltar ao dashboard"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </button>
+            <div>
+              <h1 className="font-heading text-2xl font-bold tracking-tight sm:text-3xl">Memória</h1>
+              <p className="text-sm text-muted-foreground mt-1">Todos os seus prompts e specs salvos</p>
+            </div>
           </div>
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <span className="px-2 py-1 rounded-full bg-muted font-medium">{counts.all} itens</span>
@@ -161,7 +164,6 @@ export default function MemoryPage() {
 
       {/* Controls */}
       <section className="mb-6 space-y-3">
-        {/* Mode tabs */}
         <div className="flex items-center gap-1 flex-wrap">
           {modeTabs.map((tab) => (
             <button
@@ -179,7 +181,6 @@ export default function MemoryPage() {
           ))}
         </div>
 
-        {/* Filters + search */}
         <div className="flex items-center gap-2 flex-wrap">
           <Filter className="h-3.5 w-3.5 text-muted-foreground" />
           {filterPills.map((fp) => (
