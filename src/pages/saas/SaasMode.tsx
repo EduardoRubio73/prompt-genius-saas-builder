@@ -175,13 +175,8 @@ Prioridades: ${answers.prioridades.join(", ") || "Não definidas"}
   const handleSave = useCallback(async () => {
     if (!orgId || !user) return;
     try {
-      const { data: session, error: sessErr } = await supabase
-        .from("sessions").insert({ org_id: orgId, user_id: user.id, mode: "saas" as const, tokens_total: 0 })
-        .select().single();
-      if (sessErr) throw sessErr;
-
       const { error: specErr } = await supabase.from("saas_specs").insert({
-        session_id: session.id, org_id: orgId, user_id: user.id,
+        session_id: sessionId, org_id: orgId, user_id: user.id,
         spec_md: specMarkdown, rating: specRating || null,
         project_name: answers.problema.slice(0, 100),
         answers: answers as any,
@@ -194,7 +189,7 @@ Prioridades: ${answers.prioridades.join(", ") || "Não definidas"}
     } catch (err: any) {
       toast.error("Erro ao salvar: " + (err.message || ""));
     }
-  }, [orgId, user, specMarkdown, specRating, answers]);
+  }, [orgId, user, specMarkdown, specRating, answers, sessionId]);
 
   const handleNewSession = () => {
     setStep(1); setAnswers(emptyAnswers);
