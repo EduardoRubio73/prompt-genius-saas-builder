@@ -242,10 +242,13 @@ export default function Dashboard() {
 
       {/* ── Usage + Quick actions ───────────────────────────────────────────── */}
       <section className="grid grid-cols-2 gap-3 sm:grid-cols-4 mb-8">
-        <UsageDetailCard
-          consumed={budget?.consumed ?? 0}
-          total={budget?.limit_total ?? 10000}
-          loading={isBudgetLoading}
+        <QuotaCard
+          planUsed={quota?.plan_used ?? 0}
+          planTotal={quota?.plan_total ?? 5}
+          bonusUsed={quota?.bonus_used ?? 0}
+          bonusTotal={quota?.bonus_total ?? 0}
+          totalRemaining={quota?.total_remaining ?? 0}
+          loading={isQuotaLoading}
         />
 
         {/* Quick actions: last session + memory */}
