@@ -9,12 +9,12 @@ const config = {
   no_credits: {
     icon: "💳",
     title: "Sem cotas disponíveis",
-    desc: "Você atingiu o limite de cotas do período. Compre um pacote avulso ou faça upgrade do seu plano para continuar.",
+    desc: "Você atingiu o limite de cotas do período. Compre um pacote avulso (a partir de R$4,99) ou faça upgrade do seu plano para continuar gerando.",
   },
   trial_expired: {
     icon: "⏰",
     title: "Trial expirado",
-    desc: "Seu período de teste terminou. Faça upgrade para um plano pago para continuar usando o Prompt Genius.",
+    desc: "Seu período de teste de 7 dias terminou. Faça upgrade para um plano pago para continuar usando o Prompt Genius e suas cotas mensais.",
   },
   suspended: {
     icon: "🚫",
