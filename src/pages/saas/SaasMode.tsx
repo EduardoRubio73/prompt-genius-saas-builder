@@ -166,6 +166,7 @@ Prioridades: ${answers.prioridades.join(", ") || "Não definidas"}
       setTimeElapsed((Date.now() - startTime.current) / 1000);
       setStep("results");
       fetchBalance();
+      toast.success("💰 Spec gerada! Você economizou ~R$ 15,00 vs criar manualmente.");
     } catch (err: any) {
       toast.error(err.message || "Erro ao gerar spec.");
       setStep(7);

@@ -150,6 +150,7 @@ export default function MistoMode() {
       setTimeElapsed((Date.now() - startTime.current) / 1000);
       setStep("results");
       fetchBalance();
+      toast.success("💰 Modo Misto concluído! Você economizou ~R$ 25,00 vs fazer manualmente.");
     } catch (err: any) {
       toast.error(err.message || "Erro ao processar. Tente novamente.");
       setStep("input");

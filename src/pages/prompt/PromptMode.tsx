@@ -156,6 +156,7 @@ export default function PromptMode() {
       setTimeElapsed((Date.now() - startTime.current) / 1000);
       setStep("results");
       fetchBalance();
+      toast.success("💰 Prompt gerado! Você economizou ~R$ 8,00 vs escrever manualmente.");
     } catch (err: any) {
       toast.error(err.message || "Erro ao processar.");
       setStep("input");
