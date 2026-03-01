@@ -2,10 +2,12 @@ import { Sparkles, FileCode, Layers, Zap, TrendingUp, Clock, Star, ArrowRight, B
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { AppShell } from "@/components/layout/AppShell";
 import { ModeCard } from "@/components/dashboard/ModeCard";
+import { QuotaCard } from "@/components/dashboard/QuotaCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
-import { useOrgStats, useTokenBudget } from "@/hooks/useOrgStats";
+import { useOrgStats } from "@/hooks/useOrgStats";
+import { useQuotaBalance } from "@/hooks/useQuotaBalance";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 
