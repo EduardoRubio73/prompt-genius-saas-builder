@@ -432,7 +432,8 @@ export default function LandingPage() {
               <div className="pc-limits">
                 <div className="lrow"><span className="ll">✨ Prompts</span><span className="lv">3 / mês</span></div>
                 <div className="lrow"><span className="ll">🏗️ SaaS Specs</span><span className="lv">1 / mês</span></div>
-                <div className="lrow"><span className="ll">⚡ Modo Misto</span><span className="lv">1 / mês</span></div>
+                <div className="lrow"><span className="ll">⚡ Modo Misto</span><span className="lv">—</span></div>
+                <div className="lrow"><span className="ll">⚙️ BUILD Engine</span><span className="lv">—</span></div>
                 <div className="lrow"><span className="ll">📦 Total</span><span className="lv">5 / mês</span></div>
               </div>
               <ul className="pc-feats">
@@ -440,7 +441,7 @@ export default function LandingPage() {
                 <li>Código de indicação (+5 cotas)</li>
                 <li className="no">Few-shot learning</li>
                 <li className="no">Modo Misto</li>
-                <li className="no">Export Markdown</li>
+                <li className="no">BUILD Engine</li>
               </ul>
               <button className="pc-btn pc-btn-o" onClick={() => navigate("/login")}>Começar Grátis</button>
             </div>
