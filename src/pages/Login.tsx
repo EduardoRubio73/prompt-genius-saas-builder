@@ -52,7 +52,7 @@ export default function Login() {
     <div className="noise-overlay relative flex min-h-screen items-center justify-center px-4">
       <div className="relative z-10 w-full max-w-sm space-y-6">
         <div className="text-center">
-          <img alt="Prompt Genius SaaS Builder" className="mx-auto mb-4 h-20 w-auto" src="/lovable-uploads/9b0fc4b1-5dd4-4555-bf73-60c2f50bf785.png" />
+          <img alt="Prompt Genius SaaS Builder" className="mx-auto mb-4 h-20 w-auto" src="/lovable-uploads/53326ea5-8096-429e-ba70-fe9b5281c0b6.png" />
           
           <p className="mt-1 text-sm text-muted-foreground">
             {isSignUp ? "Crie sua conta" : "Entre na sua conta"}
