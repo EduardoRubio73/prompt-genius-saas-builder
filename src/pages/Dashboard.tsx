@@ -73,6 +73,7 @@ function StatCard({
   accent = false,
   loading = false,
   sub,
+  tip,
 }: {
   label: string;
   value: string | number;
@@ -80,8 +81,9 @@ function StatCard({
   accent?: boolean;
   loading?: boolean;
   sub?: string;
+  tip?: string;
 }) {
-  return (
+  const card = (
     <div className={cn(
       "glass-card flex flex-col gap-3 p-5",
       accent && "border-primary/30 bg-primary/5"
@@ -106,6 +108,15 @@ function StatCard({
         </div>
       )}
     </div>
+  );
+
+  if (!tip) return card;
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>{card}</TooltipTrigger>
+      <TooltipContent><p className="text-xs">{tip}</p></TooltipContent>
+    </Tooltip>
   );
 }
 
