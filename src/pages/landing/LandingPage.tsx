@@ -476,16 +476,17 @@ export default function LandingPage() {
               <div className="pc-trial">✓ 7 dias grátis</div>
               <div className="pc-div" />
               <div className="pc-limits">
-                <div className="lrow"><span className="ll">✨ Prompts</span><span className="lv v">60 / mês</span></div>
-                <div className="lrow"><span className="ll">🏗️ SaaS Specs</span><span className="lv v">30 / mês</span></div>
-                <div className="lrow"><span className="ll">⚡ Modo Misto</span><span className="lv v">30 / mês</span></div>
-                <div className="lrow"><span className="ll">📦 Total</span><span className="lv v">120 / mês</span></div>
+                <div className="lrow"><span className="ll">✨ Prompts (1 cota)</span><span className="lv v">60 / mês</span></div>
+                <div className="lrow"><span className="ll">🏗️ SaaS Specs (2 cotas)</span><span className="lv v">30 / mês</span></div>
+                <div className="lrow"><span className="ll">⚡ Modo Misto (3 cotas)</span><span className="lv v">30 / mês</span></div>
+                <div className="lrow"><span className="ll">⚙️ BUILD Engine (5 cotas)</span><span className="lv v">24 / mês</span></div>
+                <div className="lrow"><span className="ll">📦 Total</span><span className="lv v">120 cotas / mês</span></div>
               </div>
               <ul className="pc-feats">
                 <li>Tudo do Basic</li>
                 <li>Few-shot avançado</li>
                 <li>Modo Misto completo</li>
-                <li>Histórico + favoritos ilimitados</li>
+                <li>BUILD Engine completo</li>
                 <li>Suporte prioritário</li>
               </ul>
               <button className="pc-btn pc-btn-g" onClick={() => navigate("/login")}>Assinar Pro</button>
