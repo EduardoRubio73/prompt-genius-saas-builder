@@ -517,44 +517,59 @@ export type Database = {
       billing_token_usage: {
         Row: {
           action_type: string | null
+          completion_tokens: number | null
           created_at: string
           estimated_cost_usd: number | null
           id: string
+          mode: string | null
           org_id: string
-          period_end: string
-          period_start: string
+          period_end: string | null
+          period_start: string | null
+          prompt_tokens: number | null
+          session_id: string | null
           session_mode: Database["public"]["Enums"]["session_mode"] | null
           tokens_input: number
           tokens_output: number
           tokens_total: number
+          total_tokens: number | null
           user_id: string
         }
         Insert: {
           action_type?: string | null
+          completion_tokens?: number | null
           created_at?: string
           estimated_cost_usd?: number | null
           id?: string
+          mode?: string | null
           org_id: string
-          period_end: string
-          period_start: string
+          period_end?: string | null
+          period_start?: string | null
+          prompt_tokens?: number | null
+          session_id?: string | null
           session_mode?: Database["public"]["Enums"]["session_mode"] | null
           tokens_input?: number
           tokens_output?: number
           tokens_total?: number
+          total_tokens?: number | null
           user_id: string
         }
         Update: {
           action_type?: string | null
+          completion_tokens?: number | null
           created_at?: string
           estimated_cost_usd?: number | null
           id?: string
+          mode?: string | null
           org_id?: string
-          period_end?: string
-          period_start?: string
+          period_end?: string | null
+          period_start?: string | null
+          prompt_tokens?: number | null
+          session_id?: string | null
           session_mode?: Database["public"]["Enums"]["session_mode"] | null
           tokens_input?: number
           tokens_output?: number
           tokens_total?: number
+          total_tokens?: number | null
           user_id?: string
         }
         Relationships: [
