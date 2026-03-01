@@ -327,7 +327,7 @@ export default function Dashboard() {
             Escolha um modo para começar
           </p>
         </div>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {modes.map((mode) => (
             <ModeCard key={mode.title} {...mode} />
           ))}

@@ -136,6 +136,31 @@ ${JSON.stringify(promptFields, null, 2)}`;
   return parsed;
 }
 
+// === ACTION: build ===
+async function handleBuild(answers: Record<string, unknown>) {
+  const system = `Você é um arquiteto de software sênior e product manager experiente.
+Com base nas respostas do wizard de construção de SaaS fornecidas, gere TODOS os documentos técnicos necessários.
+
+Responda APENAS com JSON válido contendo EXATAMENTE estas chaves:
+{
+  "prd_md": "Product Requirements Document completo em Markdown",
+  "erd_md": "Entity Relationship Diagram em Markdown (entidades, campos, relacionamentos)",
+  "rbac_md": "Role-Based Access Control em Markdown (papéis, permissões, políticas)",
+  "ux_flows_md": "Fluxos de usuário principais em Markdown",
+  "test_plan_md": "Plano de testes em Markdown (cenários, critérios de aceite)",
+  "roadmap_md": "Roadmap de desenvolvimento em fases em Markdown",
+  "admin_doc_md": "Documentação do painel admin em Markdown",
+  "sql_schema": "Schema SQL completo com CREATE TABLE, RLS policies, triggers, functions — pronto para executar no Supabase",
+  "build_prompt": "Prompt completo e otimizado para construir este projeto no Lovable, pronto para colar",
+  "deploy_guide_md": "Guia passo a passo de deploy em Markdown"
+}
+
+Seja detalhado, técnico e prático. O SQL deve ser production-ready com RLS.`;
+
+  const result = await callLLM(system, JSON.stringify(answers, null, 2));
+  return parseJsonFromLLM(result);
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -166,7 +191,7 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json();
-    const { action, freeText, fields, destino, promptFields, originalInput } = body;
+    const { action, freeText, fields, destino, promptFields, originalInput, answers } = body;
 
     let result: Record<string, unknown>;
 
@@ -183,6 +208,9 @@ Deno.serve(async (req) => {
           originalInput || "",
           destino || "lovable"
         );
+        break;
+      case "build":
+        result = await handleBuild(answers || {});
         break;
       default:
         return new Response(JSON.stringify({ error: `Unknown action: ${action}` }), {
