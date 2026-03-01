@@ -162,11 +162,11 @@ export default function Dashboard() {
   const { data: profile, isLoading: profileLoading } = useProfile(user?.id);
   const orgId = profile?.personal_org_id ?? undefined;
   const { data: stats, isLoading: statsLoading } = useOrgStats(orgId);
-  const { data: budget, isLoading: budgetLoading } = useTokenBudget(orgId);
+  const { data: quota, isLoading: quotaLoading } = useQuotaBalance(orgId);
 
   const firstName = profile?.full_name?.split(" ")[0] ?? "";
   const isLoading = profileLoading || statsLoading;
-  const isBudgetLoading = profileLoading || budgetLoading;
+  const isQuotaLoading = profileLoading || quotaLoading;
 
   const totalActions = (stats?.total_prompts ?? 0) + (stats?.total_saas_specs ?? 0);
   const avgRating = stats?.avg_prompt_rating ? Number(stats.avg_prompt_rating).toFixed(1) : "—";
