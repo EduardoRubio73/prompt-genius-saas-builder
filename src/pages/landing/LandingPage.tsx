@@ -235,7 +235,7 @@ export default function LandingPage() {
       <nav>
         <a className="nav-logo" href="#">
           <img alt="Prompt Genius SaaS Builder" src="/lovable-uploads/a06a4c23-de16-4d60-a563-0ed4f968f538.png" />
-          <span className="nav-name">Prompt Genius SaaS Builder</span>
+          <span className="nav-name">Prompt Genius SaaS Builder Engineer </span>
         </a>
         <div className="nav-r">
           <a href="#features" className="nav-link">Funcionalidades</a>
