@@ -277,6 +277,7 @@ export default function Dashboard() {
           icon={Sparkles}
           loading={isLoading}
           sub={`${stats?.total_prompts ?? 0} total`}
+          tip="Total de prompts gerados em todos os modos (Prompt, Misto, BUILD)"
         />
         <StatCard
           label="Specs criadas"
@@ -284,6 +285,7 @@ export default function Dashboard() {
           icon={FileCode}
           loading={isLoading}
           sub={`${stats?.total_saas_specs ?? 0} total`}
+          tip="Documentações técnicas SaaS geradas no modo SaaS Spec e Misto"
         />
         <StatCard
           label="Total de ações"
@@ -292,6 +294,7 @@ export default function Dashboard() {
           accent
           loading={isLoading}
           sub="prompts + specs"
+          tip="Soma de todas as gerações: prompts + specs técnicas"
         />
         <StatCard
           label="Média de rating"
@@ -299,6 +302,7 @@ export default function Dashboard() {
           icon={Star}
           loading={isLoading}
           sub={`${stats?.total_sessions ?? 0} sessões`}
+          tip="Média das avaliações (1-5 estrelas) que você deu para os resultados gerados"
         />
       </section>
 
