@@ -557,7 +557,7 @@ export default function LandingPage() {
       <footer>
         <div className="fl">
           <img src={logo} alt="PG" />
-          <span style={{ fontWeight: 800, fontSize: 14, background: "linear-gradient(90deg,var(--c),var(--v))", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>Prompt Genius SaaS Builder</span>
+          <span style={{ fontWeight: 800, fontSize: 14, background: "linear-gradient(90deg,var(--c),var(--v))", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>Prompt Genius SaaS Builder Engineer</span>
         </div>
         <div className="fc-copy">© 2026 Prompt Genius. Todos os direitos reservados.</div>
         <div className="flinks">
