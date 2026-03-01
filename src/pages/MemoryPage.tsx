@@ -93,7 +93,7 @@ export default function MemoryPage() {
   const { user, signOut } = useAuth();
   const { data: profile } = useProfile(user?.id);
   const orgId = profile?.personal_org_id ?? undefined;
-  const { data: budget } = useTokenBudget(orgId);
+  
 
   const [activeMode, setActiveMode] = useState<"all" | "prompt" | "saas" | "mixed" | "build">("all");
   const [filter, setFilter] = useState<"all" | "gold" | "favorites">("all");

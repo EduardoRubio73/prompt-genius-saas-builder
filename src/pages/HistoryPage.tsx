@@ -97,7 +97,7 @@ export default function HistoryPage() {
   const { user, signOut } = useAuth();
   const { data: profile } = useProfile(user?.id);
   const orgId = profile?.personal_org_id ?? undefined;
-  const { data: budget } = useTokenBudget(orgId);
+  
 
   const [sessions, setSessions] = useState<Session[]>([]);
   const [isLoading, setIsLoading] = useState(true);
