@@ -18,7 +18,8 @@ const navSections = [
     items: [
       { to: "/admin/users", icon: Users, label: "Usuários e Orgs" },
       { to: "/admin/prompts", icon: Sparkles, label: "Prompts e Specs" },
-      { to: "/admin/billing", icon: CreditCard, label: "Planos e Billing" },
+      { to: "/admin/billing/plans", icon: CreditCard, label: "Planos (Stripe)" },
+      { to: "/admin/settings/stripe", icon: Settings, label: "Config. Stripe" },
     ],
   },
   {

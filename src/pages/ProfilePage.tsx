@@ -224,56 +224,30 @@ interface BillingProduct {
   unit_amount: number | null;
 }
 
-interface BillingPrice {
-  id: string;
-  stripe_price_id: string | null;
-  unit_amount: number | null;
-  recurring_interval: string | null;
-}
-
-const selectPrimaryPrice = (prices: BillingPrice[] | null | undefined): BillingPrice | null => {
-  if (!prices?.length) return null;
-
-  const activeMonthly = prices.find((price) =>
-    price.recurring_interval === "month" &&
-    !!price.stripe_price_id &&
-    price.unit_amount != null
-  );
-
-  if (activeMonthly) return activeMonthly;
-
-  return prices.find((price) => !!price.stripe_price_id && price.unit_amount != null) ?? null;
-};
-
 function useBillingProducts() {
   return useQuery({
     queryKey: ["billing-products-profile"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("billing_products")
-        .select(`
-          id, name, display_name, plan_tier, is_featured, sort_order,
-          total_quotas_label, prompts_label, prompts_detail,
-          saas_specs_label, saas_specs_detail, misto_label, misto_detail,
-          build_label, build_detail, members_label,
-          trial_label, period_label, cta_label, stripe_price_id,
-          billing_prices(id, stripe_price_id, unit_amount, recurring_interval)
-        `)
-        .eq("is_active", true)
+        .from("v_active_stripe_plans")
+        .select("*")
         .order("sort_order", { ascending: true });
       if (error) throw error;
-      return (data ?? []).map((p: any) => {
-        const primaryPrice = selectPrimaryPrice(p.billing_prices);
-
-        return {
-          ...p,
-          billing_price_id: primaryPrice?.id ?? null,
-          stripe_price_id: primaryPrice?.stripe_price_id ?? null,
-          unit_amount: primaryPrice?.unit_amount ?? null,
-          recurring_interval: primaryPrice?.recurring_interval ?? null,
-          billing_prices: undefined,
-        };
-      }) as BillingProduct[];
+      return (data ?? []).map((p: any) => ({
+        id: p.product_id,
+        name: p.name,
+        display_name: p.display_name,
+        plan_tier: p.plan_tier,
+        is_featured: false,
+        sort_order: p.sort_order || 0,
+        total_quotas_label: null, prompts_label: null, prompts_detail: null,
+        saas_specs_label: null, saas_specs_detail: null, misto_label: null, misto_detail: null,
+        build_label: null, build_detail: null, members_label: null, trial_label: null, period_label: p.recurring_interval, cta_label: "Assinar",
+        billing_price_id: p.price_id,
+        stripe_price_id: p.stripe_price_id,
+        recurring_interval: p.recurring_interval,
+        unit_amount: p.unit_amount,
+      })) as BillingProduct[];
     },
   });
 }

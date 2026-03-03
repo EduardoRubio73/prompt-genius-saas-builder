@@ -242,15 +242,30 @@ export default function LandingPage() {
   useEffect(() => {
     async function fetchPricing() {
       const { data } = await supabase
-        .from("billing_products")
-        .select("id, display_name, is_featured, total_quotas_label, prompts_label, prompts_detail, saas_specs_label, saas_specs_detail, misto_label, misto_detail, build_label, build_detail, members_label, features, trial_label, period_label, cta_label, sort_order, billing_prices(unit_amount)")
-        .eq("is_active", true)
+        .from("v_active_stripe_plans")
+        .select("*")
         .order("sort_order");
       if (data) {
         setPricingProducts(data.map((p: any) => ({
-          ...p,
-          features: Array.isArray(p.features) ? p.features : [],
-          unit_amount: p.billing_prices?.[0]?.unit_amount ?? null,
+          id: p.product_id,
+          display_name: p.display_name || p.name,
+          is_featured: false,
+          total_quotas_label: "—",
+          prompts_label: "—",
+          prompts_detail: "—",
+          saas_specs_label: "—",
+          saas_specs_detail: "—",
+          misto_label: "—",
+          misto_detail: "—",
+          build_label: "—",
+          build_detail: "—",
+          members_label: "—",
+          features: [],
+          trial_label: null,
+          period_label: p.recurring_interval,
+          cta_label: "Assinar",
+          sort_order: p.sort_order || 0,
+          unit_amount: p.unit_amount ?? null,
         })));
       }
     }

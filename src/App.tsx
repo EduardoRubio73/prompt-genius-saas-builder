@@ -13,7 +13,8 @@ import AdminLayout from "./pages/admin/AdminLayout";
 import AdminOverview from "./pages/admin/AdminOverview";
 import AdminUsers from "./pages/admin/AdminUsers";
 import AdminPrompts from "./pages/admin/AdminPrompts";
-import AdminBilling from "./pages/admin/AdminBilling";
+import AdminBillingPlans from "./pages/admin/AdminBillingPlans";
+import AdminStripeSettings from "./pages/admin/AdminStripeSettings";
 import AdminAIConfig from "./pages/admin/AdminAIConfig";
 import AdminAuditLogs from "./pages/admin/AdminAuditLogs";
 import AdminFlags from "./pages/admin/AdminFlags";
@@ -80,7 +81,9 @@ const App = () => (
             <Route index element={<AdminOverview />} />
             <Route path="users" element={<AdminUsers />} />
             <Route path="prompts" element={<AdminPrompts />} />
-            <Route path="billing" element={<AdminBilling />} />
+            <Route path="billing" element={<AdminBillingPlans />} />
+            <Route path="billing/plans" element={<AdminBillingPlans />} />
+            <Route path="settings/stripe" element={<AdminStripeSettings />} />
             <Route path="ai-config" element={<AdminAIConfig />} />
             <Route path="logs" element={<AdminAuditLogs />} />
             <Route path="flags" element={<AdminFlags />} />

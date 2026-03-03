@@ -273,15 +273,12 @@ export function useDeleteModelConfig() {
   });
 }
 
-// ─── Products (Billing) ───
+// ─── Products/Prices (Billing) via view + edge functions ───
 export function useAdminProducts() {
   return useQuery({
     queryKey: ["admin-products"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("billing_products")
-        .select("*")
-        .order("sort_order");
+      const { data, error } = await supabase.from("v_active_stripe_plans").select("*").order("sort_order");
       if (error) throw error;
       return data;
     },
@@ -292,7 +289,7 @@ export function useUpdateProduct() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, updates }: { id: string; updates: Record<string, any> }) => {
-      const { error } = await supabase.from("billing_products").update(updates).eq("id", id);
+      const { error } = await supabase.functions.invoke("update-billing-plan", { body: { product_id: id, ...updates } });
       if (error) throw error;
     },
     onSuccess: () => {
@@ -302,27 +299,13 @@ export function useUpdateProduct() {
   });
 }
 
-// ─── Prices (Billing) ───
 export function useAdminPrices() {
   return useQuery({
     queryKey: ["admin-prices"],
     queryFn: async () => {
-      const { data: prices, error: pricesError } = await supabase
-        .from("billing_prices")
-        .select("*")
-        .order("product_id");
-      if (pricesError) throw pricesError;
-
-      const { data: products } = await supabase
-        .from("billing_products")
-        .select("id, name, display_name, is_active");
-
-      const productMap = new Map((products || []).map((p) => [p.id, p]));
-      return (prices || []).map((p) => ({
-        ...p,
-        product_name: productMap.get(p.product_id)?.display_name || productMap.get(p.product_id)?.name || p.product_id,
-        product_is_active: productMap.get(p.product_id)?.is_active ?? false,
-      }));
+      const { data, error } = await supabase.from("v_active_stripe_plans").select("*").order("sort_order");
+      if (error) throw error;
+      return data;
     },
   });
 }
@@ -331,7 +314,7 @@ export function useUpdatePrice() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, updates }: { id: string; updates: Record<string, any> }) => {
-      const { error } = await supabase.from("billing_prices").update(updates).eq("id", id);
+      const { error } = await supabase.functions.invoke("update-billing-plan", { body: { price_id: id, ...updates } });
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["admin-prices"] }),
