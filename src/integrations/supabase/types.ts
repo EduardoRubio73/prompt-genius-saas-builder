@@ -397,33 +397,84 @@ export type Database = {
       }
       billing_products: {
         Row: {
+          build_detail: string | null
+          build_label: string | null
           created_at: string
+          cta_label: string | null
           description: string | null
+          display_name: string | null
+          features: Json
           id: string
           is_active: boolean
+          is_featured: boolean
+          members_label: string | null
           metadata: Json | null
+          misto_detail: string | null
+          misto_label: string | null
           name: string
+          period_label: string | null
           plan_tier: Database["public"]["Enums"]["plan_tier"]
+          prompts_detail: string | null
+          prompts_label: string | null
+          saas_specs_detail: string | null
+          saas_specs_label: string | null
+          sort_order: number
+          total_quotas_label: string | null
+          trial_label: string | null
           updated_at: string
         }
         Insert: {
+          build_detail?: string | null
+          build_label?: string | null
           created_at?: string
+          cta_label?: string | null
           description?: string | null
+          display_name?: string | null
+          features?: Json
           id: string
           is_active?: boolean
+          is_featured?: boolean
+          members_label?: string | null
           metadata?: Json | null
+          misto_detail?: string | null
+          misto_label?: string | null
           name: string
+          period_label?: string | null
           plan_tier: Database["public"]["Enums"]["plan_tier"]
+          prompts_detail?: string | null
+          prompts_label?: string | null
+          saas_specs_detail?: string | null
+          saas_specs_label?: string | null
+          sort_order?: number
+          total_quotas_label?: string | null
+          trial_label?: string | null
           updated_at?: string
         }
         Update: {
+          build_detail?: string | null
+          build_label?: string | null
           created_at?: string
+          cta_label?: string | null
           description?: string | null
+          display_name?: string | null
+          features?: Json
           id?: string
           is_active?: boolean
+          is_featured?: boolean
+          members_label?: string | null
           metadata?: Json | null
+          misto_detail?: string | null
+          misto_label?: string | null
           name?: string
+          period_label?: string | null
           plan_tier?: Database["public"]["Enums"]["plan_tier"]
+          prompts_detail?: string | null
+          prompts_label?: string | null
+          saas_specs_detail?: string | null
+          saas_specs_label?: string | null
+          sort_order?: number
+          total_quotas_label?: string | null
+          trial_label?: string | null
           updated_at?: string
         }
         Relationships: []

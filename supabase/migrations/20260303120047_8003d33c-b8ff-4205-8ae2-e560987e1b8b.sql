@@ -1,0 +1,1 @@
+UPDATE public.billing_products SET is_active = true WHERE id = 'prod_free';
