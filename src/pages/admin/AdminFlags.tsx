@@ -1,12 +1,9 @@
 import { useState } from "react";
 import { useAdminFeatureFlags, useToggleFeatureFlag, useCreateFeatureFlag, useUpdateFeatureFlag, useDeleteFeatureFlag } from "@/hooks/admin/useAdminData";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Pencil, Trash2 } from "lucide-react";
-
-const mono = { fontFamily: "'IBM Plex Mono', monospace" };
+import "./admin.css";
 
 export default function AdminFlags() {
   const { data: flags } = useAdminFeatureFlags();
@@ -20,40 +17,24 @@ export default function AdminFlags() {
   const [form, setForm] = useState({ flag: "", label: "", description: "", rollout_pct: 100, enabled: false });
 
   const handleToggle = async (flag: string, currentEnabled: boolean) => {
-    try {
-      await toggleFlag.mutateAsync({ flag, enabled: !currentEnabled });
-      toast({ title: "Flag atualizada" });
-    } catch (err: any) {
-      toast({ title: "Erro", description: err.message, variant: "destructive" });
-    }
+    try { await toggleFlag.mutateAsync({ flag, enabled: !currentEnabled }); toast({ title: "Flag atualizada" }); }
+    catch (err: any) { toast({ title: "Erro", description: err.message, variant: "destructive" }); }
   };
 
-  const openCreate = () => {
-    setForm({ flag: "", label: "", description: "", rollout_pct: 100, enabled: false });
-    setShowCreate(true);
-  };
-
-  const openEdit = (f: any) => {
-    setEditing(f);
-    setForm({ flag: f.flag, label: f.label, description: f.description || "", rollout_pct: f.rollout_pct, enabled: f.enabled });
-  };
+  const openCreate = () => { setForm({ flag: "", label: "", description: "", rollout_pct: 100, enabled: false }); setShowCreate(true); };
+  const openEdit = (f: any) => { setEditing(f); setForm({ flag: f.flag, label: f.label, description: f.description || "", rollout_pct: f.rollout_pct, enabled: f.enabled }); };
 
   const saveFlag = async () => {
     try {
       if (editing) {
-        await updateFlag.mutateAsync({
-          id: editing.id,
-          updates: { label: form.label, description: form.description || null, rollout_pct: Number(form.rollout_pct), enabled: form.enabled },
-        });
+        await updateFlag.mutateAsync({ id: editing.id, updates: { label: form.label, description: form.description || null, rollout_pct: Number(form.rollout_pct), enabled: form.enabled } });
         toast({ title: "Flag atualizada" });
       } else {
         await createFlag.mutateAsync({ flag: form.flag, label: form.label, description: form.description, rollout_pct: Number(form.rollout_pct), enabled: form.enabled });
         toast({ title: "Flag criada" });
       }
       setShowCreate(false); setEditing(null);
-    } catch (err: any) {
-      toast({ title: "Erro", description: err.message, variant: "destructive" });
-    }
+    } catch (err: any) { toast({ title: "Erro", description: err.message, variant: "destructive" }); }
   };
 
   const handleDelete = async (id: string) => {
@@ -62,69 +43,65 @@ export default function AdminFlags() {
   };
 
   return (
-    <div className="space-y-5 animate-in fade-in">
-      <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold">Feature Flags</h2>
-        <Button size="sm" onClick={openCreate} className="gap-2 bg-orange-500 text-[12px] text-black hover:bg-orange-400">
-          <Plus className="h-3.5 w-3.5" /> Nova Flag
-        </Button>
+    <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <h1 className="page-title" style={{ marginBottom: 0 }}>Feature Flags</h1>
+        <button className="adm-btn primary" onClick={openCreate}><Plus size={14} /> Nova Flag</button>
       </div>
 
-      <div className="overflow-hidden rounded-[10px] border border-white/[0.06] bg-[#0F0F17]">
-        <div className="divide-y divide-white/[0.06]">
+      <div className="table-card">
+        <div>
           {flags?.map((f) => (
-            <div key={f.id} className="flex items-center justify-between px-5 py-4">
-              <div className="flex-1">
-                <div className="text-[13px] font-medium">{f.label}</div>
-                <div className="text-[12px] text-white/40 mt-0.5">{f.description || f.flag}</div>
-                <div className="text-[10px] text-orange-400/60 mt-1" style={mono}>{f.flag} · rollout: {f.rollout_pct}%</div>
+            <div key={f.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 20px", borderBottom: "1px solid var(--adm-border)" }}>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 14, fontWeight: 600 }}>{f.label}</div>
+                <div style={{ fontSize: 12, color: "var(--adm-text-soft)", marginTop: 4 }}>{f.description || f.flag}</div>
+                <div style={{ fontSize: 10, fontFamily: "var(--adm-mono)", color: "var(--adm-accent)", opacity: .6, marginTop: 4 }}>{f.flag} · rollout: {f.rollout_pct}%</div>
               </div>
-              <div className="flex items-center gap-2">
-                <Button variant="ghost" size="sm" onClick={() => openEdit(f)} className="h-7 w-7 p-0 text-white/40 hover:text-orange-400"><Pencil className="h-3 w-3" /></Button>
-                <Button variant="ghost" size="sm" onClick={() => handleDelete(f.id)} className="h-7 w-7 p-0 text-white/40 hover:text-red-400"><Trash2 className="h-3 w-3" /></Button>
-                <button onClick={() => handleToggle(f.flag, f.enabled)}
-                  className={`relative h-[22px] w-10 shrink-0 rounded-full transition-colors ${f.enabled ? "bg-green-500" : "border border-white/10 bg-[#1C1C28]"}`}>
-                  <div className={`absolute top-[3px] h-4 w-4 rounded-full bg-white shadow transition-[left] ${f.enabled ? "left-[21px]" : "left-[3px]"}`} />
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <button className="adm-btn ghost" onClick={() => openEdit(f)}><Pencil size={14} /></button>
+                <button className="adm-btn ghost" style={{ color: "var(--adm-red)" }} onClick={() => handleDelete(f.id)}><Trash2 size={14} /></button>
+                <button onClick={() => handleToggle(f.flag, f.enabled)} className={`adm-toggle ${f.enabled ? "on" : "off"}`}>
+                  <div className="adm-toggle-dot" />
                 </button>
               </div>
             </div>
           ))}
           {(!flags || flags.length === 0) && (
-            <div className="px-5 py-10 text-center text-[12px] text-white/30">Nenhuma flag configurada.</div>
+            <div style={{ padding: "40px 20px", textAlign: "center", fontSize: 12, color: "var(--adm-text-soft)" }}>Nenhuma flag configurada.</div>
           )}
         </div>
       </div>
 
       <Dialog open={showCreate || !!editing} onOpenChange={(o) => { if (!o) { setShowCreate(false); setEditing(null); } }}>
-        <DialogContent className="max-w-md border-white/[0.06] bg-[#0F0F17] text-[#E8E6F0]">
-          <DialogHeader><DialogTitle className="text-[15px]">{editing ? "Editar Flag" : "Nova Flag"}</DialogTitle></DialogHeader>
-          <div className="space-y-3 mt-3">
+        <DialogContent className="border-[var(--adm-border)] bg-[var(--adm-surface)] text-[var(--adm-text)] max-w-[500px] rounded-[18px]">
+          <DialogHeader><DialogTitle style={{ fontSize: 16, fontWeight: 800 }}>{editing ? "Editar Flag" : "Nova Flag"}</DialogTitle></DialogHeader>
+          <div style={{ display: "flex", flexDirection: "column", gap: 12, marginTop: 12 }}>
             {!editing && (
               <div>
-                <label className="text-[11px] text-white/40 mb-1 block">Flag Key</label>
-                <Input value={form.flag} onChange={(e) => setForm((f) => ({ ...f, flag: e.target.value }))} placeholder="ex: enable_build_mode"
-                  className="h-8 border-white/10 bg-[#16161F] text-[12px]" style={mono} />
+                <label className="adm-label">Flag Key</label>
+                <input className="adm-input mono" value={form.flag} onChange={(e) => setForm((f) => ({ ...f, flag: e.target.value }))} placeholder="ex: enable_build_mode" />
               </div>
             )}
             <div>
-              <label className="text-[11px] text-white/40 mb-1 block">Label</label>
-              <Input value={form.label} onChange={(e) => setForm((f) => ({ ...f, label: e.target.value }))} className="h-8 border-white/10 bg-[#16161F] text-[12px]" />
+              <label className="adm-label">Label</label>
+              <input className="adm-input" value={form.label} onChange={(e) => setForm((f) => ({ ...f, label: e.target.value }))} />
             </div>
             <div>
-              <label className="text-[11px] text-white/40 mb-1 block">Descrição</label>
-              <Input value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} className="h-8 border-white/10 bg-[#16161F] text-[12px]" />
+              <label className="adm-label">Descrição</label>
+              <input className="adm-input" value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} />
             </div>
             <div>
-              <label className="text-[11px] text-white/40 mb-1 block">Rollout %</label>
-              <Input type="number" value={form.rollout_pct} onChange={(e) => setForm((f) => ({ ...f, rollout_pct: Number(e.target.value) }))} className="h-8 border-white/10 bg-[#16161F] text-[12px]" style={mono} />
+              <label className="adm-label">Rollout %</label>
+              <input className="adm-input mono" type="number" value={form.rollout_pct} onChange={(e) => setForm((f) => ({ ...f, rollout_pct: Number(e.target.value) }))} />
             </div>
-            <label className="flex items-center gap-2 text-[12px] text-white/65">
+            <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13 }}>
               <input type="checkbox" checked={form.enabled} onChange={(e) => setForm((f) => ({ ...f, enabled: e.target.checked }))} /> Habilitada
             </label>
           </div>
-          <div className="flex justify-end gap-2 mt-4">
-            <Button variant="ghost" size="sm" onClick={() => { setShowCreate(false); setEditing(null); }} className="text-[12px] text-white/50">Cancelar</Button>
-            <Button size="sm" onClick={saveFlag} className="bg-orange-500 text-[12px] text-black hover:bg-orange-400">Salvar</Button>
+          <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 16 }}>
+            <button className="adm-btn outline" onClick={() => { setShowCreate(false); setEditing(null); }}>Cancelar</button>
+            <button className="adm-btn primary" onClick={saveFlag}>Salvar</button>
           </div>
         </DialogContent>
       </Dialog>

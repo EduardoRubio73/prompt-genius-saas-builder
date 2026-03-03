@@ -353,10 +353,14 @@ export type Database = {
           created_at: string
           currency: string
           id: string
+          internal_id: string | null
           is_active: boolean
           metadata: Json | null
           product_id: string
           recurring_interval: string | null
+          stripe_last_sync_at: string | null
+          stripe_price_id: string | null
+          stripe_synced: boolean
           trial_period_days: number | null
           unit_amount: number | null
           updated_at: string
@@ -365,10 +369,14 @@ export type Database = {
           created_at?: string
           currency?: string
           id: string
+          internal_id?: string | null
           is_active?: boolean
           metadata?: Json | null
           product_id: string
           recurring_interval?: string | null
+          stripe_last_sync_at?: string | null
+          stripe_price_id?: string | null
+          stripe_synced?: boolean
           trial_period_days?: number | null
           unit_amount?: number | null
           updated_at?: string
@@ -377,10 +385,14 @@ export type Database = {
           created_at?: string
           currency?: string
           id?: string
+          internal_id?: string | null
           is_active?: boolean
           metadata?: Json | null
           product_id?: string
           recurring_interval?: string | null
+          stripe_last_sync_at?: string | null
+          stripe_price_id?: string | null
+          stripe_synced?: boolean
           trial_period_days?: number | null
           unit_amount?: number | null
           updated_at?: string
@@ -405,6 +417,7 @@ export type Database = {
           display_name: string | null
           features: Json
           id: string
+          internal_id: string | null
           is_active: boolean
           is_featured: boolean
           members_label: string | null
@@ -419,7 +432,10 @@ export type Database = {
           saas_specs_detail: string | null
           saas_specs_label: string | null
           sort_order: number
+          stripe_last_sync_at: string | null
           stripe_payment_link: string | null
+          stripe_product_id: string | null
+          stripe_synced: boolean
           total_quotas_label: string | null
           trial_label: string | null
           updated_at: string
@@ -433,6 +449,7 @@ export type Database = {
           display_name?: string | null
           features?: Json
           id: string
+          internal_id?: string | null
           is_active?: boolean
           is_featured?: boolean
           members_label?: string | null
@@ -447,7 +464,10 @@ export type Database = {
           saas_specs_detail?: string | null
           saas_specs_label?: string | null
           sort_order?: number
+          stripe_last_sync_at?: string | null
           stripe_payment_link?: string | null
+          stripe_product_id?: string | null
+          stripe_synced?: boolean
           total_quotas_label?: string | null
           trial_label?: string | null
           updated_at?: string
@@ -461,6 +481,7 @@ export type Database = {
           display_name?: string | null
           features?: Json
           id?: string
+          internal_id?: string | null
           is_active?: boolean
           is_featured?: boolean
           members_label?: string | null
@@ -475,7 +496,10 @@ export type Database = {
           saas_specs_detail?: string | null
           saas_specs_label?: string | null
           sort_order?: number
+          stripe_last_sync_at?: string | null
           stripe_payment_link?: string | null
+          stripe_product_id?: string | null
+          stripe_synced?: boolean
           total_quotas_label?: string | null
           trial_label?: string | null
           updated_at?: string

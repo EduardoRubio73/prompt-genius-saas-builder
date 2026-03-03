@@ -1,25 +1,23 @@
 import { useState } from "react";
 import { useAdminPrompts, useAdminPromptDetail, useDeletePrompt, useAdminSaasSpecs, useAdminSpecDetail, useDeleteSpec } from "@/hooks/admin/useAdminData";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Download, ChevronLeft, ChevronRight, Trash2, Eye } from "lucide-react";
+import { Download, ChevronLeft, ChevronRight, Trash2, Eye, Search } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { DestinoBadge } from "@/components/admin/Badges";
+import "./admin.css";
 
-const mono = { fontFamily: "'IBM Plex Mono', monospace" };
 const perPage = 20;
 
 export default function AdminPrompts() {
   const [mainTab, setMainTab] = useState<"prompts" | "specs">("prompts");
 
   return (
-    <div className="space-y-5 animate-in fade-in">
-      <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold">Prompts e Specs</h2>
-        <div className="flex gap-1 rounded-lg bg-[#16161F] p-1">
+    <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <h1 className="page-title" style={{ marginBottom: 0 }}>Prompts e Specs</h1>
+        <div className="adm-tabs">
           {(["prompts", "specs"] as const).map((t) => (
-            <button key={t} onClick={() => setMainTab(t)}
-              className={`rounded-md px-3 py-1 text-[11px] font-medium transition ${mainTab === t ? "bg-orange-500/15 text-orange-400" : "text-white/50 hover:text-white/80"}`}>
+            <button key={t} onClick={() => setMainTab(t)} className={`adm-tab ${mainTab === t ? "active" : ""}`}>
               {t === "prompts" ? "Prompts" : "SaaS Specs"}
             </button>
           ))}
@@ -58,110 +56,79 @@ function PromptsTab() {
 
   const handleDelete = async (id: string) => {
     if (!confirm("Excluir este prompt permanentemente?")) return;
-    try {
-      await deletePrompt.mutateAsync(id);
-      toast({ title: "Prompt excluído" });
-      setSelectedId(null);
-    } catch (err: any) {
-      toast({ title: "Erro", description: err.message, variant: "destructive" });
-    }
+    try { await deletePrompt.mutateAsync(id); toast({ title: "Prompt excluído" }); setSelectedId(null); }
+    catch (err: any) { toast({ title: "Erro", description: err.message, variant: "destructive" }); }
   };
 
   return (
     <>
-      <div className="flex items-center gap-3">
-        <Button variant="outline" size="sm" onClick={handleExport} disabled={!prompts?.length}
-          className="gap-2 border-white/10 bg-transparent text-[12px] text-white/65 hover:bg-[#16161F]">
-          <Download className="h-3.5 w-3.5" /> CSV
-        </Button>
-        <Input placeholder="Buscar tarefa ou especialidade..." value={search} onChange={(e) => handleSearch(e.target.value)}
-          className="w-64 border-white/10 bg-[#16161F] text-[13px] text-[#E8E6F0] placeholder:text-white/30" />
+      <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+        <button className="adm-btn outline" onClick={handleExport} disabled={!prompts?.length}><Download size={14} /> CSV</button>
+        <div className="filter-input" style={{ width: 280 }}>
+          <Search size={14} />
+          <input placeholder="Buscar tarefa ou especialidade..." value={search} onChange={(e) => handleSearch(e.target.value)} />
+        </div>
       </div>
 
-      <div className="overflow-hidden rounded-[10px] border border-white/[0.06] bg-[#0F0F17]">
-        <table className="w-full">
-          <thead>
-            <tr className="border-b border-white/[0.06]">
-              {["Usuário", "Org", "Especialidade", "Tarefa", "Destino", "Rating", "Tokens", "Data", ""].map((h) => (
-                <th key={h} className="px-4 py-2.5 text-left text-[10px] font-medium uppercase tracking-[0.1em] text-white/40">{h}</th>
-              ))}
-            </tr>
-          </thead>
+      <div className="table-card">
+        <table>
+          <thead><tr>
+            {["Usuário", "Org", "Especialidade", "Tarefa", "Destino", "Rating", "Tokens", "Data", ""].map((h) => <th key={h}>{h}</th>)}
+          </tr></thead>
           <tbody>
-            {isLoading && <tr><td colSpan={9} className="px-5 py-10 text-center text-[12px] text-white/30">Carregando...</td></tr>}
+            {isLoading && <tr><td colSpan={9} style={{ textAlign: "center", padding: "40px 16px", color: "var(--adm-text-soft)" }}>Carregando...</td></tr>}
             {prompts?.map((p, i) => (
-              <tr key={`${p.id}-${i}`} className="border-b border-white/[0.06] last:border-0 hover:bg-[#16161F] transition cursor-pointer"
-                onClick={() => setSelectedId(p.id!)}>
-                <td className="px-4 py-3">
-                  <div className="text-[12px] font-medium">{p.user_name || "—"}</div>
-                  <div className="text-[10px] text-white/40" style={mono}>{p.user_email}</div>
+              <tr key={`${p.id}-${i}`} className="clickable" onClick={() => setSelectedId(p.id!)}>
+                <td>
+                  <div style={{ fontWeight: 600, fontSize: 12 }}>{p.user_name || "—"}</div>
+                  <div style={{ fontSize: 10, fontFamily: "var(--adm-mono)", color: "var(--adm-text-soft)" }}>{p.user_email}</div>
                 </td>
-                <td className="px-4 py-3 text-[12px] text-white/65">{p.org_name || "—"}</td>
-                <td className="px-4 py-3 text-[12px] text-white/65">{p.especialidade || "—"}</td>
-                <td className="px-4 py-3 text-[12px] text-white/65 max-w-[160px] truncate">{p.tarefa || "—"}</td>
-                <td className="px-4 py-3">{p.destino && <span className="rounded-md border border-white/10 bg-white/[0.05] px-2 py-0.5 text-[10px]">{p.destino}</span>}</td>
-                <td className="px-4 py-3 text-[12px] text-white/65" style={mono}>{p.rating ?? "—"}</td>
-                <td className="px-4 py-3 text-[11px] text-white/40" style={mono}>{p.tokens_consumed ?? "—"}</td>
-                <td className="px-4 py-3 text-[11px] text-white/40" style={mono}>{p.created_at ? new Date(p.created_at).toLocaleDateString("pt-BR") : "—"}</td>
-                <td className="px-4 py-3">
-                  <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-white/30 hover:text-orange-400" onClick={(e) => { e.stopPropagation(); setSelectedId(p.id!); }}>
-                    <Eye className="h-3.5 w-3.5" />
-                  </Button>
+                <td style={{ color: "var(--adm-text-soft)" }}>{p.org_name || "—"}</td>
+                <td>{p.especialidade || "—"}</td>
+                <td style={{ maxWidth: 160, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.tarefa || "—"}</td>
+                <td><DestinoBadge destino={p.destino} /></td>
+                <td>{p.rating ? <span className="rating-num">{p.rating}</span> : <span style={{ color: "var(--adm-text-soft)" }}>—</span>}</td>
+                <td style={{ fontFamily: "var(--adm-mono)", fontSize: 11, color: "var(--adm-text-soft)" }}>{p.tokens_consumed ?? "—"}</td>
+                <td style={{ fontFamily: "var(--adm-mono)", fontSize: 11, color: "var(--adm-text-soft)" }}>{p.created_at ? new Date(p.created_at).toLocaleDateString("pt-BR") : "—"}</td>
+                <td>
+                  <button className="adm-btn ghost" onClick={(e) => { e.stopPropagation(); setSelectedId(p.id!); }}><Eye size={14} /></button>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
-      </div>
-
-      <div className="flex items-center justify-between pt-2">
-        <p className="text-[11px] text-white/40">Pág. <span className="font-medium text-white/65">{page + 1}</span></p>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" disabled={page === 0} onClick={() => setPage((p) => p - 1)} className="h-7 border-white/10 bg-transparent text-[12px] text-white/65 hover:bg-[#16161F]"><ChevronLeft className="h-3.5 w-3.5" /></Button>
-          <Button variant="outline" size="sm" disabled={!prompts || prompts.length < perPage} onClick={() => setPage((p) => p + 1)} className="h-7 border-white/10 bg-transparent text-[12px] text-white/65 hover:bg-[#16161F]"><ChevronRight className="h-3.5 w-3.5" /></Button>
+        <div className="pag">
+          <span className="pag-info">Página {page + 1}</span>
+          <div className="pag-btns">
+            <button className="pag-btn" disabled={page === 0} onClick={() => setPage((p) => p - 1)}><ChevronLeft size={14} /></button>
+            <button className="pag-btn" disabled={!prompts || prompts.length < perPage} onClick={() => setPage((p) => p + 1)}><ChevronRight size={14} /></button>
+          </div>
         </div>
       </div>
 
       <Dialog open={!!selectedId && !!detail} onOpenChange={(o) => !o && setSelectedId(null)}>
-        <DialogContent className="max-w-2xl border-white/[0.06] bg-[#0F0F17] text-[#E8E6F0] max-h-[85vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="text-[15px]">Detalhes do Prompt</DialogTitle>
-          </DialogHeader>
+        <DialogContent className="border-[var(--adm-border)] bg-[var(--adm-surface)] text-[var(--adm-text)] max-w-[660px] rounded-[18px] max-h-[85vh] overflow-y-auto">
+          <DialogHeader><DialogTitle style={{ fontSize: 16, fontWeight: 800 }}>Detalhes do Prompt</DialogTitle></DialogHeader>
           {detail && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-3 text-[12px]">
+            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+              <div className="meta-grid">
                 {[
-                  ["Especialidade", detail.especialidade],
-                  ["Persona", detail.persona],
-                  ["Tarefa", detail.tarefa],
-                  ["Objetivo", detail.objetivo],
-                  ["Formato", detail.formato],
-                  ["Destino", detail.destino],
-                  ["Categoria", detail.categoria],
-                  ["Rating", detail.rating],
-                  ["Tokens", detail.tokens_consumed],
-                  ["Favorito", detail.is_favorite ? "Sim" : "Não"],
-                  ["Tags", detail.tags?.join(", ") || "—"],
+                  ["Especialidade", detail.especialidade], ["Persona", detail.persona], ["Tarefa", detail.tarefa],
+                  ["Objetivo", detail.objetivo], ["Formato", detail.formato], ["Destino", detail.destino],
+                  ["Categoria", detail.categoria], ["Rating", detail.rating], ["Tokens", detail.tokens_consumed],
+                  ["Favorito", detail.is_favorite ? "Sim" : "Não"], ["Tags", detail.tags?.join(", ") || "—"],
                   ["Data", new Date(detail.created_at).toLocaleString("pt-BR")],
                 ].map(([label, value]) => (
-                  <div key={label as string}>
-                    <div className="text-white/40 text-[10px] uppercase tracking-wider">{label}</div>
-                    <div className="text-white/80 mt-0.5" style={mono}>{String(value || "—")}</div>
-                  </div>
+                  <div key={label as string}><div className="meta-lbl">{label}</div><div className="meta-val">{String(value || "—")}</div></div>
                 ))}
               </div>
-              {detail.contexto && <div><div className="text-[10px] text-white/40 uppercase mb-1">Contexto</div><div className="rounded-md bg-[#16161F] p-3 text-[11px] text-white/70 whitespace-pre-wrap" style={mono}>{detail.contexto}</div></div>}
-              {detail.restricoes && <div><div className="text-[10px] text-white/40 uppercase mb-1">Restrições</div><div className="rounded-md bg-[#16161F] p-3 text-[11px] text-white/70 whitespace-pre-wrap" style={mono}>{detail.restricoes}</div></div>}
-              {detail.referencias && <div><div className="text-[10px] text-white/40 uppercase mb-1">Referências</div><div className="rounded-md bg-[#16161F] p-3 text-[11px] text-white/70 whitespace-pre-wrap" style={mono}>{detail.referencias}</div></div>}
-              {detail.rating_comment && <div><div className="text-[10px] text-white/40 uppercase mb-1">Comentário Rating</div><div className="rounded-md bg-[#16161F] p-3 text-[11px] text-white/70" style={mono}>{detail.rating_comment}</div></div>}
-              <div>
-                <div className="text-[10px] text-white/40 uppercase mb-1">Prompt Gerado</div>
-                <div className="rounded-md bg-[#16161F] p-3 text-[11px] text-white/70 whitespace-pre-wrap max-h-[300px] overflow-y-auto" style={mono}>{detail.prompt_gerado}</div>
-              </div>
-              <div className="flex justify-end">
-                <Button variant="destructive" size="sm" onClick={() => handleDelete(detail.id)} className="gap-2 text-[12px]">
-                  <Trash2 className="h-3.5 w-3.5" /> Excluir Prompt
-                </Button>
+              {detail.contexto && <div><div className="meta-lbl">Contexto</div><div className="code-box">{detail.contexto}</div></div>}
+              {detail.restricoes && <div><div className="meta-lbl">Restrições</div><div className="code-box">{detail.restricoes}</div></div>}
+              {detail.referencias && <div><div className="meta-lbl">Referências</div><div className="code-box">{detail.referencias}</div></div>}
+              {detail.rating_comment && <div><div className="meta-lbl">Comentário Rating</div><div className="code-box">{detail.rating_comment}</div></div>}
+              <div><div className="meta-lbl">Prompt Gerado</div><div className="code-box">{detail.prompt_gerado}</div></div>
+              <div style={{ display: "flex", justifyContent: "flex-end" }}>
+                <button className="adm-btn danger" onClick={() => handleDelete(detail.id)}><Trash2 size={14} /> Excluir Prompt</button>
               </div>
             </div>
           )}
@@ -181,90 +148,61 @@ function SpecsTab() {
 
   const handleDelete = async (id: string) => {
     if (!confirm("Excluir esta spec permanentemente?")) return;
-    try {
-      await deleteSpec.mutateAsync(id);
-      toast({ title: "Spec excluída" });
-      setSelectedId(null);
-    } catch (err: any) {
-      toast({ title: "Erro", description: err.message, variant: "destructive" });
-    }
+    try { await deleteSpec.mutateAsync(id); toast({ title: "Spec excluída" }); setSelectedId(null); }
+    catch (err: any) { toast({ title: "Erro", description: err.message, variant: "destructive" }); }
   };
 
   return (
     <>
-      <div className="overflow-hidden rounded-[10px] border border-white/[0.06] bg-[#0F0F17]">
-        <table className="w-full">
-          <thead>
-            <tr className="border-b border-white/[0.06]">
-              {["Usuário", "Projeto", "Frontend", "Backend", "DB", "Revenue", "Rating", "Data", ""].map((h) => (
-                <th key={h} className="px-4 py-2.5 text-left text-[10px] font-medium uppercase tracking-[0.1em] text-white/40">{h}</th>
-              ))}
-            </tr>
-          </thead>
+      <div className="table-card">
+        <table>
+          <thead><tr>
+            {["Usuário", "Projeto", "Frontend", "Backend", "DB", "Revenue", "Rating", "Data", ""].map((h) => <th key={h}>{h}</th>)}
+          </tr></thead>
           <tbody>
-            {isLoading && <tr><td colSpan={9} className="px-5 py-10 text-center text-[12px] text-white/30">Carregando...</td></tr>}
+            {isLoading && <tr><td colSpan={9} style={{ textAlign: "center", padding: "40px 16px", color: "var(--adm-text-soft)" }}>Carregando...</td></tr>}
             {specs?.map((s) => (
-              <tr key={s.id} className="border-b border-white/[0.06] last:border-0 hover:bg-[#16161F] transition cursor-pointer"
-                onClick={() => setSelectedId(s.id!)}>
-                <td className="px-4 py-3">
-                  <div className="text-[12px] font-medium">{s.user_name || "—"}</div>
-                  <div className="text-[10px] text-white/40" style={mono}>{s.user_email}</div>
+              <tr key={s.id} className="clickable" onClick={() => setSelectedId(s.id!)}>
+                <td>
+                  <div style={{ fontWeight: 600, fontSize: 12 }}>{s.user_name || "—"}</div>
+                  <div style={{ fontSize: 10, fontFamily: "var(--adm-mono)", color: "var(--adm-text-soft)" }}>{s.user_email}</div>
                 </td>
-                <td className="px-4 py-3 text-[12px] text-white/65">{s.project_name || "—"}</td>
-                <td className="px-4 py-3 text-[11px] text-white/50">{s.stack_frontend || "—"}</td>
-                <td className="px-4 py-3 text-[11px] text-white/50">{s.stack_backend || "—"}</td>
-                <td className="px-4 py-3 text-[11px] text-white/50">{s.stack_database || "—"}</td>
-                <td className="px-4 py-3 text-[11px] text-white/50">{s.revenue_model || "—"}</td>
-                <td className="px-4 py-3 text-[12px] text-white/65" style={mono}>{s.rating ?? "—"}</td>
-                <td className="px-4 py-3 text-[11px] text-white/40" style={mono}>{s.created_at ? new Date(s.created_at).toLocaleDateString("pt-BR") : "—"}</td>
-                <td className="px-4 py-3">
-                  <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-white/30 hover:text-orange-400"><Eye className="h-3.5 w-3.5" /></Button>
-                </td>
+                <td>{s.project_name || "—"}</td>
+                <td style={{ fontSize: 11, color: "var(--adm-text-soft)" }}>{s.stack_frontend || "—"}</td>
+                <td style={{ fontSize: 11, color: "var(--adm-text-soft)" }}>{s.stack_backend || "—"}</td>
+                <td style={{ fontSize: 11, color: "var(--adm-text-soft)" }}>{s.stack_database || "—"}</td>
+                <td style={{ fontSize: 11, color: "var(--adm-text-soft)" }}>{s.revenue_model || "—"}</td>
+                <td>{s.rating ? <span className="rating-num">{s.rating}</span> : <span style={{ color: "var(--adm-text-soft)" }}>—</span>}</td>
+                <td style={{ fontFamily: "var(--adm-mono)", fontSize: 11, color: "var(--adm-text-soft)" }}>{s.created_at ? new Date(s.created_at).toLocaleDateString("pt-BR") : "—"}</td>
+                <td><button className="adm-btn ghost"><Eye size={14} /></button></td>
               </tr>
             ))}
           </tbody>
         </table>
-      </div>
-
-      <div className="flex items-center justify-end gap-2 pt-2">
-        <Button variant="outline" size="sm" disabled={page === 0} onClick={() => setPage((p) => p - 1)} className="h-7 border-white/10 bg-transparent text-[12px] text-white/65 hover:bg-[#16161F]"><ChevronLeft className="h-3.5 w-3.5" /></Button>
-        <span className="text-[11px] text-white/40" style={mono}>Pág. {page + 1}</span>
-        <Button variant="outline" size="sm" disabled={!specs || specs.length < perPage} onClick={() => setPage((p) => p + 1)} className="h-7 border-white/10 bg-transparent text-[12px] text-white/65 hover:bg-[#16161F]"><ChevronRight className="h-3.5 w-3.5" /></Button>
+        <div className="pag">
+          <span className="pag-info">Página {page + 1}</span>
+          <div className="pag-btns">
+            <button className="pag-btn" disabled={page === 0} onClick={() => setPage((p) => p - 1)}><ChevronLeft size={14} /></button>
+            <button className="pag-btn" disabled={!specs || specs.length < perPage} onClick={() => setPage((p) => p + 1)}><ChevronRight size={14} /></button>
+          </div>
+        </div>
       </div>
 
       <Dialog open={!!selectedId && !!detail} onOpenChange={(o) => !o && setSelectedId(null)}>
-        <DialogContent className="max-w-2xl border-white/[0.06] bg-[#0F0F17] text-[#E8E6F0] max-h-[85vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="text-[15px]">Detalhes da Spec — {detail?.project_name || "Sem nome"}</DialogTitle>
-          </DialogHeader>
+        <DialogContent className="border-[var(--adm-border)] bg-[var(--adm-surface)] text-[var(--adm-text)] max-w-[660px] rounded-[18px] max-h-[85vh] overflow-y-auto">
+          <DialogHeader><DialogTitle style={{ fontSize: 16, fontWeight: 800 }}>Detalhes da Spec — {detail?.project_name || "Sem nome"}</DialogTitle></DialogHeader>
           {detail && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-3 text-[12px]">
-                {[
-                  ["Projeto", detail.project_name],
-                  ["Rating", detail.rating],
-                  ["Favorito", detail.is_favorite ? "Sim" : "Não"],
-                  ["Data", new Date(detail.created_at).toLocaleString("pt-BR")],
-                ].map(([label, value]) => (
-                  <div key={label as string}>
-                    <div className="text-white/40 text-[10px] uppercase tracking-wider">{label}</div>
-                    <div className="text-white/80 mt-0.5" style={mono}>{String(value || "—")}</div>
-                  </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+              <div className="meta-grid">
+                {[["Projeto", detail.project_name], ["Rating", detail.rating], ["Favorito", detail.is_favorite ? "Sim" : "Não"], ["Data", new Date(detail.created_at).toLocaleString("pt-BR")]].map(([label, value]) => (
+                  <div key={label as string}><div className="meta-lbl">{label}</div><div className="meta-val">{String(value || "—")}</div></div>
                 ))}
               </div>
-              {detail.rating_comment && <div><div className="text-[10px] text-white/40 uppercase mb-1">Comentário</div><div className="rounded-md bg-[#16161F] p-3 text-[11px] text-white/70" style={mono}>{detail.rating_comment}</div></div>}
-              <div>
-                <div className="text-[10px] text-white/40 uppercase mb-1">Answers (JSON)</div>
-                <div className="rounded-md bg-[#16161F] p-3 text-[11px] text-white/70 whitespace-pre-wrap max-h-[200px] overflow-y-auto" style={mono}>{JSON.stringify(detail.answers, null, 2)}</div>
-              </div>
-              <div>
-                <div className="text-[10px] text-white/40 uppercase mb-1">Spec (Markdown)</div>
-                <div className="rounded-md bg-[#16161F] p-3 text-[11px] text-white/70 whitespace-pre-wrap max-h-[300px] overflow-y-auto" style={mono}>{detail.spec_md}</div>
-              </div>
-              <div className="flex justify-end">
-                <Button variant="destructive" size="sm" onClick={() => handleDelete(detail.id)} className="gap-2 text-[12px]">
-                  <Trash2 className="h-3.5 w-3.5" /> Excluir Spec
-                </Button>
+              {detail.rating_comment && <div><div className="meta-lbl">Comentário</div><div className="code-box">{detail.rating_comment}</div></div>}
+              <div><div className="meta-lbl">Answers (JSON)</div><div className="code-box">{JSON.stringify(detail.answers, null, 2)}</div></div>
+              <div><div className="meta-lbl">Spec (Markdown)</div><div className="code-box">{detail.spec_md}</div></div>
+              <div style={{ display: "flex", justifyContent: "flex-end" }}>
+                <button className="adm-btn danger" onClick={() => handleDelete(detail.id)}><Trash2 size={14} /> Excluir Spec</button>
               </div>
             </div>
           )}

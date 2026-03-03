@@ -1,15 +1,10 @@
 import { useState } from "react";
 import { useAdminAuditLogs } from "@/hooks/admin/useAdminData";
-import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import "./admin.css";
 
 const filterOptions = [
   { value: "all", label: "Todos" },
@@ -19,73 +14,61 @@ const filterOptions = [
   { value: "admin_settings", label: "Admin Settings" },
 ];
 
-function getActionColor(action: string) {
-  if (action.includes("insert")) return "bg-green-500/12 text-green-400 border-green-500/20";
-  if (action.includes("update")) return "bg-blue-500/12 text-blue-400 border-blue-500/20";
-  if (action.includes("delete")) return "bg-red-500/12 text-red-400 border-red-500/20";
-  return "bg-white/[0.05] text-white/50 border-white/10";
+function getActionBadge(action: string) {
+  if (action.includes("insert")) return "insert";
+  if (action.includes("update")) return "update";
+  if (action.includes("delete")) return "delete";
+  return "";
 }
 
 export default function AdminAuditLogs() {
   const [page, setPage] = useState(0);
   const [filter, setFilter] = useState("all");
   const { data: logs, isLoading } = useAdminAuditLogs(page, filter === "all" ? "" : filter);
-  const mono = { fontFamily: "'IBM Plex Mono', monospace" };
 
   return (
-    <div className="space-y-5 animate-in fade-in">
-      <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold">Logs e Auditoria</h2>
+    <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <h1 className="page-title" style={{ marginBottom: 0 }}>Logs e Auditoria</h1>
         <Select value={filter} onValueChange={(v) => { setFilter(v); setPage(0); }}>
-          <SelectTrigger className="w-48 border-white/10 bg-[#16161F] text-[12px] text-[#E8E6F0]">
+          <SelectTrigger className="w-48" style={{ background: "var(--adm-surface)", border: "1px solid var(--adm-border)", borderRadius: 9, color: "var(--adm-text)", fontSize: 12 }}>
             <SelectValue placeholder="Filtrar por tipo" />
           </SelectTrigger>
-          <SelectContent className="border-white/10 bg-[#16161F] text-[#E8E6F0]">
+          <SelectContent style={{ background: "var(--adm-surface)", border: "1px solid var(--adm-border)", color: "var(--adm-text)" }}>
             {filterOptions.map((o) => (
-              <SelectItem key={o.value} value={o.value} className="text-[12px]">{o.label}</SelectItem>
+              <SelectItem key={o.value} value={o.value} style={{ fontSize: 12 }}>{o.label}</SelectItem>
             ))}
           </SelectContent>
         </Select>
       </div>
 
-      <div className="overflow-hidden rounded-[10px] border border-white/[0.06] bg-[#0F0F17]">
-        <table className="w-full">
-          <thead>
-            <tr className="border-b border-white/[0.06]">
-              {["Timestamp", "Ação", "Recurso", "ID", "User ID"].map((h) => (
-                <th key={h} className="px-5 py-2.5 text-left text-[10px] font-medium uppercase tracking-[0.1em] text-white/40">{h}</th>
-              ))}
-            </tr>
-          </thead>
+      <div className="table-card">
+        <table>
+          <thead><tr>
+            {["Timestamp", "Ação", "Recurso", "ID", "User ID"].map((h) => <th key={h}>{h}</th>)}
+          </tr></thead>
           <tbody>
-            {isLoading && (
-              <tr><td colSpan={5} className="px-5 py-10 text-center text-[12px] text-white/30">Carregando...</td></tr>
-            )}
+            {isLoading && <tr><td colSpan={5} style={{ textAlign: "center", padding: "40px", color: "var(--adm-text-soft)" }}>Carregando...</td></tr>}
             {logs?.map((log) => (
-              <tr key={log.id} className="border-b border-white/[0.06] last:border-0 hover:bg-[#16161F] transition">
-                <td className="px-5 py-2.5 text-[11px] text-white/40" style={mono}>
+              <tr key={log.id}>
+                <td style={{ fontFamily: "var(--adm-mono)", fontSize: 11, color: "var(--adm-text-soft)" }}>
                   {formatDistanceToNow(new Date(log.created_at), { addSuffix: true, locale: ptBR })}
                 </td>
-                <td className="px-5 py-2.5">
-                  <span className={`inline-flex rounded-md border px-2 py-0.5 text-[10px] font-medium ${getActionColor(log.action)}`}>
-                    {log.action}
-                  </span>
-                </td>
-                <td className="px-5 py-2.5 text-[12px] text-white/65">{log.resource_type || "—"}</td>
-                <td className="px-5 py-2.5 text-[10px] text-white/30" style={mono}>{log.resource_id?.slice(0, 12) || "—"}</td>
-                <td className="px-5 py-2.5 text-[10px] text-white/30" style={mono}>{log.user_id?.slice(0, 12) || "system"}</td>
+                <td><span className={`adm-badge ${getActionBadge(log.action)}`}>{log.action}</span></td>
+                <td>{log.resource_type || "—"}</td>
+                <td style={{ fontFamily: "var(--adm-mono)", fontSize: 10, color: "var(--adm-text-soft)" }}>{log.resource_id?.slice(0, 12) || "—"}</td>
+                <td style={{ fontFamily: "var(--adm-mono)", fontSize: 10, color: "var(--adm-text-soft)" }}>{log.user_id?.slice(0, 12) || "system"}</td>
               </tr>
             ))}
           </tbody>
         </table>
-      </div>
-
-      <div className="flex items-center justify-center gap-3">
-        <Button variant="outline" size="sm" disabled={page === 0} onClick={() => setPage((p) => p - 1)}
-          className="border-white/10 bg-transparent text-[12px] text-white/65 hover:bg-[#16161F]">← Anterior</Button>
-        <span className="text-[12px] text-white/40" style={mono}>Página {page + 1}</span>
-        <Button variant="outline" size="sm" disabled={!logs || logs.length < 50} onClick={() => setPage((p) => p + 1)}
-          className="border-white/10 bg-transparent text-[12px] text-white/65 hover:bg-[#16161F]">Próximo →</Button>
+        <div className="pag">
+          <span className="pag-info">Página {page + 1}</span>
+          <div className="pag-btns">
+            <button className="pag-btn" disabled={page === 0} onClick={() => setPage((p) => p - 1)}><ChevronLeft size={14} /> Anterior</button>
+            <button className="pag-btn" disabled={!logs || logs.length < 50} onClick={() => setPage((p) => p + 1)}>Próximo <ChevronRight size={14} /></button>
+          </div>
+        </div>
       </div>
     </div>
   );
