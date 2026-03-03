@@ -419,6 +419,7 @@ export type Database = {
           saas_specs_detail: string | null
           saas_specs_label: string | null
           sort_order: number
+          stripe_payment_link: string | null
           total_quotas_label: string | null
           trial_label: string | null
           updated_at: string
@@ -446,6 +447,7 @@ export type Database = {
           saas_specs_detail?: string | null
           saas_specs_label?: string | null
           sort_order?: number
+          stripe_payment_link?: string | null
           total_quotas_label?: string | null
           trial_label?: string | null
           updated_at?: string
@@ -473,6 +475,7 @@ export type Database = {
           saas_specs_detail?: string | null
           saas_specs_label?: string | null
           sort_order?: number
+          stripe_payment_link?: string | null
           total_quotas_label?: string | null
           trial_label?: string | null
           updated_at?: string
