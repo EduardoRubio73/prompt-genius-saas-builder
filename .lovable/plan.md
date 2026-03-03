@@ -1,45 +1,47 @@
 
 
-## Fix: Admin Credits Not Saving
+## Diagnóstico
 
-### Root Causes
+1. **Dashboard sem CTA de upgrade**: Quando cotas esgotam, os cards ficam desabilitados com "Sem cotas disponíveis" mas sem nenhum botão ou link para comprar mais cotas ou fazer upgrade.
 
-1. **Missing data**: `admin_users_overview` view doesn't include `plan_credits_total`, `bonus_credits_total`, etc. The form defaults to `0` instead of the real values.
-2. **JS falsy bug**: Line 88 uses `form.plan_credits_total || undefined` — when the value is `0`, `0 || undefined` evaluates to `undefined`, so the field is omitted from the update.
+2. **Dropdown sem link para Planos**: O menu do avatar no header (AppShell) não tem opção "Planos" ou "Plano & Cobrança".
 
-### Solution
+3. **Botões de plano desabilitados na aba Billing**: Todos os produtos (`prod_starter`, `prod_pro`, `prod_enterprise`) têm `stripe_payment_link = NULL` no banco. O código atual renderiza botão disabled quando não há link. Mesmo sem Stripe configurado, os botões devem levar o usuário a algum lugar (ex: contato ou página de planos).
 
-**1. Fetch actual org data when dialog opens**
-- In `UserDetailDialog`, add a query to fetch the organization record directly from `organizations` table using `user.org_id`
-- Initialize `plan_credits_total` and `bonus_credits_total` from the real org data
+## Plano de Correção
 
-**2. Fix the save logic**
-- Remove `|| undefined` guards — always send `plan_credits_total` and `bonus_credits_total` to the update call
-- This ensures `0` is a valid value that gets saved
+### 1. Banner de upgrade no Dashboard quando cotas esgotam
+**Arquivo:** `src/pages/Dashboard.tsx`
 
-### Files to Edit
+- Quando `noQuota === true`, renderizar um banner/card acima dos mode cards com:
+  - Mensagem: "Suas cotas acabaram! Faça upgrade ou adquira cotas avulsas para continuar."
+  - Botão "Ver planos" → navega para `/profile?tab=billing`
+  - Botão secundário "Comprar cotas avulsas" (se aplicável)
+- Nos mode cards desabilitados, mudar o texto de "Sem cotas disponíveis" para um link clicável "Adquirir cotas →" que navega para `/profile?tab=billing`
 
-| File | Change |
-|------|--------|
-| `src/pages/admin/AdminUsers.tsx` | Add org data fetch, fix form init + save logic |
+### 2. Link "Planos" no Dropdown do perfil
+**Arquivo:** `src/components/layout/AppShell.tsx`
 
-### Details
+- Adicionar item "Plano & Cobrança" no dropdown, com ícone `CreditCard`, navegando para `/profile?tab=billing`
+- Posicionar entre "Configurações" e "Sair"
 
-```tsx
-// Add useEffect to load real org data
-const [orgData, setOrgData] = useState<any>(null);
-useEffect(() => {
-  if (user.org_id) {
-    supabase.from("organizations").select("plan_credits_total, bonus_credits_total, plan_credits_used, bonus_credits_used").eq("id", user.org_id).single()
-      .then(({ data }) => {
-        if (data) {
-          setForm(f => ({ ...f, plan_credits_total: data.plan_credits_total, bonus_credits_total: data.bonus_credits_total }));
-        }
-      });
-  }
-}, [user.org_id]);
+### 3. Corrigir botões de plano na aba Billing
+**Arquivo:** `src/pages/ProfilePage.tsx`
 
-// Fix save — no more || undefined
-updates: { plan_tier: form.plan_tier, is_active: form.is_active, plan_credits_total: form.plan_credits_total, bonus_credits_total: form.bonus_credits_total }
-```
+- Quando `stripe_payment_link` é null mas o plano NÃO é o atual, renderizar botão ativo (não disabled) que:
+  - Abre link de contato (WhatsApp/email) ou
+  - Mostra toast informando que o link de pagamento será configurado em breve
+- Melhor abordagem: renderizar como botão ativo com o `cta_label` e ao clicar navegar para contato ou mostrar mensagem
+- Texto do botão disabled muda de genérico para "Em breve" ou abre modal de contato
+
+### 4. QuotaCard com CTA quando esgotado
+**Arquivo:** `src/components/dashboard/QuotaCard.tsx`
+
+- Quando `totalRemaining <= 0`, adicionar botão "Fazer upgrade" abaixo das informações de cotas, navegando para `/profile?tab=billing`
+
+### Detalhes técnicos
+
+- Nenhuma mudança no banco necessária neste momento
+- Quando os `stripe_payment_link` forem preenchidos no admin, os botões passarão a redirecionar automaticamente para o Stripe
+- Enquanto não há link, o CTA leva para contato/WhatsApp como fallback funcional
 
