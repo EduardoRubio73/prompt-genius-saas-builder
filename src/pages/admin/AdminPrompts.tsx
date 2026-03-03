@@ -1,28 +1,50 @@
 import { useState } from "react";
-import { useAdminPrompts, useAdminPromptDetail, useDeletePrompt, useAdminSaasSpecs, useAdminSpecDetail, useDeleteSpec } from "@/hooks/admin/useAdminData";
+import {
+  useAdminPrompts,
+  useAdminPromptDetail,
+  useDeletePrompt,
+  useAdminSaasSpecs,
+  useAdminSpecDetail,
+  useDeleteSpec,
+} from "@/hooks/admin/useAdminData";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Download, ChevronLeft, ChevronRight, Trash2, Eye, Search } from "lucide-react";
+import { Download, ChevronLeft, ChevronRight, Trash2, Eye, Search, Sun, Moon } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { DestinoBadge } from "@/components/admin/Badges";
 import "./admin.css";
 
 const perPage = 20;
 
+type MainTab = "prompts" | "specs";
+
 export default function AdminPrompts() {
-  const [mainTab, setMainTab] = useState<"prompts" | "specs">("prompts");
+  const [mainTab, setMainTab] = useState<MainTab>("prompts");
+  const [isDark, setIsDark] = useState(document.documentElement.getAttribute("data-theme") !== "light");
+
+  const toggleTheme = () => {
+    const next = !isDark;
+    setIsDark(next);
+    document.documentElement.setAttribute("data-theme", next ? "dark" : "light");
+  };
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+    <div className="pgp-page">
+      <div className="pgp-page-header">
         <h1 className="page-title" style={{ marginBottom: 0 }}>Prompts e Specs</h1>
-        <div className="adm-tabs">
-          {(["prompts", "specs"] as const).map((t) => (
-            <button key={t} onClick={() => setMainTab(t)} className={`adm-tab ${mainTab === t ? "active" : ""}`}>
-              {t === "prompts" ? "Prompts" : "SaaS Specs"}
-            </button>
-          ))}
+        <div className="pgp-page-header-right">
+          <div className="adm-tabs pgp-tabs">
+            {(["prompts", "specs"] as const).map((t) => (
+              <button key={t} onClick={() => setMainTab(t)} className={`adm-tab ${mainTab === t ? "active" : ""}`}>
+                {t === "prompts" ? "Prompts" : "SaaS Specs"}
+              </button>
+            ))}
+          </div>
+          <button className="pgp-theme-btn" onClick={toggleTheme} title="Alternar tema" aria-label="Alternar tema">
+            {isDark ? <Sun size={15} /> : <Moon size={15} />}
+          </button>
         </div>
       </div>
+
       {mainTab === "prompts" ? <PromptsTab /> : <SpecsTab />}
     </div>
   );
@@ -41,55 +63,90 @@ function PromptsTab() {
   const handleSearch = (v: string) => {
     setSearch(v);
     clearTimeout((window as any).__adminPromptSearch);
-    (window as any).__adminPromptSearch = setTimeout(() => { setDebouncedSearch(v); setPage(0); }, 300);
+    (window as any).__adminPromptSearch = setTimeout(() => {
+      setDebouncedSearch(v);
+      setPage(0);
+    }, 300);
   };
 
   const handleExport = () => {
     if (!prompts?.length) return;
     const headers = ["ID", "Usuário", "Email", "Especialidade", "Destino", "Rating", "Tokens", "Criado em"];
-    const rows = prompts.map((p) => [p.id, p.user_name || "", p.user_email, p.especialidade || "", p.destino || "", p.rating || "", p.tokens_consumed || 0, p.created_at ? new Date(p.created_at).toLocaleDateString("pt-BR") : ""]);
+    const rows = prompts.map((p) => [
+      p.id,
+      p.user_name || "",
+      p.user_email,
+      p.especialidade || "",
+      p.destino || "",
+      p.rating || "",
+      p.tokens_consumed || 0,
+      p.created_at ? new Date(p.created_at).toLocaleDateString("pt-BR") : "",
+    ]);
     const csv = [headers, ...rows].map((r) => r.join(",")).join("\n");
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement("a"); a.href = url; a.download = `prompts_${new Date().toISOString().split("T")[0]}.csv`; a.click(); URL.revokeObjectURL(url);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `prompts_${new Date().toISOString().split("T")[0]}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   const handleDelete = async (id: string) => {
     if (!confirm("Excluir este prompt permanentemente?")) return;
-    try { await deletePrompt.mutateAsync(id); toast({ title: "Prompt excluído" }); setSelectedId(null); }
-    catch (err: any) { toast({ title: "Erro", description: err.message, variant: "destructive" }); }
+    try {
+      await deletePrompt.mutateAsync(id);
+      toast({ title: "Prompt excluído" });
+      setSelectedId(null);
+    } catch (err: any) {
+      toast({ title: "Erro", description: err.message, variant: "destructive" });
+    }
   };
 
   return (
     <>
-      <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-        <button className="adm-btn outline" onClick={handleExport} disabled={!prompts?.length}><Download size={14} /> CSV</button>
-        <div className="filter-input" style={{ width: 280 }}>
+      <div className="pgp-toolbar">
+        <button className="adm-btn outline" onClick={handleExport} disabled={!prompts?.length}>
+          <Download size={14} /> CSV
+        </button>
+        <div className="filter-input pgp-filter-input">
           <Search size={14} />
-          <input placeholder="Buscar tarefa ou especialidade..." value={search} onChange={(e) => handleSearch(e.target.value)} />
+          <input
+            placeholder="Buscar tarefa ou especialidade..."
+            value={search}
+            onChange={(e) => handleSearch(e.target.value)}
+          />
         </div>
       </div>
 
-      <div className="table-card">
+      <div className="table-card pgp-table-card">
         <table>
-          <thead><tr>
-            {["Usuário", "Org", "Especialidade", "Tarefa", "Destino", "Rating", "Tokens", "Data", ""].map((h) => <th key={h}>{h}</th>)}
-          </tr></thead>
+          <thead>
+            <tr>
+              {["Usuário", "Org", "Especialidade", "Tarefa", "Destino", "Rating", "Tokens", "Data", ""].map((h) => (
+                <th key={h}>{h}</th>
+              ))}
+            </tr>
+          </thead>
           <tbody>
-            {isLoading && <tr><td colSpan={9} style={{ textAlign: "center", padding: "40px 16px", color: "var(--adm-text-soft)" }}>Carregando...</td></tr>}
+            {isLoading && (
+              <tr>
+                <td colSpan={9} className="pgp-empty-cell">Carregando...</td>
+              </tr>
+            )}
             {prompts?.map((p, i) => (
               <tr key={`${p.id}-${i}`} className="clickable" onClick={() => setSelectedId(p.id!)}>
                 <td>
-                  <div style={{ fontWeight: 600, fontSize: 12 }}>{p.user_name || "—"}</div>
-                  <div style={{ fontSize: 10, fontFamily: "var(--adm-mono)", color: "var(--adm-text-soft)" }}>{p.user_email}</div>
+                  <div className="pgp-user-name">{p.user_name || "—"}</div>
+                  <div className="pgp-user-mail">{p.user_email}</div>
                 </td>
-                <td style={{ color: "var(--adm-text-soft)" }}>{p.org_name || "—"}</td>
+                <td className="pgp-soft">{p.org_name || "—"}</td>
                 <td>{p.especialidade || "—"}</td>
-                <td style={{ maxWidth: 160, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.tarefa || "—"}</td>
+                <td className="pgp-task-cell">{p.tarefa || "—"}</td>
                 <td><DestinoBadge destino={p.destino} /></td>
-                <td>{p.rating ? <span className="rating-num">{p.rating}</span> : <span style={{ color: "var(--adm-text-soft)" }}>—</span>}</td>
-                <td style={{ fontFamily: "var(--adm-mono)", fontSize: 11, color: "var(--adm-text-soft)" }}>{p.tokens_consumed ?? "—"}</td>
-                <td style={{ fontFamily: "var(--adm-mono)", fontSize: 11, color: "var(--adm-text-soft)" }}>{p.created_at ? new Date(p.created_at).toLocaleDateString("pt-BR") : "—"}</td>
+                <td className="td-center">{p.rating ? <span className="rating-num">{p.rating}</span> : <span className="pgp-soft">—</span>}</td>
+                <td className="pgp-mono pgp-soft td-center">{p.tokens_consumed ?? "—"}</td>
+                <td className="pgp-mono pgp-soft">{p.created_at ? new Date(p.created_at).toLocaleDateString("pt-BR") : "—"}</td>
                 <td>
                   <button className="adm-btn ghost" onClick={(e) => { e.stopPropagation(); setSelectedId(p.id!); }}><Eye size={14} /></button>
                 </td>
@@ -148,33 +205,38 @@ function SpecsTab() {
 
   const handleDelete = async (id: string) => {
     if (!confirm("Excluir esta spec permanentemente?")) return;
-    try { await deleteSpec.mutateAsync(id); toast({ title: "Spec excluída" }); setSelectedId(null); }
-    catch (err: any) { toast({ title: "Erro", description: err.message, variant: "destructive" }); }
+    try {
+      await deleteSpec.mutateAsync(id);
+      toast({ title: "Spec excluída" });
+      setSelectedId(null);
+    } catch (err: any) {
+      toast({ title: "Erro", description: err.message, variant: "destructive" });
+    }
   };
 
   return (
     <>
-      <div className="table-card">
+      <div className="table-card pgp-table-card">
         <table>
           <thead><tr>
             {["Usuário", "Projeto", "Frontend", "Backend", "DB", "Revenue", "Rating", "Data", ""].map((h) => <th key={h}>{h}</th>)}
           </tr></thead>
           <tbody>
-            {isLoading && <tr><td colSpan={9} style={{ textAlign: "center", padding: "40px 16px", color: "var(--adm-text-soft)" }}>Carregando...</td></tr>}
+            {isLoading && <tr><td colSpan={9} className="pgp-empty-cell">Carregando...</td></tr>}
             {specs?.map((s) => (
               <tr key={s.id} className="clickable" onClick={() => setSelectedId(s.id!)}>
                 <td>
-                  <div style={{ fontWeight: 600, fontSize: 12 }}>{s.user_name || "—"}</div>
-                  <div style={{ fontSize: 10, fontFamily: "var(--adm-mono)", color: "var(--adm-text-soft)" }}>{s.user_email}</div>
+                  <div className="pgp-user-name">{s.user_name || "—"}</div>
+                  <div className="pgp-user-mail">{s.user_email}</div>
                 </td>
                 <td>{s.project_name || "—"}</td>
-                <td style={{ fontSize: 11, color: "var(--adm-text-soft)" }}>{s.stack_frontend || "—"}</td>
-                <td style={{ fontSize: 11, color: "var(--adm-text-soft)" }}>{s.stack_backend || "—"}</td>
-                <td style={{ fontSize: 11, color: "var(--adm-text-soft)" }}>{s.stack_database || "—"}</td>
-                <td style={{ fontSize: 11, color: "var(--adm-text-soft)" }}>{s.revenue_model || "—"}</td>
-                <td>{s.rating ? <span className="rating-num">{s.rating}</span> : <span style={{ color: "var(--adm-text-soft)" }}>—</span>}</td>
-                <td style={{ fontFamily: "var(--adm-mono)", fontSize: 11, color: "var(--adm-text-soft)" }}>{s.created_at ? new Date(s.created_at).toLocaleDateString("pt-BR") : "—"}</td>
-                <td><button className="adm-btn ghost"><Eye size={14} /></button></td>
+                <td className="pgp-soft">{s.stack_frontend || "—"}</td>
+                <td className="pgp-soft">{s.stack_backend || "—"}</td>
+                <td className="pgp-soft">{s.stack_database || "—"}</td>
+                <td className="pgp-soft">{s.revenue_model || "—"}</td>
+                <td className="td-center">{s.rating ? <span className="rating-num">{s.rating}</span> : <span className="pgp-soft">—</span>}</td>
+                <td className="pgp-mono pgp-soft">{s.created_at ? new Date(s.created_at).toLocaleDateString("pt-BR") : "—"}</td>
+                <td><button className="adm-btn ghost" onClick={(e) => { e.stopPropagation(); setSelectedId(s.id!); }}><Eye size={14} /></button></td>
               </tr>
             ))}
           </tbody>
