@@ -259,6 +259,20 @@ export type Database = {
             foreignKeyName: "audit_logs_org_id_fkey"
             columns: ["org_id"]
             isOneToOne: false
+            referencedRelation: "billing_dashboard"
+            referencedColumns: ["org_id"]
+          },
+          {
+            foreignKeyName: "audit_logs_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "org_active_features"
+            referencedColumns: ["org_id"]
+          },
+          {
+            foreignKeyName: "audit_logs_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
@@ -329,6 +343,20 @@ export type Database = {
             foreignKeyName: "billing_invoices_org_id_fkey"
             columns: ["org_id"]
             isOneToOne: false
+            referencedRelation: "billing_dashboard"
+            referencedColumns: ["org_id"]
+          },
+          {
+            foreignKeyName: "billing_invoices_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "org_active_features"
+            referencedColumns: ["org_id"]
+          },
+          {
+            foreignKeyName: "billing_invoices_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
@@ -343,7 +371,62 @@ export type Database = {
             foreignKeyName: "billing_invoices_subscription_id_fkey"
             columns: ["subscription_id"]
             isOneToOne: false
+            referencedRelation: "billing_dashboard"
+            referencedColumns: ["subscription_id"]
+          },
+          {
+            foreignKeyName: "billing_invoices_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
             referencedRelation: "billing_subscriptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      billing_plan_features: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          enabled: boolean | null
+          feature_key: string
+          id: string
+          limit_value: number | null
+          product_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          enabled?: boolean | null
+          feature_key: string
+          id?: string
+          limit_value?: number | null
+          product_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          enabled?: boolean | null
+          feature_key?: string
+          id?: string
+          limit_value?: number | null
+          product_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "billing_plan_features_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "billing_dashboard"
+            referencedColumns: ["product_id"]
+          },
+          {
+            foreignKeyName: "billing_plan_features_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "billing_products"
             referencedColumns: ["id"]
           },
         ]
@@ -359,7 +442,9 @@ export type Database = {
           product_id: string
           recurring_interval: string | null
           stripe_last_sync_at: string | null
+          stripe_last_synced_at: string | null
           stripe_price_id: string | null
+          stripe_sync_lock: boolean | null
           stripe_synced: boolean
           trial_period_days: number | null
           unit_amount: number | null
@@ -375,7 +460,9 @@ export type Database = {
           product_id: string
           recurring_interval?: string | null
           stripe_last_sync_at?: string | null
+          stripe_last_synced_at?: string | null
           stripe_price_id?: string | null
+          stripe_sync_lock?: boolean | null
           stripe_synced?: boolean
           trial_period_days?: number | null
           unit_amount?: number | null
@@ -391,13 +478,22 @@ export type Database = {
           product_id?: string
           recurring_interval?: string | null
           stripe_last_sync_at?: string | null
+          stripe_last_synced_at?: string | null
           stripe_price_id?: string | null
+          stripe_sync_lock?: boolean | null
           stripe_synced?: boolean
           trial_period_days?: number | null
           unit_amount?: number | null
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "billing_prices_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "billing_dashboard"
+            referencedColumns: ["product_id"]
+          },
           {
             foreignKeyName: "billing_prices_product_id_fkey"
             columns: ["product_id"]
@@ -433,8 +529,10 @@ export type Database = {
           saas_specs_label: string | null
           sort_order: number
           stripe_last_sync_at: string | null
+          stripe_last_synced_at: string | null
           stripe_payment_link: string | null
           stripe_product_id: string | null
+          stripe_sync_lock: boolean | null
           stripe_synced: boolean
           total_quotas_label: string | null
           trial_label: string | null
@@ -465,8 +563,10 @@ export type Database = {
           saas_specs_label?: string | null
           sort_order?: number
           stripe_last_sync_at?: string | null
+          stripe_last_synced_at?: string | null
           stripe_payment_link?: string | null
           stripe_product_id?: string | null
+          stripe_sync_lock?: boolean | null
           stripe_synced?: boolean
           total_quotas_label?: string | null
           trial_label?: string | null
@@ -497,8 +597,10 @@ export type Database = {
           saas_specs_label?: string | null
           sort_order?: number
           stripe_last_sync_at?: string | null
+          stripe_last_synced_at?: string | null
           stripe_payment_link?: string | null
           stripe_product_id?: string | null
+          stripe_sync_lock?: boolean | null
           stripe_synced?: boolean
           total_quotas_label?: string | null
           trial_label?: string | null
@@ -580,8 +682,29 @@ export type Database = {
             foreignKeyName: "billing_subscriptions_org_id_fkey"
             columns: ["org_id"]
             isOneToOne: false
+            referencedRelation: "billing_dashboard"
+            referencedColumns: ["org_id"]
+          },
+          {
+            foreignKeyName: "billing_subscriptions_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "org_active_features"
+            referencedColumns: ["org_id"]
+          },
+          {
+            foreignKeyName: "billing_subscriptions_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "billing_subscriptions_price_id_fkey"
+            columns: ["price_id"]
+            isOneToOne: false
+            referencedRelation: "billing_dashboard"
+            referencedColumns: ["price_id"]
           },
           {
             foreignKeyName: "billing_subscriptions_price_id_fkey"
@@ -669,6 +792,20 @@ export type Database = {
             foreignKeyName: "billing_token_usage_org_id_fkey"
             columns: ["org_id"]
             isOneToOne: false
+            referencedRelation: "billing_dashboard"
+            referencedColumns: ["org_id"]
+          },
+          {
+            foreignKeyName: "billing_token_usage_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "org_active_features"
+            referencedColumns: ["org_id"]
+          },
+          {
+            foreignKeyName: "billing_token_usage_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
@@ -733,6 +870,20 @@ export type Database = {
             columns: ["org_id"]
             isOneToOne: false
             referencedRelation: "admin_users_overview"
+            referencedColumns: ["org_id"]
+          },
+          {
+            foreignKeyName: "build_projects_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "billing_dashboard"
+            referencedColumns: ["org_id"]
+          },
+          {
+            foreignKeyName: "build_projects_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "org_active_features"
             referencedColumns: ["org_id"]
           },
           {
@@ -849,6 +1000,20 @@ export type Database = {
             foreignKeyName: "credit_purchases_org_id_fkey"
             columns: ["org_id"]
             isOneToOne: false
+            referencedRelation: "billing_dashboard"
+            referencedColumns: ["org_id"]
+          },
+          {
+            foreignKeyName: "credit_purchases_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "org_active_features"
+            referencedColumns: ["org_id"]
+          },
+          {
+            foreignKeyName: "credit_purchases_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
@@ -920,6 +1085,74 @@ export type Database = {
             foreignKeyName: "credit_transactions_org_id_fkey"
             columns: ["org_id"]
             isOneToOne: false
+            referencedRelation: "billing_dashboard"
+            referencedColumns: ["org_id"]
+          },
+          {
+            foreignKeyName: "credit_transactions_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "org_active_features"
+            referencedColumns: ["org_id"]
+          },
+          {
+            foreignKeyName: "credit_transactions_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      org_credits: {
+        Row: {
+          balance: number
+          org_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          balance?: number
+          org_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          balance?: number
+          org_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "org_credits_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: true
+            referencedRelation: "admin_billing_overview"
+            referencedColumns: ["org_id"]
+          },
+          {
+            foreignKeyName: "org_credits_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: true
+            referencedRelation: "admin_users_overview"
+            referencedColumns: ["org_id"]
+          },
+          {
+            foreignKeyName: "org_credits_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: true
+            referencedRelation: "billing_dashboard"
+            referencedColumns: ["org_id"]
+          },
+          {
+            foreignKeyName: "org_credits_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: true
+            referencedRelation: "org_active_features"
+            referencedColumns: ["org_id"]
+          },
+          {
+            foreignKeyName: "org_credits_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: true
             referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
@@ -966,6 +1199,20 @@ export type Database = {
             columns: ["org_id"]
             isOneToOne: false
             referencedRelation: "admin_users_overview"
+            referencedColumns: ["org_id"]
+          },
+          {
+            foreignKeyName: "org_members_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "billing_dashboard"
+            referencedColumns: ["org_id"]
+          },
+          {
+            foreignKeyName: "org_members_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "org_active_features"
             referencedColumns: ["org_id"]
           },
           {
@@ -1138,6 +1385,20 @@ export type Database = {
             foreignKeyName: "profiles_personal_org_id_fkey"
             columns: ["personal_org_id"]
             isOneToOne: false
+            referencedRelation: "billing_dashboard"
+            referencedColumns: ["org_id"]
+          },
+          {
+            foreignKeyName: "profiles_personal_org_id_fkey"
+            columns: ["personal_org_id"]
+            isOneToOne: false
+            referencedRelation: "org_active_features"
+            referencedColumns: ["org_id"]
+          },
+          {
+            foreignKeyName: "profiles_personal_org_id_fkey"
+            columns: ["personal_org_id"]
+            isOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
@@ -1238,6 +1499,20 @@ export type Database = {
             foreignKeyName: "prompt_memory_org_id_fkey"
             columns: ["org_id"]
             isOneToOne: false
+            referencedRelation: "billing_dashboard"
+            referencedColumns: ["org_id"]
+          },
+          {
+            foreignKeyName: "prompt_memory_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "org_active_features"
+            referencedColumns: ["org_id"]
+          },
+          {
+            foreignKeyName: "prompt_memory_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
@@ -1294,6 +1569,20 @@ export type Database = {
             columns: ["org_id"]
             isOneToOne: false
             referencedRelation: "admin_users_overview"
+            referencedColumns: ["org_id"]
+          },
+          {
+            foreignKeyName: "referral_codes_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "billing_dashboard"
+            referencedColumns: ["org_id"]
+          },
+          {
+            foreignKeyName: "referral_codes_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "org_active_features"
             referencedColumns: ["org_id"]
           },
           {
@@ -1373,6 +1662,20 @@ export type Database = {
             foreignKeyName: "referrals_invitee_org_id_fkey"
             columns: ["invitee_org_id"]
             isOneToOne: false
+            referencedRelation: "billing_dashboard"
+            referencedColumns: ["org_id"]
+          },
+          {
+            foreignKeyName: "referrals_invitee_org_id_fkey"
+            columns: ["invitee_org_id"]
+            isOneToOne: false
+            referencedRelation: "org_active_features"
+            referencedColumns: ["org_id"]
+          },
+          {
+            foreignKeyName: "referrals_invitee_org_id_fkey"
+            columns: ["invitee_org_id"]
+            isOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
@@ -1395,6 +1698,20 @@ export type Database = {
             columns: ["referrer_org_id"]
             isOneToOne: false
             referencedRelation: "admin_users_overview"
+            referencedColumns: ["org_id"]
+          },
+          {
+            foreignKeyName: "referrals_referrer_org_id_fkey"
+            columns: ["referrer_org_id"]
+            isOneToOne: false
+            referencedRelation: "billing_dashboard"
+            referencedColumns: ["org_id"]
+          },
+          {
+            foreignKeyName: "referrals_referrer_org_id_fkey"
+            columns: ["referrer_org_id"]
+            isOneToOne: false
+            referencedRelation: "org_active_features"
             referencedColumns: ["org_id"]
           },
           {
@@ -1465,6 +1782,20 @@ export type Database = {
             columns: ["org_id"]
             isOneToOne: false
             referencedRelation: "admin_users_overview"
+            referencedColumns: ["org_id"]
+          },
+          {
+            foreignKeyName: "saas_specs_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "billing_dashboard"
+            referencedColumns: ["org_id"]
+          },
+          {
+            foreignKeyName: "saas_specs_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "org_active_features"
             referencedColumns: ["org_id"]
           },
           {
@@ -1550,10 +1881,69 @@ export type Database = {
             foreignKeyName: "sessions_org_id_fkey"
             columns: ["org_id"]
             isOneToOne: false
+            referencedRelation: "billing_dashboard"
+            referencedColumns: ["org_id"]
+          },
+          {
+            foreignKeyName: "sessions_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "org_active_features"
+            referencedColumns: ["org_id"]
+          },
+          {
+            foreignKeyName: "sessions_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]
+      }
+      subscriptions: {
+        Row: {
+          cancel_at_period_end: boolean | null
+          created_at: string | null
+          current_period_end: string | null
+          current_period_start: string | null
+          id: string
+          price_id: string
+          product_id: string
+          status: string
+          stripe_subscription_id: string | null
+          tenant_id: string
+          trial_end: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          cancel_at_period_end?: boolean | null
+          created_at?: string | null
+          current_period_end?: string | null
+          current_period_start?: string | null
+          id?: string
+          price_id: string
+          product_id: string
+          status: string
+          stripe_subscription_id?: string | null
+          tenant_id: string
+          trial_end?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          cancel_at_period_end?: boolean | null
+          created_at?: string | null
+          current_period_end?: string | null
+          current_period_start?: string | null
+          id?: string
+          price_id?: string
+          product_id?: string
+          status?: string
+          stripe_subscription_id?: string | null
+          tenant_id?: string
+          trial_end?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
       }
     }
     Views: {
@@ -1641,6 +2031,37 @@ export type Database = {
         }
         Relationships: []
       }
+      billing_dashboard: {
+        Row: {
+          billing_health: string | null
+          credit_balance: number | null
+          current_period_end: string | null
+          current_period_start: string | null
+          org_id: string | null
+          org_name: string | null
+          organization_active: boolean | null
+          price_id: string | null
+          product_id: string | null
+          product_name: string | null
+          recurring_interval: string | null
+          subscription_id: string | null
+          subscription_status:
+            | Database["public"]["Enums"]["subscription_status"]
+            | null
+          time_remaining: unknown
+          unit_amount: number | null
+        }
+        Relationships: []
+      }
+      org_active_features: {
+        Row: {
+          enabled: boolean | null
+          feature_key: string | null
+          limit_value: number | null
+          org_id: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       admin_get_kpis: {
@@ -1684,6 +2105,10 @@ export type Database = {
           p_key: string
           p_value: string
         }
+        Returns: undefined
+      }
+      change_subscription_plan: {
+        Args: { p_new_price_id: string; p_org_id: string }
         Returns: undefined
       }
       consume_credit: {
@@ -1741,6 +2166,10 @@ export type Database = {
         }[]
       }
       get_user_org_ids: { Args: never; Returns: string[] }
+      has_org_feature: {
+        Args: { p_feature_key: string; p_org_id: string }
+        Returns: boolean
+      }
       is_org_admin: { Args: { p_org_id: string }; Returns: boolean }
       is_super_admin: { Args: never; Returns: boolean }
       process_credit_purchase: {
@@ -1751,7 +2180,13 @@ export type Database = {
         Args: { p_code: string; p_invitee_org: string; p_invitee_user: string }
         Returns: string
       }
-      reset_monthly_credits: { Args: { p_org_id: string }; Returns: undefined }
+      reset_monthly_credits:
+        | { Args: never; Returns: undefined }
+        | { Args: { p_org_id: string }; Returns: undefined }
+      update_subscription_status_automatically: {
+        Args: never
+        Returns: undefined
+      }
     }
     Enums: {
       account_status:
