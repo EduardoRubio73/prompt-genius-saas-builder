@@ -347,12 +347,12 @@ function BillingTab({ orgId }: { orgId: string | undefined }) {
             {[1, 2, 3].map((i) => <Skeleton key={i} className="h-72 w-full rounded-xl" />)}
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 max-w-4xl">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 max-w-5xl">
             {(products ?? []).map((plan) => {
               const isCurrent = plan.plan_tier === currentTier;
-              const priceDisplay = plan.unit_amount != null
+              const priceValue = plan.unit_amount != null
                 ? `R$ ${(plan.unit_amount / 100).toFixed(0)}`
-                : "Sob consulta";
+                : "R$ 0";
 
               return (
                 <div
@@ -360,11 +360,23 @@ function BillingTab({ orgId }: { orgId: string | undefined }) {
                   className={cn(
                     "rounded-xl border p-5 transition-colors flex flex-col",
                     isCurrent ? "border-primary bg-primary/5 ring-1 ring-primary/30" : "border-border/60 bg-card/50",
-                    plan.is_featured && !isCurrent && "border-primary/40"
+                    plan.is_featured && !isCurrent && "border-primary/40 ring-1 ring-primary/20"
                   )}
                 >
-                  <div className="flex items-center justify-between mb-2">
-                    <h3 className="text-lg font-bold text-foreground">{plan.display_name ?? plan.id}</h3>
+                  {/* Featured badge */}
+                  {plan.is_featured && (
+                    <div className="flex justify-center -mt-8 mb-2">
+                      <span className="rounded-full bg-primary px-3 py-1 text-[10px] font-bold text-primary-foreground uppercase tracking-wider">
+                        ⭐ Mais popular
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Plan name */}
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-xs font-bold uppercase tracking-widest text-primary">
+                      {plan.display_name ?? plan.id}
+                    </h3>
                     {isCurrent && (
                       <span className="rounded-full bg-primary px-2.5 py-0.5 text-[10px] font-bold text-primary-foreground uppercase">
                         Atual
@@ -372,12 +384,20 @@ function BillingTab({ orgId }: { orgId: string | undefined }) {
                     )}
                   </div>
 
-                  <p className="text-2xl font-bold text-foreground">{priceDisplay}</p>
+                  {/* Price */}
+                  <div className="mb-1">
+                    <span className="text-sm text-muted-foreground align-top">R$</span>
+                    <span className="text-4xl font-extrabold text-foreground ml-1 tracking-tight">
+                      {plan.unit_amount != null ? (plan.unit_amount / 100).toFixed(0) : "0"}
+                    </span>
+                  </div>
                   {plan.period_label && (
                     <p className="text-xs text-muted-foreground mb-1">{plan.period_label}</p>
                   )}
                   {plan.trial_label && (
-                    <p className="text-xs text-primary font-medium mb-3">{plan.trial_label}</p>
+                    <p className="text-xs text-primary font-medium mb-4 mt-1 inline-flex items-center gap-1">
+                      <Check className="h-3 w-3" /> {plan.trial_label}
+                    </p>
                   )}
 
                   {plan.total_quotas_label && (
