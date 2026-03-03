@@ -65,10 +65,15 @@ function ProductsTab() {
   const toggleActive = async (p: any) => {
     const newActive = !p.is_active;
     try {
-      await updateProduct.mutateAsync({ id: p.id, updates: { is_active: newActive } });
-      // Cascade: sync all prices for this product
-      const { error } = await supabase.from("billing_prices").update({ is_active: newActive }).eq("product_id", p.id);
-      if (error) console.error("Failed to cascade price status:", error);
+      if (newActive) {
+        // Activate prices FIRST (trigger requires active price before product)
+        await supabase.from("billing_prices").update({ is_active: true }).eq("product_id", p.id);
+        await updateProduct.mutateAsync({ id: p.id, updates: { is_active: true } });
+      } else {
+        // Deactivate product FIRST, then cascade to prices
+        await updateProduct.mutateAsync({ id: p.id, updates: { is_active: false } });
+        await supabase.from("billing_prices").update({ is_active: false }).eq("product_id", p.id);
+      }
       toast({ title: newActive ? "Ativado" : "Desativado" });
     } catch (err: any) { toast({ title: "Erro", description: err.message, variant: "destructive" }); }
   };
