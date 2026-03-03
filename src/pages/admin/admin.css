@@ -561,3 +561,85 @@
 .table-card tbody tr:nth-child(3) { animation-delay: 60ms; }
 .table-card tbody tr:nth-child(4) { animation-delay: 90ms; }
 .table-card tbody tr:nth-child(5) { animation-delay: 120ms; }
+
+/* ─── Prompts v2 ─── */
+.pgp-page {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.pgp-page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.pgp-page-header-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.pgp-tabs {
+  border: 1px solid var(--adm-border);
+  background: var(--adm-surface);
+}
+.pgp-theme-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  border: 1px solid var(--adm-border);
+  background: var(--adm-surface2);
+  color: var(--adm-text-soft);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all .15s;
+}
+.pgp-theme-btn:hover {
+  border-color: var(--adm-accent);
+  color: var(--adm-accent);
+}
+.pgp-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.pgp-filter-input {
+  width: 100%;
+  max-width: 420px;
+}
+.pgp-table-card thead tr {
+  background: var(--adm-surface);
+}
+.pgp-empty-cell {
+  text-align: center;
+  padding: 40px 16px;
+  color: var(--adm-text-soft);
+}
+.pgp-user-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--adm-text);
+}
+.pgp-user-mail {
+  font-size: 11px;
+  color: var(--adm-text-soft);
+  font-family: var(--adm-mono);
+}
+.pgp-soft {
+  color: var(--adm-text-soft);
+}
+.pgp-task-cell {
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pgp-mono {
+  font-family: var(--adm-mono);
+  font-size: 11px;
+}
+.td-center {
+  text-align: center;
+}
