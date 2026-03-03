@@ -312,12 +312,13 @@ export function useAdminPrices() {
 
       const { data: products } = await supabase
         .from("billing_products")
-        .select("id, name, display_name");
+        .select("id, name, display_name, is_active");
 
       const productMap = new Map((products || []).map((p) => [p.id, p]));
       return (prices || []).map((p) => ({
         ...p,
         product_name: productMap.get(p.product_id)?.display_name || productMap.get(p.product_id)?.name || p.product_id,
+        product_is_active: productMap.get(p.product_id)?.is_active ?? false,
       }));
     },
   });

@@ -63,8 +63,14 @@ function ProductsTab() {
   };
 
   const toggleActive = async (p: any) => {
-    try { await updateProduct.mutateAsync({ id: p.id, updates: { is_active: !p.is_active } }); toast({ title: p.is_active ? "Desativado" : "Ativado" }); }
-    catch (err: any) { toast({ title: "Erro", description: err.message, variant: "destructive" }); }
+    const newActive = !p.is_active;
+    try {
+      await updateProduct.mutateAsync({ id: p.id, updates: { is_active: newActive } });
+      // Cascade: sync all prices for this product
+      const { error } = await supabase.from("billing_prices").update({ is_active: newActive }).eq("product_id", p.id);
+      if (error) console.error("Failed to cascade price status:", error);
+      toast({ title: newActive ? "Ativado" : "Desativado" });
+    } catch (err: any) { toast({ title: "Erro", description: err.message, variant: "destructive" }); }
   };
 
   const fields = [
@@ -156,11 +162,6 @@ function PricesTab() {
     catch (err: any) { toast({ title: "Erro", description: err.message, variant: "destructive" }); }
   };
 
-  const togglePriceActive = async (p: any) => {
-    try { await updatePrice.mutateAsync({ id: p.id, updates: { is_active: !p.is_active } }); toast({ title: "Status atualizado" }); }
-    catch (err: any) { toast({ title: "Erro", description: err.message, variant: "destructive" }); }
-  };
-
   return (
     <div className="table-card">
       <table>
@@ -168,9 +169,9 @@ function PricesTab() {
           {["Produto", "Preço ID", "Valor", "Moeda", "Intervalo", "Status", "Ações"].map((h) => <th key={h}>{h}</th>)}
         </tr></thead>
         <tbody>
-          {prices?.map((p) => (
+          {prices?.map((p: any) => (
             <tr key={p.id}>
-              <td style={{ fontWeight: 600 }}>{(p as any).product_name || p.product_id}</td>
+              <td style={{ fontWeight: 600 }}>{p.product_name || p.product_id}</td>
               <td style={{ fontSize: 10, fontFamily: "var(--adm-mono)", color: "var(--adm-text-soft)" }}>{p.id}</td>
               <td>
                 {editingId === p.id ? (
@@ -188,9 +189,9 @@ function PricesTab() {
               <td style={{ fontFamily: "var(--adm-mono)", color: "var(--adm-text-soft)" }}>{p.currency}</td>
               <td>{p.recurring_interval || "—"}</td>
               <td>
-                <button onClick={() => togglePriceActive(p)} className={`adm-badge ${p.is_active ? "active" : "inactive"}`} style={{ cursor: "pointer" }}>
-                  {p.is_active ? "Ativo" : "Inativo"}
-                </button>
+                <span className={`adm-badge ${p.product_is_active ? "active" : "inactive"}`} title="Status herdado do plano">
+                  {p.product_is_active ? "Ativo" : "Inativo"}
+                </span>
               </td>
               <td><button className="adm-btn ghost" onClick={() => { setEditingId(p.id); setEditAmount(((p.unit_amount || 0) / 100).toString()); }}><Pencil size={14} /></button></td>
             </tr>
