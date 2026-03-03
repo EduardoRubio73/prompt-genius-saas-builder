@@ -295,7 +295,10 @@ export function useUpdateProduct() {
       const { error } = await supabase.from("billing_products").update(updates).eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["admin-products"] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["admin-products"] });
+      qc.invalidateQueries({ queryKey: ["admin-prices"] });
+    },
   });
 }
 

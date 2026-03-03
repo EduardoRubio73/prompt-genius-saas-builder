@@ -56,25 +56,43 @@ function ProductsTab() {
     });
   };
 
+  // Unified activation/deactivation routine
+  const applyProductActivation = async (productId: string, activate: boolean) => {
+    if (activate) {
+      // 1) Activate prices first (trigger requires active price before product)
+      const { error: priceErr } = await supabase.from("billing_prices").update({ is_active: true }).eq("product_id", productId);
+      if (priceErr) throw new Error("Erro ao ativar preços: " + priceErr.message);
+      // 2) Now activate the product
+      await updateProduct.mutateAsync({ id: productId, updates: { is_active: true } });
+    } else {
+      // 1) Deactivate product first
+      await updateProduct.mutateAsync({ id: productId, updates: { is_active: false } });
+      // 2) Cascade deactivation to prices
+      const { error: priceErr } = await supabase.from("billing_prices").update({ is_active: false }).eq("product_id", productId);
+      if (priceErr) throw new Error("Erro ao desativar preços: " + priceErr.message);
+    }
+  };
+
   const saveEdit = async () => {
     if (!editing) return;
-    try { await updateProduct.mutateAsync({ id: editing.id, updates: form }); toast({ title: "Plano atualizado" }); setEditing(null); }
-    catch (err: any) { toast({ title: "Erro", description: err.message, variant: "destructive" }); }
+    try {
+      const statusChanged = form.is_active !== editing.is_active;
+      // Update all fields EXCEPT is_active (handle separately)
+      const { is_active, ...fieldUpdates } = form;
+      await updateProduct.mutateAsync({ id: editing.id, updates: fieldUpdates });
+      // If status changed, use the unified routine
+      if (statusChanged) {
+        await applyProductActivation(editing.id, form.is_active);
+      }
+      toast({ title: "Plano atualizado" });
+      setEditing(null);
+    } catch (err: any) { toast({ title: "Erro", description: err.message, variant: "destructive" }); }
   };
 
   const toggleActive = async (p: any) => {
-    const newActive = !p.is_active;
     try {
-      if (newActive) {
-        // Activate prices FIRST (trigger requires active price before product)
-        await supabase.from("billing_prices").update({ is_active: true }).eq("product_id", p.id);
-        await updateProduct.mutateAsync({ id: p.id, updates: { is_active: true } });
-      } else {
-        // Deactivate product FIRST, then cascade to prices
-        await updateProduct.mutateAsync({ id: p.id, updates: { is_active: false } });
-        await supabase.from("billing_prices").update({ is_active: false }).eq("product_id", p.id);
-      }
-      toast({ title: newActive ? "Ativado" : "Desativado" });
+      await applyProductActivation(p.id, !p.is_active);
+      toast({ title: !p.is_active ? "Ativado" : "Desativado" });
     } catch (err: any) { toast({ title: "Erro", description: err.message, variant: "destructive" }); }
   };
 
