@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAdminUsers, useUpdateProfile, useUpdateOrganization, useAdminCreditTransactions } from "@/hooks/admin/useAdminData";
+import { supabase } from "@/integrations/supabase/client";
 import { PlanBadge, StatusBadge } from "@/components/admin/Badges";
 import { ChevronLeft, ChevronRight, Search } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -82,10 +83,21 @@ function UserDetailDialog({ user, onClose }: { user: any; onClose: () => void })
     bonus_credits_total: 0,
   });
 
+  useEffect(() => {
+    if (user.org_id) {
+      supabase.from("organizations").select("plan_credits_total, bonus_credits_total").eq("id", user.org_id).single()
+        .then(({ data }) => {
+          if (data) {
+            setForm(f => ({ ...f, plan_credits_total: data.plan_credits_total, bonus_credits_total: data.bonus_credits_total }));
+          }
+        });
+    }
+  }, [user.org_id]);
+
   const saveChanges = async () => {
     try {
       if (user.user_id) await updateProfile.mutateAsync({ id: user.user_id, updates: { full_name: form.full_name } });
-      if (user.org_id) await updateOrg.mutateAsync({ id: user.org_id, updates: { plan_tier: form.plan_tier, is_active: form.is_active, plan_credits_total: form.plan_credits_total || undefined, bonus_credits_total: form.bonus_credits_total || undefined } });
+      if (user.org_id) await updateOrg.mutateAsync({ id: user.org_id, updates: { plan_tier: form.plan_tier, is_active: form.is_active, plan_credits_total: form.plan_credits_total, bonus_credits_total: form.bonus_credits_total } });
       toast({ title: "Usuário atualizado" });
       onClose();
     } catch (err: any) {
