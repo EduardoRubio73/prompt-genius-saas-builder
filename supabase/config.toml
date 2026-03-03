@@ -2,3 +2,6 @@ project_id = "pcaebfncvuvdguyjmyxm"
 
 [functions.refine-prompt]
 verify_jwt = false
+
+[functions.stripe-sync]
+verify_jwt = false
