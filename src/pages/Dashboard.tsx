@@ -277,12 +277,12 @@ export default function Dashboard() {
       <section>
         <div className="flex items-center justify-between mb-4">
           <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
-            Escolha um modo para começar
+            {noQuota ? "Cotas esgotadas — adquira mais para continuar" : "Escolha um modo para começar"}
           </p>
         </div>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {modes.map((mode) => (
-            <ModeCard key={mode.title} {...mode} />
+            <ModeCard key={mode.title} {...mode} disabled={noQuota} />
           ))}
         </div>
       </section>
