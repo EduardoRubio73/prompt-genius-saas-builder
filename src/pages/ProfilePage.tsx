@@ -200,6 +200,7 @@ function NotificationsTab() {
 // ── Billing Tab ──
 interface BillingProduct {
   id: string;
+  name: string;
   display_name: string | null;
   plan_tier: string;
   is_featured: boolean;
@@ -216,10 +217,33 @@ interface BillingProduct {
   trial_label: string | null;
   period_label: string | null;
   cta_label: string | null;
+  billing_price_id: string | null;
   stripe_price_id: string | null;
+  recurring_interval: string | null;
   sort_order: number;
   unit_amount: number | null;
 }
+
+interface BillingPrice {
+  id: string;
+  stripe_price_id: string | null;
+  unit_amount: number | null;
+  recurring_interval: string | null;
+}
+
+const selectPrimaryPrice = (prices: BillingPrice[] | null | undefined): BillingPrice | null => {
+  if (!prices?.length) return null;
+
+  const activeMonthly = prices.find((price) =>
+    price.recurring_interval === "month" &&
+    !!price.stripe_price_id &&
+    price.unit_amount != null
+  );
+
+  if (activeMonthly) return activeMonthly;
+
+  return prices.find((price) => !!price.stripe_price_id && price.unit_amount != null) ?? null;
+};
 
 function useBillingProducts() {
   return useQuery({
@@ -228,21 +252,28 @@ function useBillingProducts() {
       const { data, error } = await supabase
         .from("billing_products")
         .select(`
-          id, display_name, plan_tier, is_featured, sort_order,
+          id, name, display_name, plan_tier, is_featured, sort_order,
           total_quotas_label, prompts_label, prompts_detail,
           saas_specs_label, saas_specs_detail, misto_label, misto_detail,
           build_label, build_detail, members_label,
           trial_label, period_label, cta_label, stripe_price_id,
-          billing_prices(unit_amount)
+          billing_prices(id, stripe_price_id, unit_amount, recurring_interval)
         `)
         .eq("is_active", true)
         .order("sort_order", { ascending: true });
       if (error) throw error;
-      return (data ?? []).map((p: any) => ({
-        ...p,
-        unit_amount: p.billing_prices?.[0]?.unit_amount ?? null,
-        billing_prices: undefined,
-      })) as BillingProduct[];
+      return (data ?? []).map((p: any) => {
+        const primaryPrice = selectPrimaryPrice(p.billing_prices);
+
+        return {
+          ...p,
+          billing_price_id: primaryPrice?.id ?? null,
+          stripe_price_id: primaryPrice?.stripe_price_id ?? null,
+          unit_amount: primaryPrice?.unit_amount ?? null,
+          recurring_interval: primaryPrice?.recurring_interval ?? null,
+          billing_prices: undefined,
+        };
+      }) as BillingProduct[];
     },
   });
 }
@@ -369,10 +400,6 @@ function BillingTab({ orgId }: { orgId: string | undefined }) {
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 max-w-5xl">
             {(products ?? []).map((plan) => {
               const isCurrent = plan.plan_tier === currentTier;
-              const priceValue = plan.unit_amount != null
-                ? `R$ ${(plan.unit_amount / 100).toFixed(0)}`
-                : "R$ 0";
-
               return (
                 <div
                   key={plan.id}
@@ -394,7 +421,7 @@ function BillingTab({ orgId }: { orgId: string | undefined }) {
                   {/* Plan name */}
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="text-xs font-bold uppercase tracking-widest text-primary">
-                      {plan.display_name ?? plan.id}
+                      {plan.display_name ?? plan.name ?? plan.id}
                     </h3>
                     {isCurrent && (
                       <span className="rounded-full bg-primary px-2.5 py-0.5 text-[10px] font-bold text-primary-foreground uppercase">
