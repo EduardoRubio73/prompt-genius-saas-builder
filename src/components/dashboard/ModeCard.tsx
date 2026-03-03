@@ -8,20 +8,24 @@ interface ModeCardProps {
   icon: LucideIcon;
   tags: readonly string[];
   href: string;
-  accentClass: string; // tailwind text color class using semantic tokens
-  glowColor: string; // HSL string for glow shadow
+  accentClass: string;
+  glowColor: string;
+  disabled?: boolean;
 }
 
-export function ModeCard({ title, description, icon: Icon, tags, href, accentClass, glowColor }: ModeCardProps) {
+export function ModeCard({ title, description, icon: Icon, tags, href, accentClass, glowColor, disabled }: ModeCardProps) {
   const navigate = useNavigate();
 
   return (
     <button
-      onClick={() => navigate(href)}
+      onClick={() => !disabled && navigate(href)}
+      disabled={disabled}
       className={cn(
         "glass-card group relative flex w-full flex-col items-start gap-4 p-6 text-left transition-all duration-300",
-        "hover:scale-[1.02] hover:border-primary/30",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+        disabled
+          ? "opacity-40 cursor-not-allowed grayscale"
+          : "hover:scale-[1.02] hover:border-primary/30"
       )}
       style={{
         // @ts-ignore
@@ -29,14 +33,16 @@ export function ModeCard({ title, description, icon: Icon, tags, href, accentCla
       }}
     >
       {/* Glow effect */}
-      <div
-        className="pointer-events-none absolute inset-0 rounded-2xl opacity-0 transition-opacity duration-500 group-hover:opacity-100"
-        style={{
-          boxShadow: `0 0 40px 4px ${glowColor}`,
-        }}
-      />
+      {!disabled && (
+        <div
+          className="pointer-events-none absolute inset-0 rounded-2xl opacity-0 transition-opacity duration-500 group-hover:opacity-100"
+          style={{
+            boxShadow: `0 0 40px 4px ${glowColor}`,
+          }}
+        />
+      )}
 
-      <div className={cn("flex h-12 w-12 items-center justify-center rounded-xl bg-muted", accentClass)}>
+      <div className={cn("flex h-12 w-12 items-center justify-center rounded-xl bg-muted", disabled ? "text-muted-foreground" : accentClass)}>
         <Icon className="h-6 w-6" />
       </div>
 
@@ -59,10 +65,10 @@ export function ModeCard({ title, description, icon: Icon, tags, href, accentCla
       <span
         className={cn(
           "mt-auto inline-flex items-center gap-1.5 text-sm font-semibold transition-colors",
-          accentClass
+          disabled ? "text-muted-foreground" : accentClass
         )}
       >
-        Iniciar →
+        {disabled ? "Sem cotas disponíveis" : "Iniciar →"}
       </span>
     </button>
   );
