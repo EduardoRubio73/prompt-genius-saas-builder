@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutGrid, Users, Sparkles, CreditCard, Settings,
-  FileText, Flag, PanelLeftClose, PanelLeftOpen, Search,
+  FileText, Flag, PanelLeftClose, PanelLeftOpen, Search, LogOut,
 } from "lucide-react";
 import { useProfile } from "@/hooks/useProfile";
 import { useAuth } from "@/hooks/useAuth";
@@ -39,7 +39,7 @@ function getBreadcrumb(pathname: string) {
 export default function AdminLayout() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const { data: profile } = useProfile(user?.id);
   const breadcrumb = getBreadcrumb(location.pathname);
   const [collapsed, setCollapsed] = useState(false);
@@ -61,6 +61,11 @@ export default function AdminLayout() {
     navigate(path);
     setSearchOpen(false);
     setSearchQuery("");
+  };
+
+  const handleLogout = async () => {
+    await signOut();
+    navigate("/");
   };
 
   const searchResults = searchQuery.trim()
@@ -113,6 +118,16 @@ export default function AdminLayout() {
             style={{ width: "100%", justifyContent: "center" }}
           >
             {collapsed ? <PanelLeftOpen size={16} /> : <PanelLeftClose size={16} />}
+          </button>
+
+          <button
+            onClick={handleLogout}
+            className="adm-btn outline"
+            style={{ width: "100%", justifyContent: "center", marginTop: 8 }}
+            title="Sair"
+          >
+            <LogOut size={16} />
+            {!collapsed && <span>Sair</span>}
           </button>
         </div>
 
