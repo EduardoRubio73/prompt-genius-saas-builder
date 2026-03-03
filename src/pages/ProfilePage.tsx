@@ -448,6 +448,13 @@ export default function ProfilePage() {
 
       <div className="flex flex-col gap-6 sm:flex-row">
         <nav className="flex sm:flex-col gap-1 sm:w-48 shrink-0">
+          <button
+            onClick={() => navigate("/dashboard")}
+            className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors text-left text-muted-foreground hover:bg-muted hover:text-foreground"
+          >
+            <LayoutDashboard className="h-4 w-4" /> Dashboard
+          </button>
+          <div className="border-b sm:border-b sm:my-1" />
           {TABS.map((tab) => {
             const Icon = tab.icon;
             return (
