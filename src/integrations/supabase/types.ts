@@ -429,6 +429,13 @@ export type Database = {
             referencedRelation: "billing_products"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "billing_plan_features_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "v_active_stripe_plans"
+            referencedColumns: ["product_id"]
+          },
         ]
       }
       billing_prices: {
@@ -500,6 +507,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "billing_products"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "billing_prices_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "v_active_stripe_plans"
+            referencedColumns: ["product_id"]
           },
         ]
       }
@@ -712,6 +726,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "billing_prices"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "billing_subscriptions_price_id_fkey"
+            columns: ["price_id"]
+            isOneToOne: false
+            referencedRelation: "v_active_stripe_plans"
+            referencedColumns: ["price_id"]
           },
         ]
       }
@@ -1900,6 +1921,27 @@ export type Database = {
           },
         ]
       }
+      stripe_sync_log: {
+        Row: {
+          created_at: string | null
+          id: string
+          payload: Json | null
+          sync_type: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          payload?: Json | null
+          sync_type?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          payload?: Json | null
+          sync_type?: string | null
+        }
+        Relationships: []
+      }
       subscriptions: {
         Row: {
           cancel_at_period_end: boolean | null
@@ -2062,6 +2104,20 @@ export type Database = {
         }
         Relationships: []
       }
+      v_active_stripe_plans: {
+        Row: {
+          display_name: string | null
+          name: string | null
+          plan_tier: Database["public"]["Enums"]["plan_tier"] | null
+          price_id: string | null
+          product_id: string | null
+          recurring_interval: string | null
+          sort_order: number | null
+          stripe_price_id: string | null
+          unit_amount: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       admin_get_kpis: {
@@ -2183,6 +2239,19 @@ export type Database = {
       reset_monthly_credits:
         | { Args: never; Returns: undefined }
         | { Args: { p_org_id: string }; Returns: undefined }
+      sync_stripe_price: {
+        Args: {
+          p_amount: number
+          p_interval: string
+          p_price_id: string
+          p_product_id: string
+        }
+        Returns: undefined
+      }
+      sync_stripe_product: {
+        Args: { p_name: string; p_product_id: string }
+        Returns: undefined
+      }
       update_subscription_status_automatically: {
         Args: never
         Returns: undefined
