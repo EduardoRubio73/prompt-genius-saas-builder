@@ -1,45 +1,36 @@
 
 
-## Fix: Admin Credits Not Saving
+## Plan: Fix Profile Billing Tab — Use Quotas + Dynamic Plans from DB
 
-### Root Causes
-
-1. **Missing data**: `admin_users_overview` view doesn't include `plan_credits_total`, `bonus_credits_total`, etc. The form defaults to `0` instead of the real values.
-2. **JS falsy bug**: Line 88 uses `form.plan_credits_total || undefined` — when the value is `0`, `0 || undefined` evaluates to `undefined`, so the field is omitted from the update.
+### Problem
+The "Plano & Cobrança" tab on `/profile?tab=billing`:
+1. Shows **token consumption** (0/10.000 tokens) instead of **quota/cotas** balance
+2. Has **hardcoded** plan cards (Free/Pro/Enterprise) instead of fetching from `billing_products` like the landing page
+3. Missing detailed plan info (prompts, SaaS specs, misto, build labels)
 
 ### Solution
 
-**1. Fetch actual org data when dialog opens**
-- In `UserDetailDialog`, add a query to fetch the organization record directly from `organizations` table using `user.org_id`
-- Initialize `plan_credits_total` and `bonus_credits_total` from the real org data
+**Rewrite `BillingTab` in `ProfilePage.tsx`:**
 
-**2. Fix the save logic**
-- Remove `|| undefined` guards — always send `plan_credits_total` and `bonus_credits_total` to the update call
-- This ensures `0` is a valid value that gets saved
+1. **Replace token budget with quota balance** — use `useQuotaBalance` hook instead of `useTokenBudget`. Show plan quotas used/total + bonus quotas used/total, matching the `QuotaCard` style on the dashboard.
+
+2. **Fetch plans dynamically from `billing_products`** — same query as landing page: `billing_products` with `billing_prices(unit_amount)`, ordered by `sort_order`. Show `display_name`, price, `total_quotas_label`, `period_label`, `trial_label`, feature rows (prompts, saas_specs, misto, build, members labels).
+
+3. **Highlight current plan** — compare user's org `plan_tier` with each product's `plan_tier` to mark the current one.
+
+4. **Upgrade button** — for non-current plans, link to `stripe_payment_link` if available, otherwise show disabled button.
 
 ### Files to Edit
 
 | File | Change |
 |------|--------|
-| `src/pages/admin/AdminUsers.tsx` | Add org data fetch, fix form init + save logic |
+| `src/pages/ProfilePage.tsx` | Rewrite `BillingTab`: replace `useTokenBudget` with `useQuotaBalance`, fetch `billing_products` dynamically, show quota bars + detailed plan cards |
 
-### Details
+### Implementation Details
 
-```tsx
-// Add useEffect to load real org data
-const [orgData, setOrgData] = useState<any>(null);
-useEffect(() => {
-  if (user.org_id) {
-    supabase.from("organizations").select("plan_credits_total, bonus_credits_total, plan_credits_used, bonus_credits_used").eq("id", user.org_id).single()
-      .then(({ data }) => {
-        if (data) {
-          setForm(f => ({ ...f, plan_credits_total: data.plan_credits_total, bonus_credits_total: data.bonus_credits_total }));
-        }
-      });
-  }
-}, [user.org_id]);
-
-// Fix save — no more || undefined
-updates: { plan_tier: form.plan_tier, is_active: form.is_active, plan_credits_total: form.plan_credits_total, bonus_credits_total: form.bonus_credits_total }
-```
+- Import `useQuotaBalance` from `@/hooks/useQuotaBalance`
+- Fetch org's `plan_tier` from `organizations` table via profile's `personal_org_id`
+- Show two progress bars: "Cotas do Plano" (plan_used/plan_total) and "Cotas Bônus" (bonus_used/bonus_total)
+- Plan cards: 3-column grid with all labels from DB, matching landing page info
+- Current plan highlighted with primary border + "ATUAL" badge
 
