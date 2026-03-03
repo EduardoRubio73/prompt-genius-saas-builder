@@ -1,52 +1,95 @@
 
 
-## Plan: Dynamic Pricing Cards from Database
+## Plan: Full Admin CRUD Overhaul
 
-### Problem
-1. Pricing cards on the landing page have **hardcoded wrong prices** (R$37, R$97, R$297) instead of the actual DB values (R$49, R$149, R$499).
-2. Card content (quotas, features, trial info) is hardcoded in JSX — user wants to manage it from `billing_products`.
+This is a large-scope upgrade to transform the admin panel from read-only dashboards into a full CRUD management system.
 
 ### Database Changes
 
-**Add columns to `billing_products`** to store all card metadata (modeled after the PRO card structure):
-
+**1. Add `stripe_payment_link` column to `billing_products`**
 ```sql
-ALTER TABLE public.billing_products ADD COLUMN IF NOT EXISTS display_name text;
-ALTER TABLE public.billing_products ADD COLUMN IF NOT EXISTS is_featured boolean NOT NULL DEFAULT false;
-ALTER TABLE public.billing_products ADD COLUMN IF NOT EXISTS total_quotas_label text;        -- e.g. "120 cotas / mês"
-ALTER TABLE public.billing_products ADD COLUMN IF NOT EXISTS prompts_label text;              -- e.g. "60 / mês"
-ALTER TABLE public.billing_products ADD COLUMN IF NOT EXISTS prompts_detail text;             -- e.g. "(1 cota)"
-ALTER TABLE public.billing_products ADD COLUMN IF NOT EXISTS saas_specs_label text;           -- e.g. "30 / mês"
-ALTER TABLE public.billing_products ADD COLUMN IF NOT EXISTS saas_specs_detail text;          -- e.g. "(2 cotas)"
-ALTER TABLE public.billing_products ADD COLUMN IF NOT EXISTS misto_label text;                -- e.g. "30 / mês"
-ALTER TABLE public.billing_products ADD COLUMN IF NOT EXISTS misto_detail text;               -- e.g. "(3 cotas)"
-ALTER TABLE public.billing_products ADD COLUMN IF NOT EXISTS build_label text;                -- e.g. "24 / mês"
-ALTER TABLE public.billing_products ADD COLUMN IF NOT EXISTS build_detail text;               -- e.g. "(5 cotas)"
-ALTER TABLE public.billing_products ADD COLUMN IF NOT EXISTS members_label text;              -- e.g. "Até 10"
-ALTER TABLE public.billing_products ADD COLUMN IF NOT EXISTS features jsonb NOT NULL DEFAULT '[]'; -- array of {text, included}
-ALTER TABLE public.billing_products ADD COLUMN IF NOT EXISTS trial_label text;                -- e.g. "✓ 7 dias grátis"
-ALTER TABLE public.billing_products ADD COLUMN IF NOT EXISTS period_label text;               -- e.g. "por mês"
-ALTER TABLE public.billing_products ADD COLUMN IF NOT EXISTS cta_label text;                  -- e.g. "Assinar Pro"
-ALTER TABLE public.billing_products ADD COLUMN IF NOT EXISTS sort_order integer NOT NULL DEFAULT 0;
+ALTER TABLE public.billing_products ADD COLUMN IF NOT EXISTS stripe_payment_link text;
 ```
 
-Then **populate** each product with data matching the reference image:
+**2. Add admin RLS policies for write access**
+Currently `billing_products` and `billing_prices` only allow SELECT. Need INSERT/UPDATE/DELETE policies for super_admin on both tables. Also need admin write policies on `organizations` and `profiles` for user management.
 
-- **Free**: display_name="Free", prompts="3 / mês", saas_specs="1 / mês", misto="—", build="—", total="5 / mês", features=[{text:"Trial de 7 dias completo",included:true}, {text:"Código de indicação (+5 cotas)",included:true}, {text:"Few-shot learning",included:false}, {text:"Modo Misto",included:false}, {text:"BUILD Engine",included:false}], cta="Começar Grátis", period="para sempre", trial="✓ 7 dias com recursos Basic", sort_order=0
-- **Starter (Basic)**: display_name="Basic", price R$49, similar structure with 35 total, sort_order=1
-- **Pro**: display_name="Pro", is_featured=true, price R$149, 120 cotas total, sort_order=2
-- **Enterprise**: display_name="Enterprise", price R$499, Ilimitado, sort_order=3
+```sql
+-- billing_products: admin full CRUD
+CREATE POLICY "admin_products_all" ON public.billing_products FOR ALL TO authenticated
+  USING (is_super_admin()) WITH CHECK (is_super_admin());
+
+-- billing_prices: admin full CRUD  
+CREATE POLICY "admin_prices_all" ON public.billing_prices FOR ALL TO authenticated
+  USING (is_super_admin()) WITH CHECK (is_super_admin());
+
+-- profiles: admin can update any profile
+CREATE POLICY "admin_profiles_update" ON public.profiles FOR UPDATE TO authenticated
+  USING (is_super_admin());
+
+-- profiles: admin can select all
+CREATE POLICY "admin_profiles_select" ON public.profiles FOR SELECT TO authenticated
+  USING (is_super_admin());
+
+-- organizations: admin can update any org
+CREATE POLICY "admin_orgs_update" ON public.organizations FOR UPDATE TO authenticated
+  USING (is_super_admin());
+
+-- organizations: admin can select all
+CREATE POLICY "admin_orgs_select" ON public.organizations FOR SELECT TO authenticated
+  USING (is_super_admin());
+```
 
 ### Frontend Changes
 
-**`src/pages/landing/LandingPage.tsx`** — Replace the hardcoded pricing section (lines 424-523) with a dynamic component:
-1. Fetch `billing_products` joined with `billing_prices` using `supabase` client (no auth needed — both tables have `SELECT` policy with `true`).
-2. Render cards dynamically from the fetched data, mapping `features` JSONB to the feature list, using `unit_amount` from `billing_prices` for the price display.
-3. Keep the same CSS classes (`pc`, `pc-name`, `pc-price`, `lrow`, etc.) for visual consistency.
+**1. AdminBilling.tsx — Full rewrite with 3 tabs**
+- **Planos (Products)**: List all `billing_products` with toggle active/inactive, edit dialog (display_name, features, labels, stripe_payment_link, cta_label, etc.), create new product
+- **Preços (Prices)**: List `billing_prices`, edit unit_amount, toggle active, link to product
+- **Assinaturas**: Keep existing subscriptions + invoices view
 
-### Summary
-- 1 migration: add ~17 columns to `billing_products` + populate data
-- 1 file edited: `LandingPage.tsx` — dynamic pricing cards from DB
-- Prices will always match `billing_prices.unit_amount`
-- User can update all card content directly from the `billing_products` table
+**2. AdminUsers.tsx — CRUD upgrade**
+- Click row → open detail dialog showing all user info (profile, org, plan, credits, prompts count, specs count, sessions)
+- Edit button: update full_name, email, plan_tier, account_status, is_active, credits (plan_credits_total, bonus_credits_total)
+- Deactivate/reactivate org toggle
+- View credit transactions history for that user/org
+
+**3. AdminPrompts.tsx — Detail dialog on row click**
+- Click any prompt row → open a detail dialog showing ALL fields: especialidade, persona, tarefa, objetivo, contexto, formato, restricoes, referencias, prompt_gerado (full text), rating, rating_comment, tags, tokens_consumed, destino, session_mode, created_at
+- Add tab or toggle to also show SaaS Specs (from `admin_saas_specs_overview`) with: project_name, stack_frontend, stack_backend, stack_database, revenue_model, answers, spec_md, rating
+- Delete prompt/spec action
+
+**4. AdminAIConfig.tsx — Add Model Configs CRUD**
+- Currently only manages `admin_settings` key-value pairs
+- Add a section for `admin_model_configs` table: list all models, toggle active/default, edit temperature/max_tokens/cost fields, create new model config
+
+**5. AdminFlags.tsx — Full CRUD**
+- Currently can only toggle existing flags
+- Add: create new flag (flag key, label, description, rollout_pct)
+- Edit existing flag details
+- Delete flag
+
+**6. New page: AdminOrganizations.tsx (optional, embedded in users)**
+- Manage orgs: view all orgs, edit plan_tier, credits, account_status, max_members
+
+### Files to Create/Edit
+
+| File | Action |
+|------|--------|
+| Migration SQL | Add `stripe_payment_link` + admin RLS policies |
+| `src/pages/admin/AdminBilling.tsx` | Full rewrite: 3-tab CRUD for products, prices, subscriptions |
+| `src/pages/admin/AdminUsers.tsx` | Add detail/edit dialog, CRUD actions |
+| `src/pages/admin/AdminPrompts.tsx` | Add detail dialog with all fields, SaaS specs tab, delete |
+| `src/pages/admin/AdminAIConfig.tsx` | Add model configs CRUD section |
+| `src/pages/admin/AdminFlags.tsx` | Add create/edit/delete flag dialogs |
+| `src/hooks/admin/useAdminData.ts` | Add mutations for products, prices, users, prompts, model configs, flags CRUD |
+| `src/integrations/supabase/types.ts` | Auto-updated after migration |
+
+### Implementation Order
+1. Migration (schema + RLS policies)
+2. `useAdminData.ts` — add all missing mutations
+3. `AdminBilling.tsx` — products/prices CRUD with stripe_payment_link
+4. `AdminUsers.tsx` — detail dialog + edit
+5. `AdminPrompts.tsx` — detail dialog with all prompt/spec fields
+6. `AdminAIConfig.tsx` — model configs CRUD
+7. `AdminFlags.tsx` — create/edit/delete
 
