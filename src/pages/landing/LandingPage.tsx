@@ -1,7 +1,30 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 import logo from "@/assets/logo-landing.png";
 import "./landing.css";
+
+interface PricingProduct {
+  id: string;
+  display_name: string | null;
+  is_featured: boolean;
+  total_quotas_label: string | null;
+  prompts_label: string | null;
+  prompts_detail: string | null;
+  saas_specs_label: string | null;
+  saas_specs_detail: string | null;
+  misto_label: string | null;
+  misto_detail: string | null;
+  build_label: string | null;
+  build_detail: string | null;
+  members_label: string | null;
+  features: { text: string; included: boolean }[];
+  trial_label: string | null;
+  period_label: string | null;
+  cta_label: string | null;
+  sort_order: number;
+  unit_amount: number | null;
+}
 
 /* ── Terms & Privacy Content ── */
 const TERMS_CONTENT =
@@ -214,6 +237,25 @@ function FaqItem({ q, a }: {q: string;a: string;}) {
 export default function LandingPage() {
   const navigate = useNavigate();
   const [modal, setModal] = useState<"terms" | "privacy" | "contact" | null>(null);
+  const [pricingProducts, setPricingProducts] = useState<PricingProduct[]>([]);
+
+  useEffect(() => {
+    async function fetchPricing() {
+      const { data } = await supabase
+        .from("billing_products")
+        .select("id, display_name, is_featured, total_quotas_label, prompts_label, prompts_detail, saas_specs_label, saas_specs_detail, misto_label, misto_detail, build_label, build_detail, members_label, features, trial_label, period_label, cta_label, sort_order, billing_prices(unit_amount)")
+        .eq("is_active", true)
+        .order("sort_order");
+      if (data) {
+        setPricingProducts(data.map((p: any) => ({
+          ...p,
+          features: Array.isArray(p.features) ? p.features : [],
+          unit_amount: p.billing_prices?.[0]?.unit_amount ?? null,
+        })));
+      }
+    }
+    fetchPricing();
+  }, []);
 
   // Intersection Observer for reveal animations
   useEffect(() => {
@@ -422,98 +464,42 @@ export default function LandingPage() {
           <div className="tag" style={{ margin: "0 auto 18px", display: "table" }}>Planos</div>
           <h2 className="sh" style={{ textAlign: "center", margin: "0 auto" }}>Simples, transparente,<br /><TypeWriter words={["sem surpresas", "sem asteriscos", "sem letras miúdas"]} /></h2>
           <div className="plans-grid">
-            {/* Free */}
-            <div className="pc">
-              <div className="pc-name">Free</div>
-              <div className="pc-price"><sup>R$</sup>0</div>
-              <div className="pc-period">para sempre</div>
-              <div className="pc-trial">✓ 7 dias com recursos Basic</div>
-              <div className="pc-div" />
-              <div className="pc-limits">
-                <div className="lrow"><span className="ll">✨ Prompts</span><span className="lv">3 / mês</span></div>
-                <div className="lrow"><span className="ll">🏗️ SaaS Specs</span><span className="lv">1 / mês</span></div>
-                <div className="lrow"><span className="ll">⚡ Modo Misto</span><span className="lv">—</span></div>
-                <div className="lrow"><span className="ll">⚙️ BUILD Engine</span><span className="lv">—</span></div>
-                <div className="lrow"><span className="ll">📦 Total</span><span className="lv">5 / mês</span></div>
-              </div>
-              <ul className="pc-feats">
-                <li>Trial de 7 dias completo</li>
-                <li>Código de indicação (+5 cotas)</li>
-                <li className="no">Few-shot learning</li>
-                <li className="no">Modo Misto</li>
-                <li className="no">BUILD Engine</li>
-              </ul>
-              <button className="pc-btn pc-btn-o" onClick={() => navigate("/login")}>Começar Grátis</button>
-            </div>
-            {/* Basic */}
-            <div className="pc">
-              <div className="pc-name">Basic</div>
-              <div className="pc-price"><sup>R$</sup>37</div>
-              <div className="pc-period">por mês</div>
-              <div className="pc-trial">✓ 7 dias grátis</div>
-              <div className="pc-div" />
-              <div className="pc-limits">
-                <div className="lrow"><span className="ll">✨ Prompts</span><span className="lv c">20 / mês</span></div>
-                <div className="lrow"><span className="ll">🏗️ SaaS Specs</span><span className="lv c">10 / mês</span></div>
-                <div className="lrow"><span className="ll">⚡ Modo Misto</span><span className="lv c">5 / mês</span></div>
-                <div className="lrow"><span className="ll">📦 Total</span><span className="lv c">35 / mês</span></div>
-              </div>
-              <ul className="pc-feats">
-                <li>Todos os 7 destinos</li>
-                <li>Histórico completo</li>
-                <li>Export Markdown</li>
-                <li>Código de indicação</li>
-                <li className="no">Few-shot avançado</li>
-              </ul>
-              <button className="pc-btn pc-btn-o" onClick={() => navigate("/login")}>Assinar Basic</button>
-            </div>
-            {/* Pro */}
-            <div className="pc feat">
-              <div className="pc-top-badge">⚡ Mais popular</div>
-              <div className="pc-name" style={{ color: "var(--v)", marginTop: 24 }}>Pro</div>
-              <div className="pc-price" style={{ background: "linear-gradient(90deg,var(--c),var(--v))", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}><sup>R$</sup>97</div>
-              <div className="pc-period">por mês</div>
-              <div className="pc-trial">✓ 7 dias grátis</div>
-              <div className="pc-div" />
-              <div className="pc-limits">
-                <div className="lrow"><span className="ll">✨ Prompts (1 cota)</span><span className="lv v">60 / mês</span></div>
-                <div className="lrow"><span className="ll">🏗️ SaaS Specs (2 cotas)</span><span className="lv v">30 / mês</span></div>
-                <div className="lrow"><span className="ll">⚡ Modo Misto (3 cotas)</span><span className="lv v">30 / mês</span></div>
-                <div className="lrow"><span className="ll">⚙️ BUILD Engine (5 cotas)</span><span className="lv v">24 / mês</span></div>
-                <div className="lrow"><span className="ll">📦 Total</span><span className="lv v">120 cotas / mês</span></div>
-              </div>
-              <ul className="pc-feats">
-                <li>Tudo do Basic</li>
-                <li>Few-shot avançado</li>
-                <li>Modo Misto completo</li>
-                <li>BUILD Engine completo</li>
-                <li>Suporte prioritário</li>
-              </ul>
-              <button className="pc-btn pc-btn-g" onClick={() => navigate("/login")}>Assinar Pro</button>
-            </div>
-            {/* Enterprise */}
-            <div className="pc">
-              <div className="pc-name">Enterprise</div>
-              <div className="pc-price"><sup>R$</sup>297</div>
-              <div className="pc-period">por mês</div>
-              <div className="pc-trial">✓ 7 dias grátis</div>
-              <div className="pc-div" />
-              <div className="pc-limits">
-                <div className="lrow"><span className="ll">✨ Prompts</span><span className="lv g">Ilimitado</span></div>
-                <div className="lrow"><span className="ll">🏗️ SaaS Specs</span><span className="lv g">Ilimitado</span></div>
-                <div className="lrow"><span className="ll">⚡ Modo Misto</span><span className="lv g">Ilimitado</span></div>
-                <div className="lrow"><span className="ll">⚙️ BUILD Engine</span><span className="lv g">Ilimitado</span></div>
-                <div className="lrow"><span className="ll">👥 Membros</span><span className="lv g">Até 10</span></div>
-              </div>
-              <ul className="pc-feats">
-                <li>Tudo do Pro</li>
-                <li>Multi-usuário (10 seats)</li>
-                <li>Admin dashboard</li>
-                <li>BUILD Engine ilimitado</li>
-                <li>Onboarding dedicado</li>
-              </ul>
-              <button className="pc-btn pc-btn-o" onClick={() => navigate("/login")}>Assinar Enterprise</button>
-            </div>
+            {pricingProducts.map((p) => {
+              const price = p.unit_amount != null ? Math.round(p.unit_amount / 100) : 0;
+              const colorClass = p.is_featured ? "v" : p.sort_order === 3 ? "g" : p.sort_order === 1 ? "c" : "";
+              return (
+                <div key={p.id} className={`pc${p.is_featured ? " feat" : ""}`}>
+                  {p.is_featured && <div className="pc-top-badge">⚡ Mais popular</div>}
+                  <div className="pc-name" style={p.is_featured ? { color: "var(--v)", marginTop: 24 } : undefined}>{p.display_name}</div>
+                  <div className="pc-price" style={p.is_featured ? { background: "linear-gradient(90deg,var(--c),var(--v))", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" } : undefined}>
+                    <sup>R$</sup>{price}
+                  </div>
+                  <div className="pc-period">{p.period_label}</div>
+                  {p.trial_label && <div className="pc-trial">{p.trial_label}</div>}
+                  <div className="pc-div" />
+                  <div className="pc-limits">
+                    <div className="lrow"><span className="ll">✨ Prompts {p.prompts_detail}</span><span className={`lv ${colorClass}`}>{p.prompts_label}</span></div>
+                    <div className="lrow"><span className="ll">🏗️ SaaS Specs {p.saas_specs_detail}</span><span className={`lv ${colorClass}`}>{p.saas_specs_label}</span></div>
+                    <div className="lrow"><span className="ll">⚡ Modo Misto {p.misto_detail}</span><span className={`lv ${colorClass}`}>{p.misto_label}</span></div>
+                    {p.build_label && p.build_label !== "—" ? (
+                      <div className="lrow"><span className="ll">⚙️ BUILD Engine {p.build_detail}</span><span className={`lv ${colorClass}`}>{p.build_label}</span></div>
+                    ) : (
+                      <div className="lrow"><span className="ll">⚙️ BUILD Engine</span><span className="lv">—</span></div>
+                    )}
+                    {p.members_label && (
+                      <div className="lrow"><span className="ll">👥 Membros</span><span className={`lv ${colorClass}`}>{p.members_label}</span></div>
+                    )}
+                    <div className="lrow"><span className="ll">📦 Total</span><span className={`lv ${colorClass}`}>{p.total_quotas_label}</span></div>
+                  </div>
+                  <ul className="pc-feats">
+                    {p.features.map((f, i) => (
+                      <li key={i} className={f.included ? "" : "no"}>{f.text}</li>
+                    ))}
+                  </ul>
+                  <button className={`pc-btn ${p.is_featured ? "pc-btn-g" : "pc-btn-o"}`} onClick={() => navigate("/login")}>{p.cta_label}</button>
+                </div>
+              );
+            })}
           </div>
 
           <div className="cost-note rv" style={{ marginTop: 40 }}>
