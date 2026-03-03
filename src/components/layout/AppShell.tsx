@@ -1,4 +1,4 @@
-import { Moon, Sun, LogOut, Settings, User, ChevronDown } from "lucide-react";
+import { Moon, Sun, LogOut, Settings, User, ChevronDown, CreditCard } from "lucide-react";
 import { useTheme } from "@/hooks/useTheme";
 import { useNavigate } from "react-router-dom";
 import logo from "@/assets/logo.png";
@@ -96,6 +96,9 @@ export function AppShell({
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => navigate("/profile?tab=notifications")} className="gap-2 text-sm cursor-pointer">
                   <Settings className="h-4 w-4" /> Configurações
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate("/profile?tab=billing")} className="gap-2 text-sm cursor-pointer">
+                  <CreditCard className="h-4 w-4" /> Plano & Cobrança
                 </DropdownMenuItem>
 
                 <DropdownMenuSeparator />

@@ -163,6 +163,7 @@ export default function Dashboard() {
   const orgId = profile?.personal_org_id ?? undefined;
   const { data: stats, isLoading: statsLoading } = useOrgStats(orgId);
   const { data: quota, isLoading: quotaLoading } = useQuotaBalance(orgId);
+  const navigate = useNavigate();
 
   const firstName = profile?.full_name?.split(" ")[0] ?? "";
   const isLoading = profileLoading || statsLoading;
@@ -274,12 +275,45 @@ export default function Dashboard() {
         </div>
       </section>
 
+      {/* ── Upgrade banner when quotas exhausted ──────────────────────────── */}
+      {noQuota && (
+        <section className="mb-6">
+          <div className="rounded-xl border border-warning/40 bg-warning/5 p-5 flex flex-col sm:flex-row items-start sm:items-center gap-4">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-warning/15 text-warning">
+              <Crown className="h-5 w-5" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-bold text-foreground">Suas cotas acabaram!</p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Faça upgrade do seu plano ou adquira cotas avulsas para continuar criando.
+              </p>
+            </div>
+            <div className="flex gap-2 shrink-0">
+              <button
+                onClick={() => navigate("/profile?tab=billing")}
+                className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground hover:bg-primary/90 transition-colors"
+              >
+                <Crown className="h-3.5 w-3.5" /> Ver planos
+              </button>
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* ── Mode cards ─────────────────────────────────────────────────────── */}
       <section>
         <div className="flex items-center justify-between mb-4">
           <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
             {noQuota ? "Cotas esgotadas — adquira mais para continuar" : "Escolha um modo para começar"}
           </p>
+          {noQuota && (
+            <button
+              onClick={() => navigate("/profile?tab=billing")}
+              className="text-xs font-semibold text-primary hover:underline"
+            >
+              Adquirir cotas →
+            </button>
+          )}
         </div>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {modes.map((mode) => (
