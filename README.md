@@ -268,6 +268,26 @@ Todas as tabelas possuem RLS habilitado:
 | `saas-spec` | Gera especificação técnica SaaS em Markdown |
 | `build` | Gera projeto completo (PRD, ERD, RBAC, SQL, Prompt, Deploy Guide) |
 
+### `create-checkout-session`
+- **Localização**: `supabase/functions/create-checkout-session/index.ts`
+- **JWT**: Habilitado (`verify_jwt = true`)
+- **Payload**: `{ "price_id": "<billing_prices.id>", "org_id": "<uuid-opcional>" }`
+- **Retorno**: `{ "url": "https://checkout.stripe.com/..." }`
+- **Segurança de contexto**:
+  - Requer organização por `org_id` no payload, header `x-org-id` ou claim `org_id` do JWT.
+  - Valida acesso com `assert_org_context_access(p_org_id)` (membership + coerência de claim).
+
+### Secrets obrigatórios para Billing/Checkout
+
+```bash
+supabase secrets set \
+  STRIPE_SECRET_KEY=sk_live_xxx \
+  STRIPE_CHECKOUT_SUCCESS_URL=https://app.seudominio.com/profile?checkout=success&session_id={CHECKOUT_SESSION_ID} \
+  STRIPE_CHECKOUT_CANCEL_URL=https://app.seudominio.com/profile?checkout=cancel
+```
+
+> A `STRIPE_CHECKOUT_SUCCESS_URL` deve incluir `{CHECKOUT_SESSION_ID}` para reconciliação no retorno do Stripe.
+
 ---
 
 ## Rotas da Aplicação
