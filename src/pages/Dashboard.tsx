@@ -361,7 +361,7 @@ export default function Dashboard() {
 
       {/* ── Upgrade banner when quotas exhausted ── */}
       {noQuota && (
-        <section className="mb-6">
+        <section className="mb-6 animate-fade-in" style={{ animationDelay: "600ms", animationFillMode: "backwards" }}>
           <div className="rounded-xl border border-destructive/40 bg-destructive/5 p-5 flex flex-col sm:flex-row items-start sm:items-center gap-4">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-destructive/15 text-destructive">
               <Crown className="h-5 w-5" />
