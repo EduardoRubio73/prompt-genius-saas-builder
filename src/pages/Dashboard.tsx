@@ -279,7 +279,7 @@ export default function Dashboard() {
       onSignOut={signOut}
     >
       {/* ── Greeting ── */}
-      <section className="mb-8">
+      <section className="mb-8 animate-fade-in" style={{ animationFillMode: "backwards" }}>
         {isLoading ? (
           <div className="space-y-2">
             <Skeleton className="h-9 w-64" />
