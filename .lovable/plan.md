@@ -1,45 +1,32 @@
 
 
-## Fix: Admin Credits Not Saving
+## Plano: Tooltips de consumo de cotas compartilhadas
 
-### Root Causes
+### Objetivo
+Adicionar tooltips informativos que expliquem que todas as ações consomem da mesma bolsa de cotas, com cálculo dinâmico de "quantas ações restam" por tipo.
 
-1. **Missing data**: `admin_users_overview` view doesn't include `plan_credits_total`, `bonus_credits_total`, etc. The form defaults to `0` instead of the real values.
-2. **JS falsy bug**: Line 88 uses `form.plan_credits_total || undefined` — when the value is `0`, `0 || undefined` evaluates to `undefined`, so the field is omitted from the update.
+### Alterações
 
-### Solution
+#### 1. `src/components/dashboard/QuotaCard.tsx`
+- Adicionar tooltip no título "Cotas do período" explicando que as cotas são compartilhadas
+- Adicionar `InfoTooltip` em cada item de `ACTION_COSTS` mostrando `floor(creditsRemaining / cost)` ações possíveis
+- Receber `creditsRemaining` já disponível via props
 
-**1. Fetch actual org data when dialog opens**
-- In `UserDetailDialog`, add a query to fetch the organization record directly from `organizations` table using `user.org_id`
-- Initialize `plan_credits_total` and `bonus_credits_total` from the real org data
+#### 2. `src/pages/ProfilePage.tsx` (BillingTab)
+- Adicionar texto explicativo abaixo do título "Cotas do Plano": *"As cotas são compartilhadas entre todas as ações."*
+- Nos cards de plano, adicionar `InfoTooltip` ao lado de "X cotas / mês" explicando o modelo de consumo compartilhado
 
-**2. Fix the save logic**
-- Remove `|| undefined` guards — always send `plan_credits_total` and `bonus_credits_total` to the update call
-- This ensures `0` is a valid value that gets saved
+#### 3. `src/pages/landing/LandingPage.tsx`
+- Adicionar nota explicativa abaixo da linha "Total cotas/mês" nos cards de pricing: *"Cotas compartilhadas entre todas as ações"*
 
-### Files to Edit
+### Componente utilizado
+`InfoTooltip` existente em `src/components/ui/info-tooltip.tsx` — reutilizado em todos os pontos.
 
-| File | Change |
-|------|--------|
-| `src/pages/admin/AdminUsers.tsx` | Add org data fetch, fix form init + save logic |
+### Arquivos alterados
 
-### Details
-
-```tsx
-// Add useEffect to load real org data
-const [orgData, setOrgData] = useState<any>(null);
-useEffect(() => {
-  if (user.org_id) {
-    supabase.from("organizations").select("plan_credits_total, bonus_credits_total, plan_credits_used, bonus_credits_used").eq("id", user.org_id).single()
-      .then(({ data }) => {
-        if (data) {
-          setForm(f => ({ ...f, plan_credits_total: data.plan_credits_total, bonus_credits_total: data.bonus_credits_total }));
-        }
-      });
-  }
-}, [user.org_id]);
-
-// Fix save — no more || undefined
-updates: { plan_tier: form.plan_tier, is_active: form.is_active, plan_credits_total: form.plan_credits_total, bonus_credits_total: form.bonus_credits_total }
-```
+| Arquivo | Mudança |
+|---------|---------|
+| `src/components/dashboard/QuotaCard.tsx` | Tooltip no título + tooltip por ação com cálculo dinâmico |
+| `src/pages/ProfilePage.tsx` | Texto explicativo + tooltip nos cards de plano |
+| `src/pages/landing/LandingPage.tsx` | Nota de cotas compartilhadas nos cards de pricing |
 
