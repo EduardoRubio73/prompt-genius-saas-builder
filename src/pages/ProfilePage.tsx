@@ -204,24 +204,13 @@ interface BillingProduct {
   display_name: string | null;
   plan_tier: string;
   is_featured: boolean;
-  total_quotas_label: string | null;
-  prompts_label: string | null;
-  prompts_detail: string | null;
-  saas_specs_label: string | null;
-  saas_specs_detail: string | null;
-  misto_label: string | null;
-  misto_detail: string | null;
-  build_label: string | null;
-  build_detail: string | null;
-  members_label: string | null;
-  trial_label: string | null;
-  period_label: string | null;
-  cta_label: string | null;
-  billing_price_id: string | null;
-  stripe_price_id: string | null;
+  credits_limit: number;
   recurring_interval: string | null;
+  cta_label: string | null;
+  stripe_price_id: string | null;
   sort_order: number;
   unit_amount: number | null;
+  trial_period_days: number | null;
 }
 
 function useBillingProducts() {
@@ -239,24 +228,13 @@ function useBillingProducts() {
         display_name: p.display_name,
         plan_tier: p.plan_tier,
         is_featured: p.is_featured ?? false,
-        sort_order: p.sort_order || 0,
-        total_quotas_label: p.total_quotas_label ?? null,
-        prompts_label: p.prompts_label ?? null,
-        prompts_detail: p.prompts_detail ?? null,
-        saas_specs_label: p.saas_specs_label ?? null,
-        saas_specs_detail: p.saas_specs_detail ?? null,
-        misto_label: p.misto_label ?? null,
-        misto_detail: p.misto_detail ?? null,
-        build_label: p.build_label ?? null,
-        build_detail: p.build_detail ?? null,
-        members_label: p.members_label ?? null,
-        trial_label: p.trial_label ?? null,
-        period_label: p.period_label ?? p.recurring_interval,
+        credits_limit: p.credits_limit ?? 0,
+        recurring_interval: p.recurring_interval ?? null,
         cta_label: p.cta_label ?? "Assinar",
-        billing_price_id: p.price_id,
         stripe_price_id: p.stripe_price_id,
-        recurring_interval: p.recurring_interval,
+        sort_order: p.sort_order || 0,
         unit_amount: p.unit_amount,
+        trial_period_days: p.trial_period_days ?? null,
       })) as BillingProduct[];
     },
   });
