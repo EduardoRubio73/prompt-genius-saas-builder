@@ -522,6 +522,9 @@ export type Database = {
           build_detail: string | null
           build_label: string | null
           created_at: string
+          credit_costs: Json | null
+          credit_unit_cost: number | null
+          credits_limit: number | null
           cta_label: string | null
           description: string | null
           display_name: string | null
@@ -556,6 +559,9 @@ export type Database = {
           build_detail?: string | null
           build_label?: string | null
           created_at?: string
+          credit_costs?: Json | null
+          credit_unit_cost?: number | null
+          credits_limit?: number | null
           cta_label?: string | null
           description?: string | null
           display_name?: string | null
@@ -590,6 +596,9 @@ export type Database = {
           build_detail?: string | null
           build_label?: string | null
           created_at?: string
+          credit_costs?: Json | null
+          credit_unit_cost?: number | null
+          credits_limit?: number | null
           cta_label?: string | null
           description?: string | null
           display_name?: string | null
@@ -2179,6 +2188,10 @@ export type Database = {
           p_value: string
         }
         Returns: undefined
+      }
+      calc_plan_credits: {
+        Args: { plan_price: number; unit_cost: number }
+        Returns: number
       }
       change_subscription_plan: {
         Args: { p_new_price_id: string; p_org_id: string }
