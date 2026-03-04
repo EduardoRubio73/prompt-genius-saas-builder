@@ -39,14 +39,12 @@ Deno.serve(async (req) => {
 
     if (stripe) {
       if (stripeProductId) {
-        // Atualizar produto no Stripe
         await stripe.products.update(stripeProductId, {
           name: body.display_name || body.name,
           active: body.is_active ?? true,
           metadata: { product_id: productId, plan_tier: body.plan_tier },
         });
       } else {
-        // Criar produto no Stripe
         const sp = await stripe.products.create({
           name: body.display_name || body.name,
           active: body.is_active ?? true,
@@ -56,20 +54,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Atualizar produto no banco
-    const { error: productError } = await admin.from("billing_products").update({
-      name: body.name,
-      display_name: body.display_name,
-      plan_tier: body.plan_tier,
-      sort_order: Number(body.sort_order ?? 0),
-      is_featured: Boolean(body.is_featured),
-      is_active: body.is_active ?? true,
-      metadata,
-      ...(stripeProductId ? { stripe_product_id: stripeProductId, stripe_synced: true, stripe_last_synced_at: new Date().toISOString() } : {}),
-    }).eq("id", productId);
-    if (productError) throw productError;
-
-    // === STRIPE: Preço ===
+    // === PREÇO PRIMEIRO (antes do produto, para satisfazer o trigger) ===
     const { data: existingPrice, error: selectError } = await admin
       .from("billing_prices")
       .select("*")
@@ -114,7 +99,6 @@ Deno.serve(async (req) => {
       let stripePriceId = existingPrice.stripe_price_id;
 
       if (stripe && stripeProductId && amountChanged && newUnitAmount > 0) {
-        // Stripe não permite alterar amount — criar novo Price, desativar antigo
         const sp = await stripe.prices.create({
           product: stripeProductId,
           unit_amount: newUnitAmount,
@@ -125,7 +109,6 @@ Deno.serve(async (req) => {
         });
         stripePriceId = sp.id;
 
-        // Desativar preço antigo no Stripe
         if (existingPrice.stripe_price_id) {
           await stripe.prices.update(existingPrice.stripe_price_id, { active: false });
         }
@@ -140,6 +123,19 @@ Deno.serve(async (req) => {
       }).eq("id", existingPrice.id);
       if (error) throw error;
     }
+
+    // === PRODUTO POR ÚLTIMO (preço já está ativo, trigger não bloqueia) ===
+    const { error: productError } = await admin.from("billing_products").update({
+      name: body.name,
+      display_name: body.display_name,
+      plan_tier: body.plan_tier,
+      sort_order: Number(body.sort_order ?? 0),
+      is_featured: Boolean(body.is_featured),
+      is_active: body.is_active ?? true,
+      metadata,
+      ...(stripeProductId ? { stripe_product_id: stripeProductId, stripe_synced: true, stripe_last_synced_at: new Date().toISOString() } : {}),
+    }).eq("id", productId);
+    if (productError) throw productError;
 
     return new Response(
       JSON.stringify({ ok: true }),
