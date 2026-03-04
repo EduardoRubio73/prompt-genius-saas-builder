@@ -25,6 +25,7 @@ export function useQuotaBalance(orgId: string | undefined) {
   return useQuery({
     queryKey: ["quota-balance", orgId],
     queryFn: async () => {
+      // Fetch plan balance from view
       const { data, error } = await supabase
         .from("v_user_plan_balance")
         .select("*")
@@ -50,6 +51,29 @@ export function useQuotaBalance(orgId: string | undefined) {
         percentUsed = 0;
       }
 
+      // Fetch real bonus data from get_credit_balance RPC
+      let bonusTotal = 0;
+      let bonusUsed = 0;
+      let bonusRemaining = 0;
+      let accountStatus = data.subscription_status ?? "active";
+      let trialEndsAt: string | null = null;
+      let resetAt = data.current_period_end ?? null;
+
+      if (orgId) {
+        const { data: creditData } = await supabase
+          .rpc("get_credit_balance", { p_org_id: orgId });
+
+        if (creditData && creditData.length > 0) {
+          const cb = creditData[0];
+          bonusTotal = cb.bonus_total ?? 0;
+          bonusUsed = cb.bonus_used ?? 0;
+          bonusRemaining = cb.bonus_remaining ?? 0;
+          accountStatus = cb.account_status ?? accountStatus;
+          trialEndsAt = cb.trial_ends_at ? String(cb.trial_ends_at) : null;
+          resetAt = cb.reset_at ? String(cb.reset_at) : resetAt;
+        }
+      }
+
       return {
         plan_name: data.plan_name ?? null,
         plan_price: Number(data.plan_price ?? 0),
@@ -58,17 +82,16 @@ export function useQuotaBalance(orgId: string | undefined) {
         credits_remaining: creditsRemaining,
         percent_used: percentUsed,
         current_period_end: data.current_period_end ?? null,
-        // backward compatibility for current UI consumers
         plan_total: creditsLimit,
         plan_used: creditsUsed,
         plan_remaining: creditsRemaining,
-        bonus_total: 0,
-        bonus_used: 0,
-        bonus_remaining: 0,
-        total_remaining: creditsRemaining,
-        account_status: data.subscription_status ?? "active",
-        trial_ends_at: null,
-        reset_at: data.current_period_end ?? null,
+        bonus_total: bonusTotal,
+        bonus_used: bonusUsed,
+        bonus_remaining: bonusRemaining,
+        total_remaining: creditsRemaining + bonusRemaining,
+        account_status: accountStatus,
+        trial_ends_at: trialEndsAt,
+        reset_at: resetAt,
       } as QuotaBalance;
     },
     enabled: !!orgId,

@@ -1,9 +1,7 @@
-import { Sparkles, FileCode, Layers, TrendingUp, Clock, Star, ArrowRight, BarChart3, Crown, Rocket } from "lucide-react";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Sparkles, FileCode, Layers, Rocket, Crown, Zap, Gift, Calendar, ArrowRight, BarChart3, Clock, Star, TrendingUp } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
-import { ModeCard } from "@/components/dashboard/ModeCard";
-import { QuotaCard } from "@/components/dashboard/QuotaCard";
 import { Skeleton } from "@/components/ui/skeleton";
+import { InfoTooltip } from "@/components/ui/info-tooltip";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
 import { useOrgStats } from "@/hooks/useOrgStats";
@@ -12,7 +10,7 @@ import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import ReferralBonusCard from "@/components/referral/ReferralBonusCard";
 
-// ── Helpers ──────────────────────────────────────────────────────────────────
+// ── Helpers ──
 
 function getGreeting(): string {
   const h = new Date().getHours();
@@ -26,104 +24,197 @@ function formatNumber(n: number): string {
   return String(n);
 }
 
-// ── Modes config ─────────────────────────────────────────────────────────────
+// ── Modes config ──
 
-const modes = [
+const MODES = [
   {
-    title: "Modo Prompt",
-    description: "Transforme ideias vagas em instruções precisas para qualquer LLM com geração guiada por IA.",
+    title: "Prompt",
+    description: "Texto livre → prompt estruturado para qualquer LLM",
     icon: Sparkles,
-    tags: ["Few-shot", "Chain-of-Thought", "Multi-plataforma"],
+    cost: 1,
     href: "/prompt",
-    accentClass: "text-primary",
-    glowColor: "hsla(254, 96%, 67%, 0.15)",
+    accent: "text-primary",
+    bgAccent: "bg-primary/10",
+    borderAccent: "border-primary/20",
+    glowColor: "hsla(var(--primary) / 0.15)",
   },
   {
-    title: "Modo SaaS Spec",
-    description: "Gere documentação técnica completa, pronta para o desenvolvimento do seu produto.",
+    title: "SaaS Spec",
+    description: "7 perguntas → spec técnica completa",
     icon: FileCode,
-    tags: ["Stack", "Banco de dados", "Arquitetura"],
+    cost: 2,
     href: "/saas-spec",
-    accentClass: "text-accent",
-    glowColor: "hsla(220, 80%, 56%, 0.15)",
+    accent: "text-accent",
+    bgAccent: "bg-accent/10",
+    borderAccent: "border-accent/20",
+    glowColor: "hsla(var(--accent) / 0.15)",
   },
   {
     title: "Modo Misto",
-    description: "Prompt → Spec em um único fluxo automatizado, do zero ao documento técnico.",
+    description: "Prompt + Spec em um único fluxo automatizado",
     icon: Layers,
-    tags: ["End-to-end", "Automatizado", "Completo"],
+    cost: 2,
     href: "/mixed",
-    accentClass: "text-secondary",
-    glowColor: "hsla(160, 100%, 45%, 0.15)",
+    accent: "text-secondary",
+    bgAccent: "bg-secondary/10",
+    borderAccent: "border-secondary/20",
+    glowColor: "hsla(var(--secondary) / 0.15)",
   },
   {
     title: "BUILD Engine",
-    description: "Transforme uma ideia em pacote deploy-ready: PRD, SQL, prompts e documentação completa.",
+    description: "Ideia → pacote deploy-ready completo",
     icon: Rocket,
-    tags: ["PRD", "SQL", "Deploy-ready"],
+    cost: 5,
     href: "/build",
-    accentClass: "text-primary",
-    glowColor: "hsla(254, 96%, 67%, 0.15)",
+    accent: "text-primary",
+    bgAccent: "bg-primary/10",
+    borderAccent: "border-primary/20",
+    glowColor: "hsla(var(--primary) / 0.15)",
   },
 ] as const;
 
-// ── Sub-components ────────────────────────────────────────────────────────────
+// ── Summary Card ──
 
-function StatCard({
+function SummaryCard({
+  icon: Icon,
   label,
   value,
-  icon: Icon,
-  accent = false,
-  loading = false,
   sub,
-  tip,
+  iconClass,
+  loading,
 }: {
+  icon: React.ElementType;
   label: string;
   value: string | number;
-  icon: React.ElementType;
-  accent?: boolean;
-  loading?: boolean;
   sub?: string;
-  tip?: string;
+  iconClass?: string;
+  loading?: boolean;
 }) {
-  const card = (
-    <div className={cn(
-      "glass-card flex flex-col gap-3 p-5",
-      accent && "border-primary/30 bg-primary/5"
-    )}>
-      <div className="flex items-center justify-between">
-        <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{label}</span>
-        <div className={cn(
-          "flex h-8 w-8 items-center justify-center rounded-lg",
-          accent ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground"
-        )}>
-          <Icon className="h-4 w-4" />
-        </div>
-      </div>
-      {loading ? (
-        <Skeleton className="h-8 w-20" />
-      ) : (
-        <div>
-          <p className={cn("text-2xl font-bold tracking-tight", accent ? "text-primary" : "text-foreground")}>
-            {value}
-          </p>
-          {sub && <p className="text-xs text-muted-foreground mt-0.5">{sub}</p>}
-        </div>
-      )}
-    </div>
-  );
-
-  if (!tip) return card;
-
   return (
-    <Tooltip>
-      <TooltipTrigger asChild>{card}</TooltipTrigger>
-      <TooltipContent><p className="text-xs">{tip}</p></TooltipContent>
-    </Tooltip>
+    <div className="rounded-xl border border-border/60 bg-card/50 p-4 flex items-center gap-3 transition-all hover:shadow-md hover:border-border">
+      <div className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-xl", iconClass ?? "bg-muted text-muted-foreground")}>
+        <Icon className="h-5 w-5" />
+      </div>
+      <div className="min-w-0">
+        <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">{label}</p>
+        {loading ? (
+          <Skeleton className="h-6 w-16 mt-0.5" />
+        ) : (
+          <>
+            <p className="text-lg font-bold text-foreground tracking-tight leading-tight">{value}</p>
+            {sub && <p className="text-[10px] text-muted-foreground">{sub}</p>}
+          </>
+        )}
+      </div>
+    </div>
   );
 }
 
-// Removed UsageDetailCard - replaced by QuotaCard
+// ── Mode Action Card ──
+
+function ModeActionCard({
+  title,
+  description,
+  icon: Icon,
+  cost,
+  href,
+  accent,
+  bgAccent,
+  borderAccent,
+  creditsRemaining,
+  disabled,
+}: {
+  title: string;
+  description: string;
+  icon: React.ElementType;
+  cost: number;
+  href: string;
+  accent: string;
+  bgAccent: string;
+  borderAccent: string;
+  creditsRemaining: number;
+  disabled?: boolean;
+}) {
+  const navigate = useNavigate();
+  const maxActions = Math.floor(creditsRemaining / cost);
+
+  return (
+    <button
+      onClick={() => !disabled && navigate(href)}
+      disabled={disabled}
+      className={cn(
+        "group relative flex flex-col items-center gap-3 p-6 rounded-xl border text-center transition-all duration-300",
+        "hover:shadow-xl hover:scale-[1.02]",
+        disabled
+          ? "opacity-40 cursor-not-allowed grayscale border-border/40 bg-muted/30"
+          : cn("border-border/60 bg-card/50 hover:border-primary/30 shadow-lg", borderAccent)
+      )}
+    >
+      <div className={cn(
+        "flex h-14 w-14 items-center justify-center rounded-2xl transition-colors",
+        disabled ? "bg-muted text-muted-foreground" : cn(bgAccent, accent)
+      )}>
+        <Icon className="h-7 w-7" />
+      </div>
+
+      <div className="space-y-1">
+        <h3 className="font-heading text-base font-bold tracking-tight">{title}</h3>
+        <p className="text-xs text-muted-foreground leading-relaxed">{description}</p>
+      </div>
+
+      <div className="flex items-center gap-1.5 mt-1">
+        <span className={cn("text-xs font-bold", disabled ? "text-muted-foreground" : accent)}>
+          {cost} {cost === 1 ? "cota" : "cotas"}
+        </span>
+        <InfoTooltip
+          content={`Com seu saldo atual você pode gerar até ${maxActions} ${title}${maxActions !== 1 ? "s" : ""}.`}
+        />
+      </div>
+
+      <p className="text-[10px] text-muted-foreground tabular-nums">
+        {disabled ? "Sem cotas" : `até ${maxActions} possíveis`}
+      </p>
+
+      <span
+        className={cn(
+          "mt-auto inline-flex items-center gap-1 text-sm font-semibold transition-colors",
+          disabled ? "text-muted-foreground" : accent
+        )}
+      >
+        {disabled ? "Indisponível" : "Iniciar →"}
+      </span>
+    </button>
+  );
+}
+
+// ── Usage Progress Bar ──
+
+function UsageProgressBar({ used, limit, className }: { used: number; limit: number; className?: string }) {
+  const pct = limit > 0 ? Math.min(100, Math.max(0, (used / limit) * 100)) : 0;
+
+  const barColor =
+    pct >= 100 ? "from-destructive to-destructive" :
+    pct >= 80 ? "from-yellow-400 to-yellow-500" :
+    pct >= 50 ? "from-yellow-300 to-yellow-400" :
+    "from-primary to-primary";
+
+  return (
+    <div className={cn("space-y-1.5", className)}>
+      <div className="relative h-3 w-full rounded-full bg-muted overflow-hidden">
+        <div
+          className={cn("h-full rounded-full bg-gradient-to-r transition-all duration-700", barColor)}
+          style={{ width: `${pct}%` }}
+        />
+      </div>
+      <div className="flex items-center justify-between text-xs text-muted-foreground tabular-nums">
+        <span><span className="text-foreground font-semibold">{used}</span> / {limit} usadas</span>
+        <span><span className="text-foreground font-semibold">{Math.max(0, limit - used)}</span> restantes</span>
+      </div>
+    </div>
+  );
+}
+
+// ── Quick Action Card ──
 
 function QuickActionCard({
   title,
@@ -142,7 +233,7 @@ function QuickActionCard({
   return (
     <button
       onClick={() => navigate(href)}
-      className="flex items-center gap-3 p-4 rounded-xl border border-border/60 bg-card/50 hover:bg-card hover:border-border hover:shadow-sm text-left transition-all duration-200 group w-full"
+      className="flex items-center gap-3 p-4 rounded-xl border border-border/60 bg-card/50 hover:bg-card hover:border-border hover:shadow-md text-left transition-all duration-200 group w-full"
     >
       <div className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-muted", accent)}>
         <Icon className="h-4 w-4" />
@@ -156,7 +247,7 @@ function QuickActionCard({
   );
 }
 
-// ── Dashboard Page ────────────────────────────────────────────────────────────
+// ── Dashboard Page ──
 
 export default function Dashboard() {
   const { user, signOut } = useAuth();
@@ -170,9 +261,15 @@ export default function Dashboard() {
   const isLoading = profileLoading || statsLoading;
   const isQuotaLoading = profileLoading || quotaLoading;
 
-  const totalActions = (stats?.total_prompts ?? 0) + (stats?.total_saas_specs ?? 0);
-  const avgRating = stats?.avg_prompt_rating ? Number(stats.avg_prompt_rating).toFixed(1) : "—";
-  const noQuota = !isQuotaLoading && quota != null && (quota.credits_remaining ?? 0) <= 0;
+  const creditsUsed = quota?.credits_used ?? 0;
+  const creditsLimit = quota?.credits_limit ?? 0;
+  const creditsRemaining = quota?.credits_remaining ?? 0;
+  const bonusRemaining = quota?.bonus_remaining ?? 0;
+  const noQuota = !isQuotaLoading && quota != null && (quota.total_remaining ?? 0) <= 0;
+
+  const renewalDate = quota?.current_period_end
+    ? new Date(quota.current_period_end).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })
+    : "—";
 
   return (
     <AppShell
@@ -181,8 +278,7 @@ export default function Dashboard() {
       avatarUrl={profile?.avatar_url}
       onSignOut={signOut}
     >
-
-      {/* ── Greeting ───────────────────────────────────────────────────────── */}
+      {/* ── Greeting ── */}
       <section className="mb-8">
         {isLoading ? (
           <div className="space-y-2">
@@ -197,7 +293,6 @@ export default function Dashboard() {
               </h1>
               <p className="mt-1 text-muted-foreground">O que vamos construir hoje?</p>
             </div>
-            {/* Plan badge */}
             <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-primary/30 bg-primary/8 text-primary text-xs font-bold uppercase tracking-wider">
               <Crown className="w-3.5 h-3.5" />
               Plano {quota?.plan_name ?? "Free"}
@@ -206,55 +301,153 @@ export default function Dashboard() {
         )}
       </section>
 
-      {/* ── Stats grid ─────────────────────────────────────────────────────── */}
-      <section className="grid grid-cols-2 gap-3 sm:grid-cols-4 mb-3">
-        <StatCard
+      {/* ── Account Summary ── */}
+      <section className="mb-6">
+        <div className="flex items-center gap-1.5 mb-3">
+          <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+            Resumo da Conta
+          </p>
+          <InfoTooltip content="Visão geral do seu plano atual, saldo de cotas, bônus e data de renovação." />
+        </div>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <SummaryCard
+            icon={Crown}
+            label="Plano Atual"
+            value={quota?.plan_name ?? "Free"}
+            sub={`${creditsLimit} cotas / mês`}
+            iconClass="bg-primary/15 text-primary"
+            loading={isQuotaLoading}
+          />
+          <SummaryCard
+            icon={Zap}
+            label="Cotas Restantes"
+            value={creditsRemaining}
+            sub={`de ${creditsLimit}`}
+            iconClass="bg-primary/15 text-primary"
+            loading={isQuotaLoading}
+          />
+          <SummaryCard
+            icon={Gift}
+            label="Bônus"
+            value={bonusRemaining}
+            sub="cotas extras permanentes"
+            iconClass="bg-accent/15 text-accent"
+            loading={isQuotaLoading}
+          />
+          <SummaryCard
+            icon={Calendar}
+            label="Renovação"
+            value={renewalDate}
+            sub="próximo ciclo"
+            iconClass="bg-muted text-muted-foreground"
+            loading={isQuotaLoading}
+          />
+        </div>
+      </section>
+
+      {/* ── Usage Progress ── */}
+      <section className="mb-6">
+        <div className="rounded-xl border border-border/60 bg-card/50 p-5">
+          <div className="flex items-center gap-1.5 mb-3">
+            <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+              Uso do período
+            </p>
+            <InfoTooltip content="Todas as ações utilizam a mesma bolsa de cotas. Você pode combinar diferentes ações até consumir seu limite mensal." />
+          </div>
+          {isQuotaLoading ? (
+            <Skeleton className="h-10 w-full" />
+          ) : (
+            <UsageProgressBar used={creditsUsed} limit={creditsLimit} />
+          )}
+        </div>
+      </section>
+
+      {/* ── Stats ── */}
+      <section className="grid grid-cols-2 gap-3 sm:grid-cols-4 mb-6">
+        <SummaryCard
+          icon={Sparkles}
           label="Prompts gerados"
           value={isLoading ? "—" : formatNumber(stats?.total_prompts ?? 0)}
-          icon={Sparkles}
           loading={isLoading}
-          sub={`${stats?.total_prompts ?? 0} total`}
-          tip="Total de prompts gerados em todos os modos (Prompt, Misto, BUILD)"
         />
-        <StatCard
+        <SummaryCard
+          icon={FileCode}
           label="Specs criadas"
           value={isLoading ? "—" : formatNumber(stats?.total_saas_specs ?? 0)}
-          icon={FileCode}
           loading={isLoading}
-          sub={`${stats?.total_saas_specs ?? 0} total`}
-          tip="Documentações técnicas SaaS geradas no modo SaaS Spec e Misto"
         />
-        <StatCard
-          label="Total de ações"
-          value={isLoading ? "—" : formatNumber(totalActions)}
+        <SummaryCard
           icon={TrendingUp}
-          accent
+          label="Total de ações"
+          value={isLoading ? "—" : formatNumber((stats?.total_prompts ?? 0) + (stats?.total_saas_specs ?? 0))}
+          iconClass="bg-primary/15 text-primary"
           loading={isLoading}
-          sub="prompts + specs"
-          tip="Soma de todas as gerações: prompts + specs técnicas"
         />
-        <StatCard
-          label="Média de rating"
-          value={isLoading ? "—" : avgRating}
+        <SummaryCard
           icon={Star}
-          loading={isLoading}
+          label="Média rating"
+          value={isLoading ? "—" : (stats?.avg_prompt_rating ? Number(stats.avg_prompt_rating).toFixed(1) : "—")}
           sub={`${stats?.total_sessions ?? 0} sessões`}
-          tip="Média das avaliações (1-5 estrelas) que você deu para os resultados gerados"
+          loading={isLoading}
         />
       </section>
 
-      {/* ── Usage + Quick actions ───────────────────────────────────────────── */}
-      <section className="grid grid-cols-2 gap-3 sm:grid-cols-4 mb-8">
-        <QuotaCard
-          creditsUsed={quota?.credits_used ?? 0}
-          creditsLimit={quota?.credits_limit ?? 0}
-          creditsRemaining={quota?.credits_remaining ?? 0}
-          percentUsed={Number(quota?.percent_used ?? 0)}
-          loading={isQuotaLoading}
-        />
+      {/* ── Upgrade banner when quotas exhausted ── */}
+      {noQuota && (
+        <section className="mb-6">
+          <div className="rounded-xl border border-destructive/40 bg-destructive/5 p-5 flex flex-col sm:flex-row items-start sm:items-center gap-4">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-destructive/15 text-destructive">
+              <Crown className="h-5 w-5" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-bold text-foreground">Suas cotas acabaram!</p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Faça upgrade ou adquira cotas avulsas para continuar criando.
+              </p>
+            </div>
+            <button
+              onClick={() => navigate("/profile?tab=billing")}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground hover:bg-primary/90 transition-colors shrink-0"
+            >
+              <Crown className="h-3.5 w-3.5" /> Ver planos
+            </button>
+          </div>
+        </section>
+      )}
 
-        {/* Quick actions: last session + memory */}
-        <div className="col-span-full sm:col-span-2 space-y-2">
+      {/* ── Mode cards ── */}
+      <section className="mb-6">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-1.5">
+            <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+              Modos disponíveis
+            </p>
+            <InfoTooltip content="Cada modo consome uma quantidade diferente de cotas. Escolha o modo adequado para sua necessidade." />
+          </div>
+          {noQuota && (
+            <button
+              onClick={() => navigate("/profile?tab=billing")}
+              className="text-xs font-semibold text-primary hover:underline"
+            >
+              Adquirir cotas →
+            </button>
+          )}
+        </div>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {MODES.map((mode) => (
+            <ModeActionCard
+              key={mode.title}
+              {...mode}
+              creditsRemaining={creditsRemaining}
+              disabled={noQuota}
+            />
+          ))}
+        </div>
+      </section>
+
+      {/* ── Quick access + Referral ── */}
+      <section className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="space-y-2">
           <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider px-1">
             Acesso rápido
           </p>
@@ -274,57 +467,8 @@ export default function Dashboard() {
           />
         </div>
 
-        {/* Referral bonus card */}
-        <ReferralBonusCard bonusCredits={quota?.bonus_remaining ?? 0} />
+        <ReferralBonusCard bonusCredits={bonusRemaining} />
       </section>
-
-      {/* ── Upgrade banner when quotas exhausted ──────────────────────────── */}
-      {noQuota && (
-        <section className="mb-6">
-          <div className="rounded-xl border border-warning/40 bg-warning/5 p-5 flex flex-col sm:flex-row items-start sm:items-center gap-4">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-warning/15 text-warning">
-              <Crown className="h-5 w-5" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-bold text-foreground">Suas cotas acabaram!</p>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                Faça upgrade do seu plano ou adquira cotas avulsas para continuar criando.
-              </p>
-            </div>
-            <div className="flex gap-2 shrink-0">
-              <button
-                onClick={() => navigate("/profile?tab=billing")}
-                className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground hover:bg-primary/90 transition-colors"
-              >
-                <Crown className="h-3.5 w-3.5" /> Ver planos
-              </button>
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* ── Mode cards ─────────────────────────────────────────────────────── */}
-      <section>
-        <div className="flex items-center justify-between mb-4">
-          <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
-            {noQuota ? "Cotas esgotadas — adquira mais para continuar" : "Escolha um modo para começar"}
-          </p>
-          {noQuota && (
-            <button
-              onClick={() => navigate("/profile?tab=billing")}
-              className="text-xs font-semibold text-primary hover:underline"
-            >
-              Adquirir cotas →
-            </button>
-          )}
-        </div>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {modes.map((mode) => (
-            <ModeCard key={mode.title} {...mode} disabled={noQuota} />
-          ))}
-        </div>
-      </section>
-
     </AppShell>
   );
 }
