@@ -2,10 +2,12 @@ import { useState, useEffect } from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutGrid, Users, Sparkles, CreditCard, Settings,
-  FileText, Flag, PanelLeftClose, PanelLeftOpen, Search, LogOut,
+  FileText, PanelLeftClose, PanelLeftOpen, Search, LogOut,
+  Sun, Moon,
 } from "lucide-react";
 import { useProfile } from "@/hooks/useProfile";
 import { useAuth } from "@/hooks/useAuth";
+import { useTheme } from "@/hooks/useTheme";
 import "./admin.css";
 
 const navSections = [
@@ -18,16 +20,14 @@ const navSections = [
     items: [
       { to: "/admin/users", icon: Users, label: "Usuários e Orgs" },
       { to: "/admin/prompts", icon: Sparkles, label: "Prompts e Specs" },
-      { to: "/admin/billing/plans", icon: CreditCard, label: "Planos (Stripe)" },
+      { to: "/admin/billing/plans", icon: CreditCard, label: "Planos Stripe" },
       { to: "/admin/settings/stripe", icon: Settings, label: "Config. Stripe" },
     ],
   },
   {
     label: "Sistema",
     items: [
-      { to: "/admin/ai-config", icon: Settings, label: "Config. de IA" },
       { to: "/admin/logs", icon: FileText, label: "Logs e Auditoria" },
-      { to: "/admin/flags", icon: Flag, label: "Feature Flags" },
     ],
   },
 ];
@@ -42,6 +42,7 @@ export default function AdminLayout() {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
   const { data: profile } = useProfile(user?.id);
+  const { theme, toggleTheme } = useTheme();
   const breadcrumb = getBreadcrumb(location.pathname);
   const [collapsed, setCollapsed] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -83,7 +84,7 @@ export default function AdminLayout() {
           <div className="logo-icon">⌘</div>
           {!collapsed && (
             <div style={{ minWidth: 0 }}>
-              <div style={{ fontSize: 13, fontWeight: 700, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>Admin Master</div>
+              <div style={{ fontSize: 13, fontWeight: 700, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>Admin Panel</div>
               <div style={{ fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: ".1em", color: "var(--adm-accent)" }}>Prompt Genius</div>
             </div>
           )}
@@ -112,7 +113,17 @@ export default function AdminLayout() {
           ))}
         </nav>
 
-        <div style={{ borderTop: `1px solid var(--adm-border)`, padding: 12 }}>
+        <div style={{ borderTop: `1px solid var(--adm-border)`, padding: 12, display: "flex", flexDirection: "column", gap: 6 }}>
+          <button
+            onClick={toggleTheme}
+            className="adm-btn outline"
+            style={{ width: "100%", justifyContent: "center" }}
+            title={theme === "dark" ? "Modo claro" : "Modo escuro"}
+          >
+            {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
+            {!collapsed && <span>{theme === "dark" ? "Claro" : "Escuro"}</span>}
+          </button>
+
           <button
             onClick={() => setCollapsed(!collapsed)}
             className="adm-btn outline"
@@ -124,7 +135,7 @@ export default function AdminLayout() {
           <button
             onClick={handleLogout}
             className="adm-btn outline"
-            style={{ width: "100%", justifyContent: "center", marginTop: 8 }}
+            style={{ width: "100%", justifyContent: "center" }}
             title="Sair"
           >
             <LogOut size={16} />
