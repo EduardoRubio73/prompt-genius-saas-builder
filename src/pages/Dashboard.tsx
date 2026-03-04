@@ -279,7 +279,7 @@ export default function Dashboard() {
       onSignOut={signOut}
     >
       {/* ── Greeting ── */}
-      <section className="mb-8">
+      <section className="mb-8 animate-fade-in" style={{ animationFillMode: "backwards" }}>
         {isLoading ? (
           <div className="space-y-2">
             <Skeleton className="h-9 w-64" />
@@ -310,43 +310,21 @@ export default function Dashboard() {
           <InfoTooltip content="Visão geral do seu plano atual, saldo de cotas, bônus e data de renovação." />
         </div>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <SummaryCard
-            icon={Crown}
-            label="Plano Atual"
-            value={quota?.plan_name ?? "Free"}
-            sub={`${creditsLimit} cotas / mês`}
-            iconClass="bg-primary/15 text-primary"
-            loading={isQuotaLoading}
-          />
-          <SummaryCard
-            icon={Zap}
-            label="Cotas Restantes"
-            value={creditsRemaining}
-            sub={`de ${creditsLimit}`}
-            iconClass="bg-primary/15 text-primary"
-            loading={isQuotaLoading}
-          />
-          <SummaryCard
-            icon={Gift}
-            label="Bônus"
-            value={bonusRemaining}
-            sub="cotas extras permanentes"
-            iconClass="bg-accent/15 text-accent"
-            loading={isQuotaLoading}
-          />
-          <SummaryCard
-            icon={Calendar}
-            label="Renovação"
-            value={renewalDate}
-            sub="próximo ciclo"
-            iconClass="bg-muted text-muted-foreground"
-            loading={isQuotaLoading}
-          />
+          {[
+            { icon: Crown, label: "Plano Atual", value: quota?.plan_name ?? "Free", sub: `${creditsLimit} cotas / mês`, iconClass: "bg-primary/15 text-primary" },
+            { icon: Zap, label: "Cotas Restantes", value: creditsRemaining, sub: `de ${creditsLimit}`, iconClass: "bg-primary/15 text-primary" },
+            { icon: Gift, label: "Bônus", value: bonusRemaining, sub: "cotas extras permanentes", iconClass: "bg-accent/15 text-accent" },
+            { icon: Calendar, label: "Renovação", value: renewalDate, sub: "próximo ciclo", iconClass: "bg-muted text-muted-foreground" },
+          ].map((card, i) => (
+            <div key={card.label} className="animate-fade-in" style={{ animationDelay: `${i * 80}ms`, animationFillMode: "backwards" }}>
+              <SummaryCard {...card} loading={isQuotaLoading} />
+            </div>
+          ))}
         </div>
       </section>
 
       {/* ── Usage Progress ── */}
-      <section className="mb-6">
+      <section className="mb-6 animate-fade-in" style={{ animationDelay: "350ms", animationFillMode: "backwards" }}>
         <div className="rounded-xl border bg-card shadow-md p-5">
           <div className="flex items-center gap-1.5 mb-3">
             <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
@@ -364,37 +342,21 @@ export default function Dashboard() {
 
       {/* ── Stats ── */}
       <section className="grid grid-cols-2 gap-3 sm:grid-cols-4 mb-6">
-        <SummaryCard
-          icon={Sparkles}
-          label="Prompts gerados"
-          value={isLoading ? "—" : formatNumber(stats?.total_prompts ?? 0)}
-          loading={isLoading}
-        />
-        <SummaryCard
-          icon={FileCode}
-          label="Specs criadas"
-          value={isLoading ? "—" : formatNumber(stats?.total_saas_specs ?? 0)}
-          loading={isLoading}
-        />
-        <SummaryCard
-          icon={TrendingUp}
-          label="Total de ações"
-          value={isLoading ? "—" : formatNumber((stats?.total_prompts ?? 0) + (stats?.total_saas_specs ?? 0))}
-          iconClass="bg-primary/15 text-primary"
-          loading={isLoading}
-        />
-        <SummaryCard
-          icon={Star}
-          label="Média rating"
-          value={isLoading ? "—" : (stats?.avg_prompt_rating ? Number(stats.avg_prompt_rating).toFixed(1) : "—")}
-          sub={`${stats?.total_sessions ?? 0} sessões`}
-          loading={isLoading}
-        />
+        {[
+          { icon: Sparkles, label: "Prompts gerados", value: isLoading ? "—" : formatNumber(stats?.total_prompts ?? 0) },
+          { icon: FileCode, label: "Specs criadas", value: isLoading ? "—" : formatNumber(stats?.total_saas_specs ?? 0) },
+          { icon: TrendingUp, label: "Total de ações", value: isLoading ? "—" : formatNumber((stats?.total_prompts ?? 0) + (stats?.total_saas_specs ?? 0)), iconClass: "bg-primary/15 text-primary" },
+          { icon: Star, label: "Média rating", value: isLoading ? "—" : (stats?.avg_prompt_rating ? Number(stats.avg_prompt_rating).toFixed(1) : "—"), sub: `${stats?.total_sessions ?? 0} sessões` },
+        ].map((card, i) => (
+          <div key={card.label} className="animate-fade-in" style={{ animationDelay: `${450 + i * 80}ms`, animationFillMode: "backwards" }}>
+            <SummaryCard {...card} loading={isLoading} />
+          </div>
+        ))}
       </section>
 
       {/* ── Upgrade banner when quotas exhausted ── */}
       {noQuota && (
-        <section className="mb-6">
+        <section className="mb-6 animate-fade-in" style={{ animationDelay: "600ms", animationFillMode: "backwards" }}>
           <div className="rounded-xl border border-destructive/40 bg-destructive/5 p-5 flex flex-col sm:flex-row items-start sm:items-center gap-4">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-destructive/15 text-destructive">
               <Crown className="h-5 w-5" />
@@ -434,19 +396,20 @@ export default function Dashboard() {
           )}
         </div>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {MODES.map((mode) => (
-            <ModeActionCard
-              key={mode.title}
-              {...mode}
-              creditsRemaining={creditsRemaining}
-              disabled={noQuota}
-            />
+          {MODES.map((mode, i) => (
+            <div key={mode.title} className="animate-fade-in" style={{ animationDelay: `${700 + i * 100}ms`, animationFillMode: "backwards" }}>
+              <ModeActionCard
+                {...mode}
+                creditsRemaining={creditsRemaining}
+                disabled={noQuota}
+              />
+            </div>
           ))}
         </div>
       </section>
 
       {/* ── Quick access + Referral ── */}
-      <section className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <section className="grid grid-cols-1 sm:grid-cols-2 gap-4 animate-fade-in" style={{ animationDelay: "1100ms", animationFillMode: "backwards" }}>
         <div className="space-y-2">
           <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider px-1">
             Acesso rápido

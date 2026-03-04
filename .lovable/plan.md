@@ -1,26 +1,45 @@
 
 
-## Plano: Animações de entrada nos cards do Dashboard
+## Fix: Admin Credits Not Saving
 
-### Abordagem
+### Root Causes
 
-Usar a animação `fade-in` já existente no Tailwind config (`animate-fade-in`: translateY(10px) + opacity 0→1) com delays escalonados via `style={{ animationDelay }}` para criar efeito cascata.
+1. **Missing data**: `admin_users_overview` view doesn't include `plan_credits_total`, `bonus_credits_total`, etc. The form defaults to `0` instead of the real values.
+2. **JS falsy bug**: Line 88 uses `form.plan_credits_total || undefined` — when the value is `0`, `0 || undefined` evaluates to `undefined`, so the field is omitted from the update.
 
-### Alterações em `src/pages/Dashboard.tsx`
+### Solution
 
-1. **SummaryCard** — adicionar `animate-fade-in` com `animationFillMode: "backwards"` e receber prop `delay` (index × 80ms)
-2. **ModeActionCard** — mesmo padrão, delay baseado no index
-3. **UsageProgressBar container** — `animate-fade-in` com delay fixo
-4. **Stats row** — cada card com delay escalonado
-5. **QuickActionCard** — `animate-fade-in`
-6. **Upgrade banner** — `animate-fade-in`
-7. **Greeting section** — `animate-fade-in` sem delay
+**1. Fetch actual org data when dialog opens**
+- In `UserDetailDialog`, add a query to fetch the organization record directly from `organizations` table using `user.org_id`
+- Initialize `plan_credits_total` and `bonus_credits_total` from the real org data
 
-Passar `index` como prop nos `.map()` calls para calcular `animationDelay: ${index * 80}ms`.
+**2. Fix the save logic**
+- Remove `|| undefined` guards — always send `plan_credits_total` and `bonus_credits_total` to the update call
+- This ensures `0` is a valid value that gets saved
 
-### Arquivo alterado
+### Files to Edit
 
-| Arquivo | Mudança |
-|---------|---------|
-| `src/pages/Dashboard.tsx` | Adicionar classes de animação e delays escalonados em todos os cards |
+| File | Change |
+|------|--------|
+| `src/pages/admin/AdminUsers.tsx` | Add org data fetch, fix form init + save logic |
+
+### Details
+
+```tsx
+// Add useEffect to load real org data
+const [orgData, setOrgData] = useState<any>(null);
+useEffect(() => {
+  if (user.org_id) {
+    supabase.from("organizations").select("plan_credits_total, bonus_credits_total, plan_credits_used, bonus_credits_used").eq("id", user.org_id).single()
+      .then(({ data }) => {
+        if (data) {
+          setForm(f => ({ ...f, plan_credits_total: data.plan_credits_total, bonus_credits_total: data.bonus_credits_total }));
+        }
+      });
+  }
+}, [user.org_id]);
+
+// Fix save — no more || undefined
+updates: { plan_tier: form.plan_tier, is_active: form.is_active, plan_credits_total: form.plan_credits_total, bonus_credits_total: form.bonus_credits_total }
+```
 
