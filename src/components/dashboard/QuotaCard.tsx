@@ -71,6 +71,11 @@ export function QuotaCard({
             <p className="text-xs text-muted-foreground tabular-nums">
               <span className="text-foreground font-semibold">{creditsRemaining}</span> restantes
             </p>
+            {extraCredits > 0 && (
+              <p className="text-xs text-accent tabular-nums">
+                + <span className="font-semibold">{extraCredits}</span> créditos extras
+              </p>
+            )}
           </div>
 
           <div className="border-t border-border/50 pt-3">
