@@ -1,45 +1,43 @@
 
 
-## Fix: Admin Credits Not Saving
+## Plano: Redesign visual do Dashboard
 
-### Root Causes
+### Análise
 
-1. **Missing data**: `admin_users_overview` view doesn't include `plan_credits_total`, `bonus_credits_total`, etc. The form defaults to `0` instead of the real values.
-2. **JS falsy bug**: Line 88 uses `form.plan_credits_total || undefined` — when the value is `0`, `0 || undefined` evaluates to `undefined`, so the field is omitted from the update.
+O Dashboard atual (`src/pages/Dashboard.tsx`) já possui toda a estrutura funcional solicitada: cards de resumo, barra de progresso, cards de modo e tooltips. As mudanças são puramente visuais para atingir o padrão Stripe/Vercel/Linear.
 
-### Solution
+### Alterações em `src/pages/Dashboard.tsx`
 
-**1. Fetch actual org data when dialog opens**
-- In `UserDetailDialog`, add a query to fetch the organization record directly from `organizations` table using `user.org_id`
-- Initialize `plan_credits_total` and `bonus_credits_total` from the real org data
+#### 1. SummaryCard — elevar visual
+- Trocar `border-border/60 bg-card/50` por `border bg-card shadow-md hover:shadow-xl`
+- Aumentar padding de `p-4` para `p-5`
+- Adicionar `duration-300` na transição
 
-**2. Fix the save logic**
-- Remove `|| undefined` guards — always send `plan_credits_total` and `bonus_credits_total` to the update call
-- This ensures `0` is a valid value that gets saved
+#### 2. ModeActionCard — destaque maior
+- Aplicar `shadow-md hover:shadow-xl hover:scale-[1.02]` consistentemente
+- Trocar `bg-card/50` por `bg-card`
+- Bordas sólidas `border` em vez de `border-border/60`
 
-### Files to Edit
+#### 3. UsageProgressBar — gradientes semânticos
+- Atualizar cores: `<50% green`, `<75% yellow`, `<90% orange`, `>=90% red`
+- Já implementado parcialmente, ajustar thresholds para combinar com spec
 
-| File | Change |
-|------|--------|
-| `src/pages/admin/AdminUsers.tsx` | Add org data fetch, fix form init + save logic |
+#### 4. Seção de Stats — remover para simplificar
+- A spec não inclui a seção de stats (prompts gerados, specs criadas, etc.)
+- Mover para baixo ou remover para manter layout limpo de 3 blocos
 
-### Details
+#### 5. Cards de acesso rápido + referral — elevar visual
+- Mesmos padrões de sombra e borda
 
-```tsx
-// Add useEffect to load real org data
-const [orgData, setOrgData] = useState<any>(null);
-useEffect(() => {
-  if (user.org_id) {
-    supabase.from("organizations").select("plan_credits_total, bonus_credits_total, plan_credits_used, bonus_credits_used").eq("id", user.org_id).single()
-      .then(({ data }) => {
-        if (data) {
-          setForm(f => ({ ...f, plan_credits_total: data.plan_credits_total, bonus_credits_total: data.bonus_credits_total }));
-        }
-      });
-  }
-}, [user.org_id]);
+#### 6. Greeting — refinamento
+- Badge de plano com `shadow-sm`
 
-// Fix save — no more || undefined
-updates: { plan_tier: form.plan_tier, is_active: form.is_active, plan_credits_total: form.plan_credits_total, bonus_credits_total: form.bonus_credits_total }
-```
+### Arquivo alterado
+
+| Arquivo | Mudança |
+|---------|---------|
+| `src/pages/Dashboard.tsx` | Refinar classes CSS dos cards, progress bar e layout geral |
+
+### Resultado
+Dashboard com visual Stripe/Vercel: cards com sombras, hover elevado, bordas limpas, transições suaves, 100% compatível dark/light via tokens semânticos existentes.
 
