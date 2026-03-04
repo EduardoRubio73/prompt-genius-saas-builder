@@ -7,6 +7,7 @@ import { useProfile } from "@/hooks/useProfile";
 import { useTheme } from "@/hooks/useTheme";
 import { toast } from "sonner";
 import type { Enums } from "@/integrations/supabase/types";
+import { callEdgeFunction } from "@/lib/edgeFunctions";
 
 import { PromptInput } from "@/components/prompt/PromptInput";
 import { MistoRefining } from "@/components/misto/MistoRefining";
@@ -18,9 +19,6 @@ import type { MistoFields } from "@/pages/misto/MistoMode";
 import "../misto/misto.css";
 
 type PromptStep = "input" | "generating" | "results";
-
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || "https://pcaebfncvuvdguyjmyxm.supabase.co";
-const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBjYWViZm5jdnV2ZGd1eWpteXhtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIxMTM5ODAsImV4cCI6MjA4NzY4OTk4MH0.7pDeOmLlWzPoVKJKIRepxGKtMAD0PPJiyXHG8AYhy34";
 
 const stepsDef = [
   { label: "Entrada" },
@@ -61,14 +59,6 @@ export default function PromptMode() {
     return b;
   }, [orgId]);
 
-  const getAuthHeaders = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    return {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${session?.access_token ?? SUPABASE_ANON_KEY}`,
-    };
-  };
-
   const [sessionId, setSessionId] = useState<string | null>(null);
 
   const handleGenerate = useCallback(async () => {
@@ -81,7 +71,6 @@ export default function PromptMode() {
     if (balance.total_remaining <= 0) { setCreditModal("no_credits"); return; }
 
     startTime.current = Date.now();
-    const headers = await getAuthHeaders();
 
     try {
       setStep("generating");
@@ -97,12 +86,9 @@ export default function PromptMode() {
       if (inputMode === "free") {
         // Distribute free text into fields
         setGenStatus("distributing");
-        const distributeRes = await fetch(`${SUPABASE_URL}/functions/v1/refine-prompt`, {
-          method: "POST", headers,
-          body: JSON.stringify({ action: "distribute", freeText, destino, sessionId: currentSessionId }),
+        const d = await callEdgeFunction("refine-prompt", {
+          action: "distribute", freeText, destino, sessionId: currentSessionId,
         });
-        if (!distributeRes.ok) throw new Error("Falha na distribuição");
-        const d = await distributeRes.json();
         const extracted: MistoFields = {
           especialidade: d.especialidade || "", persona: d.persona || "",
           tarefa: d.tarefa || "", objetivo: d.objetivo || "",
@@ -112,12 +98,9 @@ export default function PromptMode() {
 
         // Refine
         setGenStatus("refining");
-        const refineRes = await fetch(`${SUPABASE_URL}/functions/v1/refine-prompt`, {
-          method: "POST", headers,
-          body: JSON.stringify({ action: "refine", fields: extracted, destino, sessionId: currentSessionId }),
+        const r = await callEdgeFunction("refine-prompt", {
+          action: "refine", fields: extracted, destino, sessionId: currentSessionId,
         });
-        if (!refineRes.ok) throw new Error("Falha no refinamento");
-        const r = await refineRes.json();
         const refined: MistoFields = {
           especialidade: r.especialidade || extracted.especialidade,
           persona: r.persona || extracted.persona,
@@ -132,12 +115,9 @@ export default function PromptMode() {
         // Manual fields → skip distribute, go straight to refine
         setGenStatus("refining");
         setFields(manualFields);
-        const refineRes = await fetch(`${SUPABASE_URL}/functions/v1/refine-prompt`, {
-          method: "POST", headers,
-          body: JSON.stringify({ action: "refine", fields: manualFields, destino, sessionId: currentSessionId }),
+        const r = await callEdgeFunction("refine-prompt", {
+          action: "refine", fields: manualFields, destino, sessionId: currentSessionId,
         });
-        if (!refineRes.ok) throw new Error("Falha no refinamento");
-        const r = await refineRes.json();
         const refined: MistoFields = {
           especialidade: r.especialidade || manualFields.especialidade,
           persona: r.persona || manualFields.persona,

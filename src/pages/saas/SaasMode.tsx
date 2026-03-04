@@ -6,6 +6,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
 import { useTheme } from "@/hooks/useTheme";
 import { toast } from "sonner";
+import { callEdgeFunction } from "@/lib/edgeFunctions";
 
 import { SaasStepper } from "@/components/saas/SaasStepper";
 import { SaasStep1 } from "@/components/saas/SaasStep1";
@@ -46,9 +47,6 @@ const emptyAnswers: SaasAnswers = {
   prazo: "", prioridades: [],
 };
 
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || "https://pcaebfncvuvdguyjmyxm.supabase.co";
-const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBjYWViZm5jdnV2ZGd1eWpteXhtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIxMTM5ODAsImV4cCI6MjA4NzY4OTk4MH0.7pDeOmLlWzPoVKJKIRepxGKtMAD0PPJiyXHG8AYhy34";
-
 type SaasStep = 1 | 2 | 3 | 4 | 5 | 6 | 7 | "generating" | "results";
 
 export default function SaasMode() {
@@ -78,14 +76,6 @@ export default function SaasMode() {
     return b;
   }, [orgId]);
 
-  const getAuthHeaders = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    return {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${session?.access_token ?? SUPABASE_ANON_KEY}`,
-    };
-  };
-
   const updateAnswers = (partial: Partial<SaasAnswers>) => setAnswers(prev => ({ ...prev, ...partial }));
 
   const canNext = (s: number): boolean => {
@@ -94,8 +84,8 @@ export default function SaasMode() {
       case 2: return answers.segmento.length >= 3 && answers.dor.length >= 3;
       case 3: return answers.features.filter(f => f.length >= 3).length >= 3;
       case 4: return answers.modelo.length > 0;
-      case 5: return true; // stack is optional (AI decides)
-      case 6: return true; // integrations optional
+      case 5: return true;
+      case 6: return true;
       case 7: return answers.prazo.length > 0;
       default: return false;
     }
@@ -113,7 +103,6 @@ export default function SaasMode() {
     if (balance.total_remaining <= 0) { setCreditModal("no_credits"); return; }
 
     startTime.current = Date.now();
-    const headers = await getAuthHeaders();
 
     try {
       setStep("generating");
@@ -138,26 +127,21 @@ Prazo: ${answers.prazo}
 Prioridades: ${answers.prioridades.join(", ") || "Não definidas"}
       `.trim();
 
-      const specRes = await fetch(`${SUPABASE_URL}/functions/v1/refine-prompt`, {
-        method: "POST", headers,
-        body: JSON.stringify({
-          action: "saas-spec",
-          promptFields: {
-            especialidade: "Product Manager / Software Architect",
-            persona: "Technical advisor",
-            tarefa: "Generate a complete SaaS technical specification",
-            objetivo: "Deliver a production-ready spec document",
-            contexto: prompt,
-            destino: "lovable",
-          },
-          originalInput: answers.problema,
+      const specData = await callEdgeFunction("refine-prompt", {
+        action: "saas-spec",
+        promptFields: {
+          especialidade: "Product Manager / Software Architect",
+          persona: "Technical advisor",
+          tarefa: "Generate a complete SaaS technical specification",
+          objetivo: "Deliver a production-ready spec document",
+          contexto: prompt,
           destino: "lovable",
-          sessionId: currentSessionId,
-        }),
+        },
+        originalInput: answers.problema,
+        destino: "lovable",
+        sessionId: currentSessionId,
       });
 
-      if (!specRes.ok) throw new Error("Falha na geração da spec");
-      const specData = await specRes.json();
       setSpecMarkdown(specData.spec_md || "");
 
       // Consume credit

@@ -1,44 +1,45 @@
 
 
-## Plano: Migrar todas as chamadas fetch para supabase.functions.invoke
+## Fix: Admin Credits Not Saving
 
-### Problema
-3 arquivos usam `fetch()` direto para chamar Edge Functions, causando erro 401 por falta de JWT/apikey.
+### Root Causes
 
-### Mudancas
+1. **Missing data**: `admin_users_overview` view doesn't include `plan_credits_total`, `bonus_credits_total`, etc. The form defaults to `0` instead of the real values.
+2. **JS falsy bug**: Line 88 uses `form.plan_credits_total || undefined` — when the value is `0`, `0 || undefined` evaluates to `undefined`, so the field is omitted from the update.
 
-**1. Criar helper `src/lib/edgeFunctions.ts`**
-```ts
-import { supabase } from "@/integrations/supabase/client";
+### Solution
 
-export async function callEdgeFunction(name: string, body?: any) {
-  const { data, error } = await supabase.functions.invoke(name, { body });
-  if (error) { console.error("Edge Function Error:", error); throw error; }
-  return data;
-}
+**1. Fetch actual org data when dialog opens**
+- In `UserDetailDialog`, add a query to fetch the organization record directly from `organizations` table using `user.org_id`
+- Initialize `plan_credits_total` and `bonus_credits_total` from the real org data
+
+**2. Fix the save logic**
+- Remove `|| undefined` guards — always send `plan_credits_total` and `bonus_credits_total` to the update call
+- This ensures `0` is a valid value that gets saved
+
+### Files to Edit
+
+| File | Change |
+|------|--------|
+| `src/pages/admin/AdminUsers.tsx` | Add org data fetch, fix form init + save logic |
+
+### Details
+
+```tsx
+// Add useEffect to load real org data
+const [orgData, setOrgData] = useState<any>(null);
+useEffect(() => {
+  if (user.org_id) {
+    supabase.from("organizations").select("plan_credits_total, bonus_credits_total, plan_credits_used, bonus_credits_used").eq("id", user.org_id).single()
+      .then(({ data }) => {
+        if (data) {
+          setForm(f => ({ ...f, plan_credits_total: data.plan_credits_total, bonus_credits_total: data.bonus_credits_total }));
+        }
+      });
+  }
+}, [user.org_id]);
+
+// Fix save — no more || undefined
+updates: { plan_tier: form.plan_tier, is_active: form.is_active, plan_credits_total: form.plan_credits_total, bonus_credits_total: form.bonus_credits_total }
 ```
-
-**2. Refatorar `src/pages/prompt/PromptMode.tsx`**
-- Remover constantes `SUPABASE_URL`, `SUPABASE_ANON_KEY`
-- Remover funcao `getAuthHeaders`
-- Substituir 3 chamadas `fetch()` (linhas ~100, ~115, ~135) por `callEdgeFunction("refine-prompt", { action, ... })`
-- Tratar resposta diretamente (sem `.json()`)
-
-**3. Refatorar `src/pages/misto/MistoMode.tsx`**
-- Remover constantes `SUPABASE_URL`, `SUPABASE_ANON_KEY`
-- Substituir 3 chamadas `fetch()` (linhas ~105, ~122, ~142) por `callEdgeFunction("refine-prompt", { action, ... })`
-
-**4. Refatorar `src/pages/saas/SaasMode.tsx`**
-- Remover constantes `SUPABASE_URL`, `SUPABASE_ANON_KEY`
-- Substituir 1 chamada `fetch()` (linha ~141) por `callEdgeFunction("refine-prompt", { action, ... })`
-
-### Nota
-`LandingPage.tsx`, `ProfilePage.tsx`, `AdminBillingPlans.tsx` e `AdminStripeSettings.tsx` ja usam `supabase.functions.invoke` -- nao precisam de alteracao.
-
-| Arquivo | Acao |
-|---------|------|
-| `src/lib/edgeFunctions.ts` | Criar helper |
-| `src/pages/prompt/PromptMode.tsx` | Substituir 3 fetch por callEdgeFunction |
-| `src/pages/misto/MistoMode.tsx` | Substituir 3 fetch por callEdgeFunction |
-| `src/pages/saas/SaasMode.tsx` | Substituir 1 fetch por callEdgeFunction |
 
