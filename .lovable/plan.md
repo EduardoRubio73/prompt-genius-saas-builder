@@ -1,45 +1,37 @@
 
 
-## Fix: Admin Credits Not Saving
+## Plano: Filtrar Topups dos Planos + Substituir botões por info nos cards de cotas
 
-### Root Causes
+### Problema 1: Topup cards aparecem na seção de Planos
+A view `v_active_stripe_plans` retorna todos os produtos (incluindo Topups). O frontend não filtra, então cards como "Topup 5 Credits" aparecem junto com Free, Starter, Pro, Enterprise.
 
-1. **Missing data**: `admin_users_overview` view doesn't include `plan_credits_total`, `bonus_credits_total`, etc. The form defaults to `0` instead of the real values.
-2. **JS falsy bug**: Line 88 uses `form.plan_credits_total || undefined` — when the value is `0`, `0 || undefined` evaluates to `undefined`, so the field is omitted from the update.
-
-### Solution
-
-**1. Fetch actual org data when dialog opens**
-- In `UserDetailDialog`, add a query to fetch the organization record directly from `organizations` table using `user.org_id`
-- Initialize `plan_credits_total` and `bonus_credits_total` from the real org data
-
-**2. Fix the save logic**
-- Remove `|| undefined` guards — always send `plan_credits_total` and `bonus_credits_total` to the update call
-- This ensures `0` is a valid value that gets saved
-
-### Files to Edit
-
-| File | Change |
-|------|--------|
-| `src/pages/admin/AdminUsers.tsx` | Add org data fetch, fix form init + save logic |
-
-### Details
+**Solução:** No `fetchPricing` em `LandingPage.tsx`, filtrar os produtos cujo `name` começa com "Topup" na query ou no `.filter()` do JavaScript.
 
 ```tsx
-// Add useEffect to load real org data
-const [orgData, setOrgData] = useState<any>(null);
-useEffect(() => {
-  if (user.org_id) {
-    supabase.from("organizations").select("plan_credits_total, bonus_credits_total, plan_credits_used, bonus_credits_used").eq("id", user.org_id).single()
-      .then(({ data }) => {
-        if (data) {
-          setForm(f => ({ ...f, plan_credits_total: data.plan_credits_total, bonus_credits_total: data.bonus_credits_total }));
-        }
-      });
-  }
-}, [user.org_id]);
-
-// Fix save — no more || undefined
-updates: { plan_tier: form.plan_tier, is_active: form.is_active, plan_credits_total: form.plan_credits_total, bonus_credits_total: form.bonus_credits_total }
+// Filtrar topups após fetch
+setPricingProducts(data
+  .filter((p: any) => !p.name?.startsWith("Topup"))
+  .map((p: any) => ({ ... }))
+);
 ```
+
+### Problema 2: Botões "Comprar" nos cards de Cotas Adicionais
+Os 3 cards na seção "Cotas Adicionais" têm botões `<button className="cc-btn">Comprar</button>`. O user quer substituí-los por informações descritivas vindas de `billing_products.description`.
+
+**Solução:** Tornar os credit cards dinâmicos — buscar `credit_packs` (já possui `display_name`, `credits`, `price_brl`, `is_featured`) e `billing_products` (para pegar `description`). Alternativamente, como os dados de description estão em `billing_products` e os topups têm nomes como "Topup 5 Credits", buscar esses registros e usar a `description`.
+
+Na prática, os cards já são hardcoded. Vou:
+1. Remover os botões "Comprar" dos 3 cards
+2. Substituí-los por texto descritivo das `billing_products` (fetch dinâmico) ou hardcoded baseado nos descriptions encontrados:
+   - 5 credits: "Pacote de 5 créditos adicionais. Créditos não expiram."
+   - 15 credits: "Pacote de 15 créditos adicionais com melhor custo por crédito."
+   - 40 credits: "Pacote de 40 créditos adicionais para uso intensivo."
+
+Melhor: buscar dinamicamente da tabela `credit_packs` e cruzar com `billing_products` por nome para pegar a description.
+
+### Arquivos
+
+| Arquivo | Ação |
+|---------|------|
+| `src/pages/landing/LandingPage.tsx` | Editar — filtrar topups na seção Planos; remover botões "Comprar" dos credit cards e adicionar descriptions |
 
