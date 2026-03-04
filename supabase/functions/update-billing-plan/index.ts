@@ -28,10 +28,18 @@ Deno.serve(async (req) => {
       .eq("id", productId)
       .maybeSingle();
 
+    const creditCosts = {
+      prompt_cost: Number(body.prompt_cost ?? 1),
+      saas_specs_cost: Number(body.saas_specs_cost ?? 2),
+      modo_misto_cost: Number(body.modo_misto_cost ?? 2),
+      build_engine_cost: Number(body.build_engine_cost ?? 5),
+    };
+
     const metadata = {
       trial_days: Number(body.trial_days ?? 0),
       credits_limit: Number(body.credits_limit ?? 0),
       members_limit: Number(body.members_limit ?? 1),
+      ...creditCosts,
     };
 
     // === STRIPE: Produto ===
@@ -66,7 +74,6 @@ Deno.serve(async (req) => {
     const newUnitAmount = Number(body.unit_amount ?? 0);
 
     if (!existingPrice) {
-      // Criar novo preço
       let stripePriceId: string | null = null;
 
       if (stripe && stripeProductId) {
@@ -94,7 +101,6 @@ Deno.serve(async (req) => {
       });
       if (error) throw error;
     } else {
-      // Preço já existe — verificar se amount mudou
       const amountChanged = existingPrice.unit_amount !== newUnitAmount;
       let stripePriceId = existingPrice.stripe_price_id;
 
@@ -132,6 +138,9 @@ Deno.serve(async (req) => {
       sort_order: Number(body.sort_order ?? 0),
       is_featured: Boolean(body.is_featured),
       is_active: body.is_active ?? true,
+      credits_limit: Number(body.credits_limit ?? 0),
+      credit_unit_cost: Number(body.credit_unit_cost ?? 0),
+      credit_costs: creditCosts,
       metadata,
       ...(stripeProductId ? { stripe_product_id: stripeProductId, stripe_synced: true, stripe_last_synced_at: new Date().toISOString() } : {}),
     }).eq("id", productId);

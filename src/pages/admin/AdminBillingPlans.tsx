@@ -1,4 +1,4 @@
-import { useMemo, useState, type ReactNode } from "react";
+import { useMemo, useState, useEffect, type ReactNode } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
@@ -18,6 +18,8 @@ type PlanRow = {
   sort_order: number | null;
   product_active: boolean | null;
   price_active: boolean | null;
+  credits_limit: number | null;
+  credit_unit_cost: number | null;
 };
 
 type PlanForm = {
@@ -33,6 +35,11 @@ type PlanForm = {
   credits_limit: number;
   members_limit: number;
   is_active: boolean;
+  credit_unit_cost: number;
+  prompt_cost: number;
+  saas_specs_cost: number;
+  modo_misto_cost: number;
+  build_engine_cost: number;
 };
 
 const emptyForm = (): PlanForm => ({
@@ -47,6 +54,11 @@ const emptyForm = (): PlanForm => ({
   credits_limit: 0,
   members_limit: 1,
   is_active: true,
+  credit_unit_cost: 0.87,
+  prompt_cost: 1,
+  saas_specs_cost: 2,
+  modo_misto_cost: 2,
+  build_engine_cost: 5,
 });
 
 export default function AdminBillingPlans() {
@@ -55,6 +67,15 @@ export default function AdminBillingPlans() {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<PlanRow | null>(null);
   const [form, setForm] = useState<PlanForm>(emptyForm());
+
+  // Auto-calc credits_limit when price or credit_unit_cost changes
+  useEffect(() => {
+    const price = Number(form.unit_amount_brl);
+    const cost = form.credit_unit_cost;
+    if (price > 0 && cost > 0) {
+      setForm((f) => ({ ...f, credits_limit: Math.floor(price / cost) }));
+    }
+  }, [form.unit_amount_brl, form.credit_unit_cost]);
 
   const { data: plans, isLoading } = useQuery({
     queryKey: ["admin-stripe-plans"],
@@ -80,6 +101,11 @@ export default function AdminBillingPlans() {
           credits_limit: payload.credits_limit,
           members_limit: payload.members_limit,
           is_active: payload.is_active,
+          credit_unit_cost: payload.credit_unit_cost,
+          prompt_cost: payload.prompt_cost,
+          saas_specs_cost: payload.saas_specs_cost,
+          modo_misto_cost: payload.modo_misto_cost,
+          build_engine_cost: payload.build_engine_cost,
         },
       });
       if (error) throw error;
@@ -103,6 +129,11 @@ export default function AdminBillingPlans() {
           credits_limit: payload.credits_limit,
           members_limit: payload.members_limit,
           is_active: payload.is_active,
+          credit_unit_cost: payload.credit_unit_cost,
+          prompt_cost: payload.prompt_cost,
+          saas_specs_cost: payload.saas_specs_cost,
+          modo_misto_cost: payload.modo_misto_cost,
+          build_engine_cost: payload.build_engine_cost,
         },
       });
       if (error) throw error;
@@ -134,15 +165,15 @@ export default function AdminBillingPlans() {
   const openNew = () => { setEditing(null); setForm(emptyForm()); setOpen(true); };
   const openEdit = async (row: PlanRow) => {
     setEditing(row);
-    // Fetch metadata from billing_products and billing_prices
     const [prodRes, priceRes] = await Promise.all([
-      supabase.from("billing_products").select("is_featured, metadata").eq("id", row.product_id).single(),
+      supabase.from("billing_products").select("is_featured, metadata, credit_unit_cost, credit_costs").eq("id", row.product_id).single(),
       row.price_id
         ? supabase.from("billing_prices").select("trial_period_days, metadata").eq("id", row.price_id).single()
         : Promise.resolve({ data: null }),
     ]);
     const prodMeta = (prodRes.data?.metadata as any) || {};
     const priceMeta = (priceRes.data?.metadata as any) || {};
+    const creditCosts = (prodRes.data as any)?.credit_costs || {};
     const trialDays = (priceRes.data as any)?.trial_period_days ?? priceMeta.trial_days ?? prodMeta.trial_days ?? 0;
 
     setForm({
@@ -155,9 +186,14 @@ export default function AdminBillingPlans() {
       sort_order: row.sort_order ?? 0,
       is_featured: prodRes.data?.is_featured ?? false,
       trial_days: trialDays,
-      credits_limit: prodMeta.credits_limit ?? priceMeta.credits_limit ?? 0,
-      members_limit: prodMeta.members_limit ?? priceMeta.members_limit ?? 1,
+      credits_limit: row.credits_limit ?? prodMeta.credits_limit ?? 0,
+      members_limit: prodMeta.members_limit ?? 1,
       is_active: row.product_active ?? true,
+      credit_unit_cost: (prodRes.data as any)?.credit_unit_cost ?? prodMeta.credit_unit_cost ?? 0.87,
+      prompt_cost: creditCosts.prompt_cost ?? prodMeta.prompt_cost ?? 1,
+      saas_specs_cost: creditCosts.saas_specs_cost ?? prodMeta.saas_specs_cost ?? 2,
+      modo_misto_cost: creditCosts.modo_misto_cost ?? prodMeta.modo_misto_cost ?? 2,
+      build_engine_cost: creditCosts.build_engine_cost ?? prodMeta.build_engine_cost ?? 5,
     });
     setOpen(true);
   };
@@ -176,6 +212,12 @@ export default function AdminBillingPlans() {
   const loading = createPlan.isPending || updatePlan.isPending;
   const rows = useMemo(() => plans ?? [], [plans]);
 
+  // Derived limits preview
+  const promptLimit = form.prompt_cost > 0 ? Math.floor(form.credits_limit / form.prompt_cost) : 0;
+  const saasLimit = form.saas_specs_cost > 0 ? Math.floor(form.credits_limit / form.saas_specs_cost) : 0;
+  const mistoLimit = form.modo_misto_cost > 0 ? Math.floor(form.credits_limit / form.modo_misto_cost) : 0;
+  const buildLimit = form.build_engine_cost > 0 ? Math.floor(form.credits_limit / form.build_engine_cost) : 0;
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
@@ -191,12 +233,13 @@ export default function AdminBillingPlans() {
 
       <div className="table-card">
         <table>
-          <thead><tr>{["Nome", "Preço", "Intervalo", "Tier", "Status", "Stripe Product", "Stripe Price", "Ações"].map((h) => <th key={h}>{h}</th>)}</tr></thead>
+          <thead><tr>{["Nome", "Preço", "Cotas", "Intervalo", "Tier", "Status", "Stripe Price", "Ações"].map((h) => <th key={h}>{h}</th>)}</tr></thead>
           <tbody>
             {rows.map((p) => (
               <tr key={`${p.product_id}-${p.price_id ?? "no-price"}`}>
                 <td style={{ fontWeight: 600 }}>{p.display_name || p.name || "—"}</td>
                 <td>R$ {((p.unit_amount ?? 0) / 100).toFixed(2)}</td>
+                <td>{p.credits_limit ?? 0}</td>
                 <td>{p.recurring_interval || "—"}</td>
                 <td>{p.plan_tier || "—"}</td>
                 <td>
@@ -204,7 +247,6 @@ export default function AdminBillingPlans() {
                     ? <span className="adm-badge inactive">Inativo</span>
                     : <span className="adm-badge active">Ativo</span>}
                 </td>
-                <td style={{ fontSize: 11, fontFamily: "var(--adm-mono)" }}>{p.product_id || "—"}</td>
                 <td style={{ fontSize: 11, fontFamily: "var(--adm-mono)" }}>{p.stripe_price_id || "—"}</td>
                 <td><button className="adm-btn ghost" onClick={() => openEdit(p)}><Pencil size={14} /></button></td>
               </tr>
@@ -221,16 +263,43 @@ export default function AdminBillingPlans() {
             <Field label="Nome"><input className="adm-input" value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} /></Field>
             <Field label="Display name"><input className="adm-input" value={form.display_name} onChange={(e) => setForm((f) => ({ ...f, display_name: e.target.value }))} /></Field>
             <Field label="Plan tier"><select className="adm-input" value={form.plan_tier} onChange={(e) => setForm((f) => ({ ...f, plan_tier: e.target.value as any }))}><option value="free">free</option><option value="starter">starter</option><option value="pro">pro</option><option value="enterprise">enterprise</option></select></Field>
-            <Field label="Preço (BRL)"><input className="adm-input" type="number" value={form.unit_amount_brl} onChange={(e) => setForm((f) => ({ ...f, unit_amount_brl: e.target.value }))} /></Field>
+            <Field label="Preço (BRL)"><input className="adm-input" type="number" step="0.01" value={form.unit_amount_brl} onChange={(e) => setForm((f) => ({ ...f, unit_amount_brl: e.target.value }))} /></Field>
+            <Field label="Custo por Cota (R$)"><input className="adm-input" type="number" step="0.01" value={form.credit_unit_cost} onChange={(e) => setForm((f) => ({ ...f, credit_unit_cost: Number(e.target.value) }))} /></Field>
+            <Field label="Limite de créditos (auto)">
+              <input className="adm-input" type="number" value={form.credits_limit} readOnly style={{ opacity: 0.7, cursor: "not-allowed" }} />
+            </Field>
             <Field label="Intervalo"><select className="adm-input" value={form.recurring_interval} onChange={(e) => setForm((f) => ({ ...f, recurring_interval: e.target.value as any }))}><option value="day">day</option><option value="month">month</option><option value="year">year</option></select></Field>
             <Field label="Ordem"><input className="adm-input" type="number" value={form.sort_order} onChange={(e) => setForm((f) => ({ ...f, sort_order: Number(e.target.value) }))} /></Field>
             <Field label="Trial days"><input className="adm-input" type="number" value={form.trial_days} onChange={(e) => setForm((f) => ({ ...f, trial_days: Number(e.target.value) }))} /></Field>
-            <Field label="Limite de créditos"><input className="adm-input" type="number" value={form.credits_limit} onChange={(e) => setForm((f) => ({ ...f, credits_limit: Number(e.target.value) }))} /></Field>
             <Field label="Limite de membros"><input className="adm-input" type="number" value={form.members_limit} onChange={(e) => setForm((f) => ({ ...f, members_limit: Number(e.target.value) }))} /></Field>
-            <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
-              <label><input type="checkbox" checked={form.is_featured} onChange={(e) => setForm((f) => ({ ...f, is_featured: e.target.checked }))} /> Destaque</label>
-              <label><input type="checkbox" checked={form.is_active} onChange={(e) => setForm((f) => ({ ...f, is_active: e.target.checked }))} /> Ativo</label>
+          </div>
+
+          {/* Action costs */}
+          <div style={{ marginTop: 8 }}>
+            <label className="adm-label" style={{ marginBottom: 8, display: "block" }}>Custo por ação (cotas)</label>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 8 }}>
+              <Field label="Prompt"><input className="adm-input" type="number" value={form.prompt_cost} onChange={(e) => setForm((f) => ({ ...f, prompt_cost: Number(e.target.value) }))} /></Field>
+              <Field label="SaaS Spec"><input className="adm-input" type="number" value={form.saas_specs_cost} onChange={(e) => setForm((f) => ({ ...f, saas_specs_cost: Number(e.target.value) }))} /></Field>
+              <Field label="Modo Misto"><input className="adm-input" type="number" value={form.modo_misto_cost} onChange={(e) => setForm((f) => ({ ...f, modo_misto_cost: Number(e.target.value) }))} /></Field>
+              <Field label="BUILD Engine"><input className="adm-input" type="number" value={form.build_engine_cost} onChange={(e) => setForm((f) => ({ ...f, build_engine_cost: Number(e.target.value) }))} /></Field>
             </div>
+          </div>
+
+          {/* Derived limits preview */}
+          <div style={{ marginTop: 8, padding: "10px 14px", borderRadius: 10, background: "var(--adm-bg)", border: "1px solid var(--adm-border)", fontSize: 12, color: "var(--adm-text-soft)" }}>
+            <strong style={{ color: "var(--adm-text)", fontSize: 12 }}>Limites calculados:</strong>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr 1fr", gap: 6, marginTop: 6 }}>
+              <span>✨ Prompts: <strong style={{ color: "var(--adm-text)" }}>{promptLimit}</strong></span>
+              <span>🏗️ SaaS: <strong style={{ color: "var(--adm-text)" }}>{saasLimit}</strong></span>
+              <span>⚡ Misto: <strong style={{ color: "var(--adm-text)" }}>{mistoLimit}</strong></span>
+              <span>⚙️ BUILD: <strong style={{ color: "var(--adm-text)" }}>{buildLimit}</strong></span>
+              <span>📦 Total: <strong style={{ color: "var(--adm-text)" }}>{form.credits_limit}</strong></span>
+            </div>
+          </div>
+
+          <div style={{ display: "flex", gap: 16, alignItems: "center", marginTop: 4 }}>
+            <label><input type="checkbox" checked={form.is_featured} onChange={(e) => setForm((f) => ({ ...f, is_featured: e.target.checked }))} /> Destaque</label>
+            <label><input type="checkbox" checked={form.is_active} onChange={(e) => setForm((f) => ({ ...f, is_active: e.target.checked }))} /> Ativo</label>
           </div>
           <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
             <button className="adm-btn outline" onClick={() => setOpen(false)}>Cancelar</button>
