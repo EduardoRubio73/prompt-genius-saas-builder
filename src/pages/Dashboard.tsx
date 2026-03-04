@@ -329,7 +329,7 @@ export default function Dashboard() {
       </section>
 
       {/* ── Usage Progress ── */}
-      <section className="mb-6">
+      <section className="mb-6 animate-fade-in" style={{ animationDelay: "350ms", animationFillMode: "backwards" }}>
         <div className="rounded-xl border bg-card shadow-md p-5">
           <div className="flex items-center gap-1.5 mb-3">
             <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
