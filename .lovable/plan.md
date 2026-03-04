@@ -1,45 +1,34 @@
 
 
-## Fix: Admin Credits Not Saving
+## Diagnóstico do teste
 
-### Root Causes
+### O que funciona
+- **Planos na tabela**: 3 planos (Free, Starter, Pro) aparecem corretamente via `v_active_stripe_plans`
+- **Formulário de edição**: Já tem o campo "Preço (BRL)" e todos os campos necessários
+- **Botões**: "Conferir Stripe" e "Criar novo plano" existem e chamam as funções corretas
 
-1. **Missing data**: `admin_users_overview` view doesn't include `plan_credits_total`, `bonus_credits_total`, etc. The form defaults to `0` instead of the real values.
-2. **JS falsy bug**: Line 88 uses `form.plan_credits_total || undefined` — when the value is `0`, `0 || undefined` evaluates to `undefined`, so the field is omitted from the update.
+### Problemas encontrados
 
-### Solution
+1. **`stripe-sync-products` crashando**: O log mostra `No such product: 'prod_U58VVYaLevEyB5'` para o `prod_enterprise`. Os `stripe_product_id` armazenados no banco são IDs inválidos no Stripe — provavelmente foram criados em outro ambiente/conta. Quando a função tenta `stripe.products.update()` com um ID inexistente, dá 404. Depois o Deno crasheia com `runMicrotasks()`.
 
-**1. Fetch actual org data when dialog opens**
-- In `UserDetailDialog`, add a query to fetch the organization record directly from `organizations` table using `user.org_id`
-- Initialize `plan_credits_total` and `bonus_credits_total` from the real org data
+2. **Tratamento de erro insuficiente**: A função atual faz `try/catch` e apenas loga o erro, mas o crash do Deno depois da resposta causa o erro `event loop error` que mata o response.
 
-**2. Fix the save logic**
-- Remove `|| undefined` guards — always send `plan_credits_total` and `bonus_credits_total` to the update call
-- This ensures `0` is a valid value that gets saved
+3. **IDs inválidos no Stripe**: Os 4 `stripe_product_id` no banco (`prod_U58Vo19Ozb67fo`, etc.) não existem na conta Stripe conectada. A função precisa detectar `resource_missing` (404) e **recriar** o produto em vez de apenas logar o erro.
 
-### Files to Edit
+### Correção
 
-| File | Change |
-|------|--------|
-| `src/pages/admin/AdminUsers.tsx` | Add org data fetch, fix form init + save logic |
+#### `stripe-sync-products/index.ts`
+- Quando `stripe.products.update()` retornar erro 404 (`resource_missing`):
+  - Criar um novo produto no Stripe
+  - Atualizar o `stripe_product_id` no banco com o novo ID
+- Para preços com `stripe_price_id` inválido: mesma lógica — verificar se existe, recriar se necessário
+- Garantir que o `prod_enterprise` também ganhe preço e fique ativo
 
-### Details
+#### Resumo de mudanças
 
-```tsx
-// Add useEffect to load real org data
-const [orgData, setOrgData] = useState<any>(null);
-useEffect(() => {
-  if (user.org_id) {
-    supabase.from("organizations").select("plan_credits_total, bonus_credits_total, plan_credits_used, bonus_credits_used").eq("id", user.org_id).single()
-      .then(({ data }) => {
-        if (data) {
-          setForm(f => ({ ...f, plan_credits_total: data.plan_credits_total, bonus_credits_total: data.bonus_credits_total }));
-        }
-      });
-  }
-}, [user.org_id]);
+| Arquivo | Mudança |
+|---------|---------|
+| `supabase/functions/stripe-sync-products/index.ts` | Tratar erro 404 recriando produto/preço no Stripe |
 
-// Fix save — no more || undefined
-updates: { plan_tier: form.plan_tier, is_active: form.is_active, plan_credits_total: form.plan_credits_total, bonus_credits_total: form.bonus_credits_total }
-```
+Sem essa correção, o botão "Conferir Stripe" vai continuar falhando silenciosamente por causa dos IDs inválidos.
 
