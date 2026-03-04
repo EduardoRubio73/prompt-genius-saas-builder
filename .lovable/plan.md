@@ -1,45 +1,52 @@
 
 
-## Fix: Admin Credits Not Saving
+## Plano: Adicionar header `apikey` em todas as chamadas de Edge Functions
 
-### Root Causes
+### Problema
+O gateway do Supabase exige o header `apikey` junto com o JWT. O `supabase.functions.invoke()` não o envia automaticamente neste projeto, causando `401 Invalid JWT`.
 
-1. **Missing data**: `admin_users_overview` view doesn't include `plan_credits_total`, `bonus_credits_total`, etc. The form defaults to `0` instead of the real values.
-2. **JS falsy bug**: Line 88 uses `form.plan_credits_total || undefined` — when the value is `0`, `0 || undefined` evaluates to `undefined`, so the field is omitted from the update.
+### Mudanca
 
-### Solution
+**Unico arquivo a alterar: `src/lib/edgeFunctions.ts`**
 
-**1. Fetch actual org data when dialog opens**
-- In `UserDetailDialog`, add a query to fetch the organization record directly from `organizations` table using `user.org_id`
-- Initialize `plan_credits_total` and `bonus_credits_total` from the real org data
+Adicionar `headers: { apikey }` na chamada centralizada. Todas as 7+ chamadas via `callEdgeFunction` e as chamadas diretas tambem precisam do header.
 
-**2. Fix the save logic**
-- Remove `|| undefined` guards — always send `plan_credits_total` and `bonus_credits_total` to the update call
-- This ensures `0` is a valid value that gets saved
+Porem, como existem 6 arquivos com chamadas diretas a `supabase.functions.invoke()`, ha duas opcoes:
 
-### Files to Edit
+**Opcao escolhida**: Criar um wrapper global que injeta o header e migrar as chamadas diretas restantes.
 
-| File | Change |
-|------|--------|
-| `src/pages/admin/AdminUsers.tsx` | Add org data fetch, fix form init + save logic |
+### Arquivos alterados
 
-### Details
+| Arquivo | Mudanca |
+|---------|---------|
+| `src/lib/edgeFunctions.ts` | Adicionar `headers: { apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY }` |
+| `src/pages/landing/LandingPage.tsx` | Substituir `supabase.functions.invoke` direto por `callEdgeFunction` |
+| `src/pages/ProfilePage.tsx` | Substituir `supabase.functions.invoke` direto por `callEdgeFunction` |
+| `src/pages/admin/AdminBillingPlans.tsx` | Substituir 3 chamadas diretas por `callEdgeFunction` |
+| `src/pages/admin/AdminStripeSettings.tsx` | Substituir 1 chamada direta por `callEdgeFunction` |
+| `src/hooks/admin/useAdminData.ts` | Substituir 2 chamadas diretas por `callEdgeFunction` |
 
-```tsx
-// Add useEffect to load real org data
-const [orgData, setOrgData] = useState<any>(null);
-useEffect(() => {
-  if (user.org_id) {
-    supabase.from("organizations").select("plan_credits_total, bonus_credits_total, plan_credits_used, bonus_credits_used").eq("id", user.org_id).single()
-      .then(({ data }) => {
-        if (data) {
-          setForm(f => ({ ...f, plan_credits_total: data.plan_credits_total, bonus_credits_total: data.bonus_credits_total }));
-        }
-      });
+### Codigo do helper atualizado
+
+```ts
+import { supabase } from "@/integrations/supabase/client";
+
+export async function callEdgeFunction(name: string, body?: any) {
+  const { data, error } = await supabase.functions.invoke(name, {
+    body,
+    headers: {
+      apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+    },
+  });
+
+  if (error) {
+    console.error("Edge Function Error:", error);
+    throw error;
   }
-}, [user.org_id]);
 
-// Fix save — no more || undefined
-updates: { plan_tier: form.plan_tier, is_active: form.is_active, plan_credits_total: form.plan_credits_total, bonus_credits_total: form.bonus_credits_total }
+  return data;
+}
 ```
+
+Todas as chamadas passam a usar este helper, garantindo `apikey` + JWT em 100% dos casos.
 
