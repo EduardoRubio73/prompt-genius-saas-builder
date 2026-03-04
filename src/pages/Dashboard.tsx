@@ -91,7 +91,7 @@ function SummaryCard({
   loading?: boolean;
 }) {
   return (
-    <div className="rounded-xl border border-border/60 bg-card/50 p-4 flex items-center gap-3 transition-all hover:shadow-md hover:border-border">
+    <div className="rounded-xl border bg-card p-5 flex items-center gap-3 shadow-md hover:shadow-xl transition-all duration-300">
       <div className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-xl", iconClass ?? "bg-muted text-muted-foreground")}>
         <Icon className="h-5 w-5" />
       </div>
