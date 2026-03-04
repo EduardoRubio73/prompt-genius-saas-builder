@@ -199,23 +199,17 @@ function NotificationsTab() {
 
 // ── Billing Tab ──
 interface BillingProduct {
-  id: string;
-  name: string;
   display_name: string | null;
-  plan_tier: string;
-  is_featured: boolean;
+  price_brl: number;
   credits_limit: number;
   prompts_limit: number;
   saas_specs_limit: number;
   modo_misto_limit: number;
   build_engine_limit: number;
   members_label: string | null;
-  recurring_interval: string | null;
-  cta_label: string | null;
-  stripe_price_id: string | null;
+  is_featured: boolean;
   sort_order: number;
-  price_brl: number;
-  trial_period_days: number | null;
+  stripe_price_id: string | null;
 }
 
 function useBillingProducts() {
@@ -225,26 +219,20 @@ function useBillingProducts() {
       const { data, error } = await supabase
         .from("v_active_stripe_plans")
         .select("*")
-        .order("sort_order", { ascending: true });
+        .order("sort_order");
       if (error) throw error;
       return (data ?? []).map((p: any) => ({
-        id: p.product_id,
-        name: p.name,
-        display_name: p.display_name,
-        plan_tier: p.plan_tier,
-        is_featured: p.is_featured ?? false,
-        credits_limit: p.credits_limit ?? 0,
-        prompts_limit: p.prompts_limit ?? 0,
-        saas_specs_limit: p.saas_specs_limit ?? 0,
-        modo_misto_limit: p.modo_misto_limit ?? 0,
-        build_engine_limit: p.build_engine_limit ?? 0,
-        members_label: p.members_label ?? null,
-        recurring_interval: p.recurring_interval ?? null,
-        cta_label: p.cta_label ?? "Assinar",
-        stripe_price_id: p.stripe_price_id,
-        sort_order: p.sort_order || 0,
+        display_name: p.display_name ?? null,
         price_brl: Number(p.price_brl ?? 0),
-        trial_period_days: p.trial_period_days ?? null,
+        credits_limit: Number(p.credits_limit ?? 0),
+        prompts_limit: Number(p.prompts_limit ?? 0),
+        saas_specs_limit: Number(p.saas_specs_limit ?? 0),
+        modo_misto_limit: Number(p.modo_misto_limit ?? 0),
+        build_engine_limit: Number(p.build_engine_limit ?? 0),
+        members_label: p.members_label ?? null,
+        is_featured: Boolean(p.is_featured),
+        sort_order: Number(p.sort_order ?? 0),
+        stripe_price_id: p.stripe_price_id ?? null,
       })) as BillingProduct[];
     },
   });
@@ -272,34 +260,11 @@ function BillingTab({ orgId }: { orgId: string | undefined }) {
     toast.error("Não foi possível redirecionar para o checkout.");
   };
 
-  // Get org plan_tier
-  const { data: org } = useQuery({
-    queryKey: ["org-plan-tier", orgId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("organizations")
-        .select("plan_tier")
-        .eq("id", orgId!)
-        .single();
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!orgId,
-  });
-
-  const currentTier = org?.plan_tier ?? "free";
-
   // Quota bars
-  const planUsed = quota?.plan_used ?? 0;
-  const planTotal = quota?.plan_total ?? 0;
-  const planPct = planTotal > 0 ? Math.min(100, Math.round((planUsed / planTotal) * 100)) : 0;
-
-  const bonusUsed = quota?.bonus_used ?? 0;
-  const bonusTotal = quota?.bonus_total ?? 0;
-  const bonusPct = bonusTotal > 0 ? Math.min(100, Math.round((bonusUsed / bonusTotal) * 100)) : 0;
+  const planPct = Number(quota?.percent_used ?? 0);
 
   const barColor = (pct: number) =>
-    pct >= 90 ? "bg-destructive" : pct >= 70 ? "bg-yellow-500" : "bg-primary";
+    pct >= 100 ? "bg-destructive" : pct >= 80 ? "bg-yellow-500" : "bg-primary";
 
   const featureRow = (label: string, value: string) => {
     return (
@@ -315,8 +280,8 @@ function BillingTab({ orgId }: { orgId: string | undefined }) {
 
   return (
     <div className="space-y-6">
-      {/* Quota bars */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl">
+      {/* Quota bar */}
+      <div className="max-w-2xl">
         <div className="rounded-xl border border-border/60 p-5">
           <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
             Cotas do Plano
@@ -326,35 +291,19 @@ function BillingTab({ orgId }: { orgId: string | undefined }) {
           ) : (
             <>
               <div className="h-3 w-full rounded-full bg-border overflow-hidden mb-2">
-                <div className={cn("h-full rounded-full transition-all", barColor(planPct))} style={{ width: `${planPct}%` }} />
+                <div className={cn("h-full rounded-full transition-all", barColor(planPct))} style={{ width: `${Math.min(100, Math.max(0, planPct))}%` }} />
               </div>
               <p className="text-sm text-muted-foreground">
-                <span className="text-foreground font-semibold">{planUsed}</span> / {planTotal} cotas usadas ({planPct}%)
+                <span className="text-foreground font-semibold">{quota?.credits_used ?? 0}</span> / {quota?.credits_limit ?? 0} usadas
               </p>
-              {quota?.reset_at && (
+              <p className="text-xs text-muted-foreground mt-1">
+                <span className="text-foreground font-semibold">{quota?.credits_remaining ?? 0}</span> restantes
+              </p>
+              {quota?.current_period_end && (
                 <p className="text-xs text-muted-foreground mt-1">
-                  Renova em {new Date(quota.reset_at).toLocaleDateString("pt-BR")}
+                  Renova em {new Date(quota.current_period_end).toLocaleDateString("pt-BR")}
                 </p>
               )}
-            </>
-          )}
-        </div>
-
-        <div className="rounded-xl border border-border/60 p-5">
-          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
-            Cotas Bônus
-          </p>
-          {quotaLoading ? (
-            <Skeleton className="h-10 w-full" />
-          ) : (
-            <>
-              <div className="h-3 w-full rounded-full bg-border overflow-hidden mb-2">
-                <div className={cn("h-full rounded-full transition-all", bonusTotal > 0 ? barColor(bonusPct) : "bg-muted")} style={{ width: `${bonusPct}%` }} />
-              </div>
-              <p className="text-sm text-muted-foreground">
-                <span className="text-foreground font-semibold">{bonusUsed}</span> / {bonusTotal} bônus usadas ({bonusPct}%)
-              </p>
-              <p className="text-xs text-muted-foreground mt-1">Cotas bônus não expiram</p>
             </>
           )}
         </div>
@@ -370,10 +319,10 @@ function BillingTab({ orgId }: { orgId: string | undefined }) {
         ) : (
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 max-w-5xl">
             {(products ?? []).map((plan) => {
-              const isCurrent = plan.plan_tier === currentTier;
+              const isCurrent = (plan.display_name ?? "").toLowerCase() === (quota?.plan_name ?? "").toLowerCase();
               return (
                 <div
-                  key={plan.id}
+                  key={`${plan.display_name}-${plan.sort_order}`}
                   className={cn(
                     "rounded-xl border p-5 transition-colors flex flex-col",
                     isCurrent ? "border-primary bg-primary/5 ring-1 ring-primary/30" : "border-border/60 bg-card/50",
@@ -392,7 +341,7 @@ function BillingTab({ orgId }: { orgId: string | undefined }) {
                   {/* Plan name */}
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="text-xs font-bold uppercase tracking-widest text-primary">
-                      {plan.display_name ?? plan.name ?? plan.id}
+                      {plan.display_name ?? "Plano"}
                     </h3>
                     {isCurrent && (
                       <span className="rounded-full bg-primary px-2.5 py-0.5 text-[10px] font-bold text-primary-foreground uppercase">
@@ -411,20 +360,14 @@ function BillingTab({ orgId }: { orgId: string | undefined }) {
                     </span>
                   </div>
                   {(() => {
-                    const interval = plan.recurring_interval ?? "mês";
-                    const isUnlimited = plan.plan_tier === "enterprise";
-                    const fmtVal = (val: number) => isUnlimited ? "Ilimitado" : `${val} / ${interval}`;
+                    const interval = "mês";
+                    const fmtVal = (val: number) => `${val} / ${interval}`;
                     return (
                       <>
                         <p className="text-xs text-muted-foreground mb-1">por {interval}</p>
-                        {plan.trial_period_days && plan.trial_period_days > 0 && (
-                          <p className="text-xs text-primary font-medium mb-4 mt-1 inline-flex items-center gap-1">
-                            <Check className="h-3 w-3" /> {plan.trial_period_days} dias grátis
-                          </p>
-                        )}
 
                         <p className="text-sm font-semibold text-foreground mb-3 mt-2">
-                          {isUnlimited ? "Ilimitado" : `${plan.credits_limit} cotas / ${interval}`}
+                          {`${plan.credits_limit} cotas / ${interval}`}
                         </p>
 
                         <div className="space-y-2 flex-1 mb-4">
@@ -432,7 +375,7 @@ function BillingTab({ orgId }: { orgId: string | undefined }) {
                           {featureRow("🏗️ SaaS Specs (2 cotas)", fmtVal(plan.saas_specs_limit))}
                           {featureRow("⚡ Modo Misto (2 cotas)", fmtVal(plan.modo_misto_limit))}
                           {featureRow("⚙️ BUILD Engine (5 cotas)", fmtVal(plan.build_engine_limit))}
-                          {featureRow("👥 Membros", isUnlimited ? "Ilimitado" : plan.members_label ?? "1")}
+                          {featureRow("👥 Membros", plan.members_label ?? "1")}
                         </div>
                       </>
                     );
@@ -442,13 +385,17 @@ function BillingTab({ orgId }: { orgId: string | undefined }) {
                     <div className="w-full rounded-lg border border-primary/30 bg-primary/5 px-3 py-2 text-center text-xs font-medium text-primary">
                       Plano atual
                     </div>
+                  ) : Number(plan.price_brl) === 0 ? (
+                    <div className="w-full rounded-lg border border-border/60 bg-muted/40 px-3 py-2 text-center text-xs font-medium text-muted-foreground">
+                      Plano gratuito
+                    </div>
                   ) : (
                     <Button
                       onClick={() => subscribe(plan.stripe_price_id ?? "")}
                       disabled={!plan.stripe_price_id}
                       className="w-full"
                     >
-                      {plan.cta_label ?? "Assinar"}
+                      Assinar
                     </Button>
                   )}
                 </div>

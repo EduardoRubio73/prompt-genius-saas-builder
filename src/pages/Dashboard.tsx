@@ -171,7 +171,7 @@ export default function Dashboard() {
 
   const totalActions = (stats?.total_prompts ?? 0) + (stats?.total_saas_specs ?? 0);
   const avgRating = stats?.avg_prompt_rating ? Number(stats.avg_prompt_rating).toFixed(1) : "—";
-  const noQuota = !isQuotaLoading && quota != null && (quota.total_remaining ?? 0) <= 0;
+  const noQuota = !isQuotaLoading && quota != null && (quota.credits_remaining ?? 0) <= 0;
 
   return (
     <AppShell
@@ -199,7 +199,7 @@ export default function Dashboard() {
             {/* Plan badge */}
             <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-primary/30 bg-primary/8 text-primary text-xs font-bold uppercase tracking-wider">
               <Crown className="w-3.5 h-3.5" />
-              Plano Free
+              Plano {quota?.plan_name ?? "Free"}
             </div>
           </div>
         )}
@@ -245,11 +245,10 @@ export default function Dashboard() {
       {/* ── Usage + Quick actions ───────────────────────────────────────────── */}
       <section className="grid grid-cols-2 gap-3 sm:grid-cols-4 mb-8">
         <QuotaCard
-          planUsed={quota?.plan_used ?? 0}
-          planTotal={quota?.plan_total ?? 0}
-          bonusUsed={quota?.bonus_used ?? 0}
-          bonusTotal={quota?.bonus_total ?? 0}
-          totalRemaining={quota?.total_remaining ?? 0}
+          creditsUsed={quota?.credits_used ?? 0}
+          creditsLimit={quota?.credits_limit ?? 0}
+          creditsRemaining={quota?.credits_remaining ?? 0}
+          percentUsed={Number(quota?.percent_used ?? 0)}
           loading={isQuotaLoading}
         />
 
