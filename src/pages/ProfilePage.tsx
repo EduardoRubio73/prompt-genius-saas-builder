@@ -452,6 +452,59 @@ function BillingTab({ orgId }: { orgId: string | undefined }) {
           </div>
         )}
       </div>
+
+      {/* Credit Packs */}
+      <div>
+        <h2 className="text-lg font-bold text-foreground mb-1">Comprar Créditos Extras</h2>
+        <p className="text-sm text-muted-foreground mb-4">
+          Adicione créditos extras para continuar utilizando as funcionalidades de IA.
+        </p>
+        {packsLoading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-3xl">
+            {[1, 2, 3].map((i) => <Skeleton key={i} className="h-48 w-full rounded-xl" />)}
+          </div>
+        ) : (packs ?? []).length === 0 ? (
+          <p className="text-sm text-muted-foreground">Nenhum pacote disponível no momento.</p>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-3xl">
+            {(packs ?? []).map((pack) => (
+              <div
+                key={pack.id}
+                className={cn(
+                  "rounded-xl border p-5 flex flex-col items-center text-center transition-colors",
+                  pack.is_featured
+                    ? "border-primary/40 ring-1 ring-primary/20 bg-primary/5"
+                    : "border-border/60 bg-card/50"
+                )}
+              >
+                {pack.is_featured && (
+                  <span className="rounded-full bg-primary px-3 py-1 text-[10px] font-bold text-primary-foreground uppercase tracking-wider -mt-8 mb-2">
+                    ⭐ Mais popular
+                  </span>
+                )}
+                <Coins className="h-8 w-8 text-primary mb-3" />
+                <p className="text-3xl font-extrabold text-foreground">{pack.credits}</p>
+                <p className="text-xs text-muted-foreground mb-2">créditos</p>
+                <p className="text-lg font-bold text-foreground mb-4">
+                  R$ {Number(pack.price_brl).toFixed(2).replace(".", ",")}
+                </p>
+                <Button
+                  onClick={() => buyCredits(pack.id)}
+                  disabled={buyingPackId !== null}
+                  className="w-full"
+                  variant={pack.is_featured ? "default" : "outline"}
+                >
+                  {buyingPackId === pack.id ? (
+                    <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Processando...</>
+                  ) : (
+                    "Comprar"
+                  )}
+                </Button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
