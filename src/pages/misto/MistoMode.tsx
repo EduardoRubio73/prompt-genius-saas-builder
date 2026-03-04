@@ -7,6 +7,7 @@ import { useProfile } from "@/hooks/useProfile";
 import { useTheme } from "@/hooks/useTheme";
 import { toast } from "sonner";
 import type { Enums } from "@/integrations/supabase/types";
+import { callEdgeFunction } from "@/lib/edgeFunctions";
 
 import { MistoStepper } from "@/components/misto/MistoStepper";
 import { MistoInput } from "@/components/misto/MistoInput";
@@ -28,9 +29,6 @@ export interface MistoFields {
   contexto: string;
   destino: string;
 }
-
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || "https://pcaebfncvuvdguyjmyxm.supabase.co";
-const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBjYWViZm5jdnV2ZGd1eWpteXhtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIxMTM5ODAsImV4cCI6MjA4NzY4OTk4MH0.7pDeOmLlWzPoVKJKIRepxGKtMAD0PPJiyXHG8AYhy34";
 
 export default function MistoMode() {
   const navigate = useNavigate();
@@ -65,14 +63,6 @@ export default function MistoMode() {
     return b;
   }, [orgId]);
 
-  const getAuthHeaders = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    return {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${session?.access_token ?? SUPABASE_ANON_KEY}`,
-    };
-  };
-
   const [sessionId, setSessionId] = useState<string | null>(null);
 
   // Main generate flow
@@ -89,7 +79,6 @@ export default function MistoMode() {
     if (balance.total_remaining <= 0) { setCreditModal("no_credits"); return; }
 
     startTime.current = Date.now();
-    const headers = await getAuthHeaders();
 
     try {
       setStep("distributing");
@@ -102,12 +91,9 @@ export default function MistoMode() {
       const currentSessionId = sessionRecord.id;
       setSessionId(currentSessionId);
 
-      const distributeRes = await fetch(`${SUPABASE_URL}/functions/v1/refine-prompt`, {
-        method: "POST", headers,
-        body: JSON.stringify({ action: "distribute", freeText: userInput, destino, sessionId: currentSessionId }),
+      const distributeData = await callEdgeFunction("refine-prompt", {
+        action: "distribute", freeText: userInput, destino, sessionId: currentSessionId,
       });
-      if (!distributeRes.ok) throw new Error("Falha na distribuição");
-      const distributeData = await distributeRes.json();
       const extractedFields: MistoFields = {
         especialidade: distributeData.especialidade || "",
         persona: distributeData.persona || "",
@@ -119,12 +105,9 @@ export default function MistoMode() {
       setFields(extractedFields);
 
       setStep("refining");
-      const refineRes = await fetch(`${SUPABASE_URL}/functions/v1/refine-prompt`, {
-        method: "POST", headers,
-        body: JSON.stringify({ action: "refine", fields: extractedFields, destino, sessionId: currentSessionId }),
+      const refineData = await callEdgeFunction("refine-prompt", {
+        action: "refine", fields: extractedFields, destino, sessionId: currentSessionId,
       });
-      if (!refineRes.ok) throw new Error("Falha no refinamento");
-      const refineData = await refineRes.json();
       const refinedFields: MistoFields = {
         especialidade: refineData.especialidade || extractedFields.especialidade,
         persona: refineData.persona || extractedFields.persona,
@@ -139,12 +122,9 @@ export default function MistoMode() {
       await supabase.rpc("consume_credit", { p_org_id: orgId, p_user_id: user.id, p_session_id: currentSessionId });
 
       setStep("generating-spec");
-      const specRes = await fetch(`${SUPABASE_URL}/functions/v1/refine-prompt`, {
-        method: "POST", headers,
-        body: JSON.stringify({ action: "saas-spec", promptFields: refinedFields, originalInput: userInput, destino, sessionId: currentSessionId }),
+      const specData = await callEdgeFunction("refine-prompt", {
+        action: "saas-spec", promptFields: refinedFields, originalInput: userInput, destino, sessionId: currentSessionId,
       });
-      if (!specRes.ok) throw new Error("Falha na geração da spec");
-      const specData = await specRes.json();
       setSpecMarkdown(specData.spec_md || "");
 
       setTimeElapsed((Date.now() - startTime.current) / 1000);
