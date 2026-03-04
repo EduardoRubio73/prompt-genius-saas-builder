@@ -188,8 +188,12 @@ export default function AdminBillingPlans() {
                 <td>R$ {((p.unit_amount ?? 0) / 100).toFixed(2)}</td>
                 <td>{p.recurring_interval || "—"}</td>
                 <td>{p.plan_tier || "—"}</td>
-                <td><span className="adm-badge active">Ativo</span></td>
-                <td style={{ fontSize: 11, fontFamily: "var(--adm-mono)" }}>{p.stripe_product_id || "—"}</td>
+                <td>
+                  {p.product_active === false
+                    ? <span className="adm-badge inactive">Inativo</span>
+                    : <span className="adm-badge active">Ativo</span>}
+                </td>
+                <td style={{ fontSize: 11, fontFamily: "var(--adm-mono)" }}>{p.product_id || "—"}</td>
                 <td style={{ fontSize: 11, fontFamily: "var(--adm-mono)" }}>{p.stripe_price_id || "—"}</td>
                 <td><button className="adm-btn ghost" onClick={() => openEdit(p)}><Pencil size={14} /></button></td>
               </tr>
