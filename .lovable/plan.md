@@ -1,45 +1,64 @@
 
 
-## Fix: Admin Credits Not Saving
+## Correção completa do sistema Stripe
 
-### Root Causes
+### Estado atual do banco
+- 4 produtos (`prod_free`, `prod_starter`, `prod_pro`, `prod_enterprise`) — todos com `is_active = false`
+- 3 preços com `stripe_price_id` preenchido e `is_active = true`
+- Todos já têm `stripe_product_id` no Stripe
+- **Nenhum** `STRIPE_SECRET_KEY` nos secrets do projeto — as Edge Functions vão falhar sem isso
 
-1. **Missing data**: `admin_users_overview` view doesn't include `plan_credits_total`, `bonus_credits_total`, etc. The form defaults to `0` instead of the real values.
-2. **JS falsy bug**: Line 88 uses `form.plan_credits_total || undefined` — when the value is `0`, `0 || undefined` evaluates to `undefined`, so the field is omitted from the update.
+### Correções
 
-### Solution
+#### 1. `stripe-sync-products/index.ts` — Reescrever (Supabase → Stripe)
+- SDK: `stripe@14.21.0` (v16 causa crash `Deno.core.runMicrotasks()`)
+- Nova lógica:
+  - Ler todos `billing_products` e `billing_prices` do Supabase
+  - Para cada produto **sem** `stripe_product_id`: criar no Stripe, salvar ID
+  - Para cada produto **com** `stripe_product_id`: fazer `stripe.products.update()` com nome atualizado
+  - Para cada preço **sem** `stripe_price_id`: criar no Stripe, salvar ID
+  - Após sync, ativar preços e produtos no banco
+  - Retornar resumo `{ created, updated }`
 
-**1. Fetch actual org data when dialog opens**
-- In `UserDetailDialog`, add a query to fetch the organization record directly from `organizations` table using `user.org_id`
-- Initialize `plan_credits_total` and `bonus_credits_total` from the real org data
+#### 2. `update-billing-plan/index.ts` — Adicionar Stripe
+- Importar Stripe SDK v14.21.0
+- Se produto tem `stripe_product_id` → `stripe.products.update()`; senão → `stripe.products.create()` e salvar
+- Se preço mudou `unit_amount` e tem `stripe_price_id` → criar novo Price no Stripe (imutável), desativar antigo
+- Se não tem `stripe_price_id` → `stripe.prices.create()` e salvar
+- Buscar dados existentes do banco antes de atualizar
 
-**2. Fix the save logic**
-- Remove `|| undefined` guards — always send `plan_credits_total` and `bonus_credits_total` to the update call
-- This ensures `0` is a valid value that gets saved
+#### 3. `create-billing-plan/index.ts` — Fix SDK
+- Mudar `stripe@16.12.0` para `stripe@14.21.0`
 
-### Files to Edit
-
-| File | Change |
-|------|--------|
-| `src/pages/admin/AdminUsers.tsx` | Add org data fetch, fix form init + save logic |
-
-### Details
-
-```tsx
-// Add useEffect to load real org data
-const [orgData, setOrgData] = useState<any>(null);
-useEffect(() => {
-  if (user.org_id) {
-    supabase.from("organizations").select("plan_credits_total, bonus_credits_total, plan_credits_used, bonus_credits_used").eq("id", user.org_id).single()
-      .then(({ data }) => {
-        if (data) {
-          setForm(f => ({ ...f, plan_credits_total: data.plan_credits_total, bonus_credits_total: data.bonus_credits_total }));
-        }
-      });
-  }
-}, [user.org_id]);
-
-// Fix save — no more || undefined
-updates: { plan_tier: form.plan_tier, is_active: form.is_active, plan_credits_total: form.plan_credits_total, bonus_credits_total: form.bonus_credits_total }
+#### 4. `supabase/config.toml` — Adicionar funções faltantes
+```toml
+[functions.create-billing-plan]
+verify_jwt = false
+[functions.update-billing-plan]
+verify_jwt = false
+[functions.stripe-sync-products]
+verify_jwt = false
+[functions.stripe-test-connection]
+verify_jwt = false
 ```
+
+#### 5. Ativar produtos no banco (data update)
+```sql
+UPDATE billing_products SET is_active = true 
+WHERE id IN ('prod_free','prod_starter','prod_pro','prod_enterprise');
+```
+Os triggers permitem porque os preços já estão ativos com `stripe_price_id`.
+
+### Pré-requisito do usuário
+Adicionar `STRIPE_SECRET_KEY` no painel Supabase → Settings → Edge Functions. Sem isso, nenhuma função Stripe vai funcionar.
+
+### Arquivos modificados
+
+| Arquivo | Mudança |
+|---------|---------|
+| `supabase/functions/stripe-sync-products/index.ts` | Reescrever: Supabase→Stripe, SDK v14 |
+| `supabase/functions/update-billing-plan/index.ts` | Adicionar Stripe create/update |
+| `supabase/functions/create-billing-plan/index.ts` | SDK v16→v14 |
+| `supabase/config.toml` | Adicionar 4 entries |
+| Data update | `is_active = true` nos produtos |
 
