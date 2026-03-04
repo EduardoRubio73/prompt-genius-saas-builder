@@ -291,14 +291,13 @@ function BillingTab({ orgId }: { orgId: string | undefined }) {
   const barColor = (pct: number) =>
     pct >= 90 ? "bg-destructive" : pct >= 70 ? "bg-yellow-500" : "bg-primary";
 
-  const featureRow = (label: string | null, detail: string | null) => {
-    if (!label) return null;
+  const featureRow = (label: string, value: string) => {
     return (
       <div className="flex items-start gap-2 text-sm">
         <Check className="h-4 w-4 text-primary shrink-0 mt-0.5" />
         <div>
           <span className="text-foreground font-medium">{label}</span>
-          {detail && <span className="text-muted-foreground ml-1">— {detail}</span>}
+          <span className="text-muted-foreground ml-1">— {value}</span>
         </div>
       </div>
     );
