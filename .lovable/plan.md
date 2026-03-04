@@ -1,45 +1,60 @@
 
 
-## Fix: Admin Credits Not Saving
+## Plano: Consumir `v_active_stripe_plans` dinamicamente com `credits_limit`
 
-### Root Causes
+### Problema atual
 
-1. **Missing data**: `admin_users_overview` view doesn't include `plan_credits_total`, `bonus_credits_total`, etc. The form defaults to `0` instead of the real values.
-2. **JS falsy bug**: Line 88 uses `form.plan_credits_total || undefined` — when the value is `0`, `0 || undefined` evaluates to `undefined`, so the field is omitted from the update.
+Os cards de planos na Landing e no ProfilePage usam labels estáticas (`prompts_label`, `saas_specs_label`, etc.) cadastradas manualmente no banco. O usuário quer que os limites sejam **calculados dinamicamente** a partir de `credits_limit` e dos custos por ação (1, 2, 2, 5 cotas).
 
-### Solution
+A view `v_active_stripe_plans` não expõe `credits_limit`, `credit_costs`, nem `credit_unit_cost`.
 
-**1. Fetch actual org data when dialog opens**
-- In `UserDetailDialog`, add a query to fetch the organization record directly from `organizations` table using `user.org_id`
-- Initialize `plan_credits_total` and `bonus_credits_total` from the real org data
+### Solução
 
-**2. Fix the save logic**
-- Remove `|| undefined` guards — always send `plan_credits_total` and `bonus_credits_total` to the update call
-- This ensures `0` is a valid value that gets saved
+#### 1. Migration: Adicionar colunas numéricas à view
 
-### Files to Edit
+Recriar `v_active_stripe_plans` incluindo `credits_limit`, `credit_unit_cost` e `credit_costs` da tabela `billing_products`, além de `trial_period_days` da `billing_prices`.
 
-| File | Change |
-|------|--------|
-| `src/pages/admin/AdminUsers.tsx` | Add org data fetch, fix form init + save logic |
+#### 2. LandingPage — Calcular limites no frontend
 
-### Details
+Substituir o uso de `prompts_label`, `saas_specs_label`, etc. por cálculos:
 
 ```tsx
-// Add useEffect to load real org data
-const [orgData, setOrgData] = useState<any>(null);
-useEffect(() => {
-  if (user.org_id) {
-    supabase.from("organizations").select("plan_credits_total, bonus_credits_total, plan_credits_used, bonus_credits_used").eq("id", user.org_id).single()
-      .then(({ data }) => {
-        if (data) {
-          setForm(f => ({ ...f, plan_credits_total: data.plan_credits_total, bonus_credits_total: data.bonus_credits_total }));
-        }
-      });
-  }
-}, [user.org_id]);
+const cl = plan.credits_limit;
+const isUnlimited = plan.plan_tier === "enterprise";
+const interval = plan.recurring_interval ?? "mês";
 
-// Fix save — no more || undefined
-updates: { plan_tier: form.plan_tier, is_active: form.is_active, plan_credits_total: form.plan_credits_total, bonus_credits_total: form.bonus_credits_total }
+// Computed labels
+prompts:     isUnlimited ? "Ilimitado" : `${Math.floor(cl / 1)} / ${interval}`
+saas_specs:  isUnlimited ? "Ilimitado" : `${Math.floor(cl / 2)} / ${interval}`
+modo_misto:  isUnlimited ? "Ilimitado" : `${Math.floor(cl / 2)} / ${interval}`
+build:       isUnlimited ? "Ilimitado" : `${Math.floor(cl / 5)} / ${interval}`
+total:       isUnlimited ? "Ilimitado" : `${cl} cotas / ${interval}`
 ```
+
+Cards mostrarão custo por ação: `✨ Prompts (1 cota)`, `🏗️ SaaS Specs (2 cotas)`, etc.
+
+#### 3. ProfilePage — Mesma lógica dinâmica
+
+Aplicar a mesma fórmula de cálculo nos cards de planos disponíveis.
+
+#### 4. Interface `PricingProduct` / `BillingProduct`
+
+Adicionar `credits_limit`, `plan_tier`, `recurring_interval`, `stripe_price_id` e remover dependência de labels estáticas.
+
+| Arquivo | Mudança |
+|---------|---------|
+| Migration SQL | Adicionar `credits_limit`, `credit_unit_cost`, `credit_costs`, `trial_period_days` à view |
+| `src/pages/landing/LandingPage.tsx` | Calcular limites a partir de `credits_limit`; usar `stripe_price_id` para checkout |
+| `src/pages/ProfilePage.tsx` | Mesma lógica dinâmica nos cards de planos |
+
+### Dados no banco (confirmados)
+
+| Plano | credits_limit | Resultado Prompts | SaaS | Misto | BUILD |
+|-------|--------------|-------------------|------|-------|-------|
+| Free | 5* (metadata) | 5 | 2 | 2 | 1 |
+| Starter | 56 | 56 | 28 | 28 | 11 |
+| Pro | 171 | 171 | 85 | 85 | 34 |
+| Enterprise | 286 | Ilimitado | Ilimitado | Ilimitado | Ilimitado |
+
+*Nota: Free tem `credits_limit=0` na coluna, mas `5` no metadata. A view usará `COALESCE(bp.credits_limit, (bp.metadata->>'credits_limit')::int, 0)`.
 
