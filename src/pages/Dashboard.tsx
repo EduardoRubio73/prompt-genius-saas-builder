@@ -246,7 +246,7 @@ export default function Dashboard() {
       <section className="grid grid-cols-2 gap-3 sm:grid-cols-4 mb-8">
         <QuotaCard
           planUsed={quota?.plan_used ?? 0}
-          planTotal={quota?.plan_total ?? 5}
+          planTotal={quota?.plan_total ?? 0}
           bonusUsed={quota?.bonus_used ?? 0}
           bonusTotal={quota?.bonus_total ?? 0}
           totalRemaining={quota?.total_remaining ?? 0}

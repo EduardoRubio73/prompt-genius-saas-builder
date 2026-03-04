@@ -12,6 +12,7 @@ export interface QuotaBalance {
   account_status: string;
   trial_ends_at: string | null;
   reset_at: string | null;
+  plan_name?: string | null;
 }
 
 export function useQuotaBalance(orgId: string | undefined) {
@@ -22,7 +23,39 @@ export function useQuotaBalance(orgId: string | undefined) {
         p_org_id: orgId!,
       });
       if (error) throw error;
-      return (data as QuotaBalance[])?.[0] ?? null;
+
+      const baseQuota = (data as QuotaBalance[])?.[0] ?? null;
+      if (!baseQuota) return null;
+
+      const { data: activeSubscription, error: subError } = await supabase
+        .from("billing_subscriptions")
+        .select(`
+          status,
+          billing_prices (
+            billing_products (
+              display_name,
+              credits_limit
+            )
+          )
+        `)
+        .eq("org_id", orgId!)
+        .in("status", ["active", "trialing", "past_due"])
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (subError) throw subError;
+
+      const product = (activeSubscription as any)?.billing_prices?.billing_products;
+      const subscriptionCreditsLimit = Number(product?.credits_limit ?? 0);
+      const planTotal = subscriptionCreditsLimit > 0 ? subscriptionCreditsLimit : Number(baseQuota.plan_total ?? 0);
+
+      return {
+        ...baseQuota,
+        plan_name: product?.display_name ?? null,
+        plan_total: planTotal,
+        plan_remaining: Math.max(planTotal - Number(baseQuota.plan_used ?? 0), 0),
+      } as QuotaBalance;
     },
     enabled: !!orgId,
   });
