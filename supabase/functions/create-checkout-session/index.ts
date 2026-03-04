@@ -126,12 +126,27 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Lookup billing price
-    const { data: localPrice, error: localPriceError } = await admin
+    // Lookup billing price — try by id first, then by stripe_price_id
+    let localPrice: { id: string; stripe_price_id: string | null; is_active: boolean } | null = null;
+    let localPriceError: unknown = null;
+
+    const { data: byId, error: byIdErr } = await admin
       .from("billing_prices")
       .select("id, stripe_price_id, is_active")
       .eq("id", priceId)
-      .single();
+      .maybeSingle();
+
+    if (byId) {
+      localPrice = byId;
+    } else {
+      const { data: byStripe, error: byStripeErr } = await admin
+        .from("billing_prices")
+        .select("id, stripe_price_id, is_active")
+        .eq("stripe_price_id", priceId)
+        .maybeSingle();
+      localPrice = byStripe;
+      localPriceError = byStripeErr || byIdErr;
+    }
 
     if (localPriceError || !localPrice) {
       console.error("create-checkout-session billing price lookup error", localPriceError);
