@@ -293,7 +293,7 @@ export default function Dashboard() {
               </h1>
               <p className="mt-1 text-muted-foreground">O que vamos construir hoje?</p>
             </div>
-            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-primary/30 bg-primary/8 text-primary text-xs font-bold uppercase tracking-wider">
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-primary/30 bg-primary/8 text-primary text-xs font-bold uppercase tracking-wider shadow-sm">
               <Crown className="w-3.5 h-3.5" />
               Plano {quota?.plan_name ?? "Free"}
             </div>
