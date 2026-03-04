@@ -1277,16 +1277,19 @@ export type Database = {
       org_credits: {
         Row: {
           balance: number
+          extra_balance: number
           org_id: string
           updated_at: string | null
         }
         Insert: {
           balance?: number
+          extra_balance?: number
           org_id: string
           updated_at?: string | null
         }
         Update: {
           balance?: number
+          extra_balance?: number
           org_id?: string
           updated_at?: string | null
         }
@@ -2259,6 +2262,24 @@ export type Database = {
           },
         ]
       }
+      stripe_events_processed: {
+        Row: {
+          created_at: string | null
+          event_type: string
+          id: string
+        }
+        Insert: {
+          created_at?: string | null
+          event_type: string
+          id: string
+        }
+        Update: {
+          created_at?: string | null
+          event_type?: string
+          id?: string
+        }
+        Relationships: []
+      }
       stripe_sync_log: {
         Row: {
           created_at: string | null
@@ -2603,6 +2624,10 @@ export type Database = {
       }
     }
     Functions: {
+      add_extra_credits: {
+        Args: { p_credits: number; p_org_id: string; p_source?: string }
+        Returns: undefined
+      }
       admin_get_kpis: {
         Args: never
         Returns: {
@@ -2669,7 +2694,7 @@ export type Database = {
       }
       consume_credit: {
         Args: { p_org_id: string; p_session_id: string; p_user_id: string }
-        Returns: string
+        Returns: undefined
       }
       generate_referral_code: {
         Args: { p_org_id: string; p_user_id: string }
