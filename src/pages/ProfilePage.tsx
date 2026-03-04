@@ -68,47 +68,49 @@ function ProfileTab({ userId, profile, onRefresh }: { userId: string; profile: a
   };
 
   return (
-    <div className="space-y-6 max-w-lg">
-      <div className="flex items-center gap-4">
-        <button onClick={() => fileRef.current?.click()} className="relative group">
-          <Avatar className="h-20 w-20 border-2 border-border">
-            {avatarUrl && <AvatarImage src={avatarUrl} />}
-            <AvatarFallback className="bg-primary/10 text-primary text-lg font-bold">{initials}</AvatarFallback>
-          </Avatar>
-          <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity">
-            <Upload className="h-5 w-5 text-white" />
+    <div className="space-y-6">
+      <div className="rounded-xl border bg-card p-6 shadow-sm space-y-6 max-w-lg">
+        <div className="flex items-center gap-4">
+          <button onClick={() => fileRef.current?.click()} className="relative group">
+            <Avatar className="h-20 w-20 border-2 border-border">
+              {avatarUrl && <AvatarImage src={avatarUrl} />}
+              <AvatarFallback className="bg-primary/10 text-primary text-lg font-bold">{initials}</AvatarFallback>
+            </Avatar>
+            <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity">
+              <Upload className="h-5 w-5 text-white" />
+            </div>
+          </button>
+          <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
+          <div>
+            <p className="text-sm font-semibold text-foreground">{fullName || "Seu nome"}</p>
+            <p className="text-xs text-muted-foreground">{profile?.email}</p>
           </div>
+        </div>
+
+        <div className="space-y-2">
+          <div className="flex items-center gap-1.5">
+            <Label htmlFor="fullName">Nome completo</Label>
+            <InfoTooltip content="Como será exibido no app e para outros membros da organização. Ex: João Silva" />
+          </div>
+          <Input id="fullName" value={fullName} onChange={(e) => setFullName(e.target.value)} />
+        </div>
+
+        <div className="space-y-2">
+          <div className="flex items-center gap-1.5">
+            <Label>E-mail</Label>
+            <InfoTooltip content="Não editável. Vinculado à autenticação da conta. Para alterar, entre em contato com o suporte." />
+          </div>
+          <Input value={profile?.email ?? ""} disabled className="opacity-60" />
+        </div>
+
+        <button
+          onClick={handleSave}
+          disabled={saving}
+          className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
+        >
+          <Save className="h-4 w-4" /> {saving ? "Salvando..." : "Salvar alterações"}
         </button>
-        <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
-        <div>
-          <p className="text-sm font-semibold text-foreground">{fullName || "Seu nome"}</p>
-          <p className="text-xs text-muted-foreground">{profile?.email}</p>
-        </div>
       </div>
-
-      <div className="space-y-2">
-        <div className="flex items-center gap-1.5">
-          <Label htmlFor="fullName">Nome completo</Label>
-          <InfoTooltip content="Como será exibido no app e para outros membros da organização. Ex: João Silva" />
-        </div>
-        <Input id="fullName" value={fullName} onChange={(e) => setFullName(e.target.value)} />
-      </div>
-
-      <div className="space-y-2">
-        <div className="flex items-center gap-1.5">
-          <Label>E-mail</Label>
-          <InfoTooltip content="Não editável. Vinculado à autenticação da conta. Para alterar, entre em contato com o suporte." />
-        </div>
-        <Input value={profile?.email ?? ""} disabled className="opacity-60" />
-      </div>
-
-      <button
-        onClick={handleSave}
-        disabled={saving}
-        className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
-      >
-        <Save className="h-4 w-4" /> {saving ? "Salvando..." : "Salvar alterações"}
-      </button>
     </div>
   );
 }
@@ -131,28 +133,30 @@ function SecurityTab() {
   };
 
   return (
-    <div className="space-y-6 max-w-lg">
-      <div className="space-y-2">
-        <div className="flex items-center gap-1.5">
-          <Label htmlFor="newPw">Nova senha</Label>
-          <InfoTooltip content="Mínimo 8 caracteres. Use letras maiúsculas, minúsculas, números e símbolos para mais segurança." />
+    <div className="space-y-6">
+      <div className="rounded-xl border bg-card p-6 shadow-sm space-y-6 max-w-lg">
+        <div className="space-y-2">
+          <div className="flex items-center gap-1.5">
+            <Label htmlFor="newPw">Nova senha</Label>
+            <InfoTooltip content="Mínimo 8 caracteres. Use letras maiúsculas, minúsculas, números e símbolos para mais segurança." />
+          </div>
+          <Input id="newPw" type="password" value={newPw} onChange={(e) => setNewPw(e.target.value)} placeholder="Mínimo 8 caracteres" />
         </div>
-        <Input id="newPw" type="password" value={newPw} onChange={(e) => setNewPw(e.target.value)} placeholder="Mínimo 8 caracteres" />
-      </div>
-      <div className="space-y-2">
-        <div className="flex items-center gap-1.5">
-          <Label htmlFor="confirmPw">Confirmar senha</Label>
-          <InfoTooltip content="Repita a mesma senha digitada acima para confirmar." />
+        <div className="space-y-2">
+          <div className="flex items-center gap-1.5">
+            <Label htmlFor="confirmPw">Confirmar senha</Label>
+            <InfoTooltip content="Repita a mesma senha digitada acima para confirmar." />
+          </div>
+          <Input id="confirmPw" type="password" value={confirmPw} onChange={(e) => setConfirmPw(e.target.value)} />
         </div>
-        <Input id="confirmPw" type="password" value={confirmPw} onChange={(e) => setConfirmPw(e.target.value)} />
+        <button
+          onClick={handleChangePassword}
+          disabled={saving}
+          className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
+        >
+          <Lock className="h-4 w-4" /> {saving ? "Atualizando..." : "Alterar senha"}
+        </button>
       </div>
-      <button
-        onClick={handleChangePassword}
-        disabled={saving}
-        className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
-      >
-        <Lock className="h-4 w-4" /> {saving ? "Atualizando..." : "Alterar senha"}
-      </button>
     </div>
   );
 }
@@ -176,25 +180,27 @@ function NotificationsTab() {
   ];
 
   return (
-    <div className="space-y-4 max-w-lg">
-      {items.map((item) => (
-        <div key={item.key} className="flex items-center justify-between rounded-xl border border-border/60 p-4">
-          <div>
-            <div className="flex items-center gap-1.5">
-              <p className="text-sm font-medium text-foreground">{item.label}</p>
-              <InfoTooltip content={item.tip} />
+    <div className="space-y-6">
+      <div className="rounded-xl border bg-card p-6 shadow-sm space-y-4 max-w-lg">
+        {items.map((item) => (
+          <div key={item.key} className="flex items-center justify-between rounded-xl border border-border/60 p-4">
+            <div>
+              <div className="flex items-center gap-1.5">
+                <p className="text-sm font-medium text-foreground">{item.label}</p>
+                <InfoTooltip content={item.tip} />
+              </div>
+              <p className="text-xs text-muted-foreground">{item.desc}</p>
             </div>
-            <p className="text-xs text-muted-foreground">{item.desc}</p>
+            <Switch checked={prefs[item.key]} onCheckedChange={() => toggle(item.key)} />
           </div>
-          <Switch checked={prefs[item.key]} onCheckedChange={() => toggle(item.key)} />
-        </div>
-      ))}
-      <button
-        onClick={() => toast.success("Preferências salvas!")}
-        className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
-      >
-        <Save className="h-4 w-4" /> Salvar preferências
-      </button>
+        ))}
+        <button
+          onClick={() => toast.success("Preferências salvas!")}
+          className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
+        >
+          <Save className="h-4 w-4" /> Salvar preferências
+        </button>
+      </div>
     </div>
   );
 }
@@ -202,6 +208,7 @@ function NotificationsTab() {
 // ── Billing Tab ──
 interface BillingProduct {
   display_name: string | null;
+  name: string | null;
   price_brl: number;
   credits_limit: number;
   prompts_limit: number;
@@ -225,6 +232,7 @@ function useBillingProducts() {
       if (error) throw error;
       return (data ?? []).map((p: any) => ({
         display_name: p.display_name ?? null,
+        name: p.name ?? null,
         price_brl: Number(p.price_brl ?? 0),
         credits_limit: Number(p.credits_limit ?? 0),
         prompts_limit: Number(p.prompts_limit ?? 0),
@@ -260,6 +268,11 @@ function BillingTab({ orgId }: { orgId: string | undefined }) {
   const { data: products, isLoading: productsLoading } = useBillingProducts();
   const { data: packs, isLoading: packsLoading } = useCreditPacks();
   const [buyingPackId, setBuyingPackId] = useState<string | null>(null);
+
+  // Filter out topup products
+  const subscriptionPlans = (products ?? []).filter(
+    (p) => !(p.name ?? "").toLowerCase().startsWith("topup") && !(p.display_name ?? "").toLowerCase().startsWith("topup")
+  );
 
   const subscribe = async (priceId: string) => {
     try {
@@ -312,60 +325,113 @@ function BillingTab({ orgId }: { orgId: string | undefined }) {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Quota bar */}
-      <div className="max-w-2xl">
-        <div className="rounded-xl border border-border/60 p-5">
-          <div className="flex items-center gap-1.5 mb-3">
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-              Cotas do Plano
-            </p>
-            <InfoTooltip content="Todas as ações utilizam a mesma bolsa de cotas. Você pode combinar diferentes ações até consumir seu limite mensal." />
-          </div>
-          <p className="text-[11px] text-muted-foreground mb-3">
-            As cotas são compartilhadas entre todas as ações. Combine prompts, SaaS Specs e builds livremente.
+      <div className="rounded-xl border bg-card p-6 shadow-sm max-w-2xl">
+        <div className="flex items-center gap-1.5 mb-3">
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+            Cotas do Plano
           </p>
-          {quotaLoading ? (
-            <Skeleton className="h-10 w-full" />
-          ) : (
-            <>
-              <div className="h-3 w-full rounded-full bg-border overflow-hidden mb-2">
-                <div className={cn("h-full rounded-full transition-all", barColor(planPct))} style={{ width: `${Math.min(100, Math.max(0, planPct))}%` }} />
-              </div>
-              <p className="text-sm text-muted-foreground">
-                <span className="text-foreground font-semibold">{quota?.credits_used ?? 0}</span> / {quota?.credits_limit ?? 0} usadas
+          <InfoTooltip content="Todas as ações utilizam a mesma bolsa de cotas. Você pode combinar diferentes ações até consumir seu limite mensal." />
+        </div>
+        <p className="text-[11px] text-muted-foreground mb-3">
+          As cotas são compartilhadas entre todas as ações. Combine prompts, SaaS Specs e builds livremente.
+        </p>
+        {quotaLoading ? (
+          <Skeleton className="h-10 w-full" />
+        ) : (
+          <>
+            <div className="h-3 w-full rounded-full bg-border overflow-hidden mb-2">
+              <div className={cn("h-full rounded-full transition-all", barColor(planPct))} style={{ width: `${Math.min(100, Math.max(0, planPct))}%` }} />
+            </div>
+            <p className="text-sm text-muted-foreground">
+              <span className="text-foreground font-semibold">{quota?.credits_used ?? 0}</span> / {quota?.credits_limit ?? 0} usadas
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">
+              <span className="text-foreground font-semibold">{quota?.credits_remaining ?? 0}</span> restantes
+            </p>
+            {(quota?.extra_credits ?? 0) > 0 && (
+              <p className="text-xs text-accent mt-1">
+                + <span className="font-semibold">{quota?.extra_credits}</span> créditos extras
               </p>
+            )}
+            {quota?.current_period_end && (
               <p className="text-xs text-muted-foreground mt-1">
-                <span className="text-foreground font-semibold">{quota?.credits_remaining ?? 0}</span> restantes
+                Renova em {new Date(quota.current_period_end).toLocaleDateString("pt-BR")}
               </p>
-              {(quota?.extra_credits ?? 0) > 0 && (
-                <p className="text-xs text-accent mt-1">
-                  + <span className="font-semibold">{quota?.extra_credits}</span> créditos extras
-                </p>
-              )}
-              {quota?.current_period_end && (
-                <p className="text-xs text-muted-foreground mt-1">
-                  Renova em {new Date(quota.current_period_end).toLocaleDateString("pt-BR")}
-                </p>
-              )}
-            </>
-          )}
-        </div>
-        <div className="max-w-2xl">
-          <ReferralBonusCard bonusCredits={quota?.bonus_remaining ?? 0} />
-        </div>
+            )}
+          </>
+        )}
       </div>
 
-      {/* Plans */}
-      <div>
+      {/* Referral */}
+      <div className="max-w-2xl">
+        <ReferralBonusCard bonusCredits={quota?.bonus_remaining ?? 0} orgId={orgId} />
+      </div>
+
+      {/* Credit Packs — ABOVE plans */}
+      <div className="rounded-xl border bg-card p-6 shadow-sm">
+        <h2 className="text-lg font-bold text-foreground mb-1">Comprar Créditos Extras</h2>
+        <p className="text-sm text-muted-foreground mb-4">
+          Adicione créditos extras para continuar utilizando as funcionalidades de IA.
+        </p>
+        {packsLoading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-3xl">
+            {[1, 2, 3].map((i) => <Skeleton key={i} className="h-48 w-full rounded-xl" />)}
+          </div>
+        ) : (packs ?? []).length === 0 ? (
+          <p className="text-sm text-muted-foreground">Nenhum pacote disponível no momento.</p>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-3xl">
+            {(packs ?? []).map((pack) => (
+              <div
+                key={pack.id}
+                className={cn(
+                  "rounded-xl border p-5 flex flex-col items-center text-center transition-colors",
+                  pack.is_featured
+                    ? "border-primary/40 ring-1 ring-primary/20 bg-primary/5"
+                    : "border-border/60 bg-card/50"
+                )}
+              >
+                {pack.is_featured && (
+                  <span className="rounded-full bg-primary px-3 py-1 text-[10px] font-bold text-primary-foreground uppercase tracking-wider -mt-8 mb-2">
+                    ⭐ Mais popular
+                  </span>
+                )}
+                <Coins className="h-8 w-8 text-primary mb-3" />
+                <p className="text-3xl font-extrabold text-foreground">{pack.credits}</p>
+                <p className="text-xs text-muted-foreground mb-2">créditos</p>
+                <p className="text-lg font-bold text-foreground mb-4">
+                  R$ {Number(pack.price_brl).toFixed(2).replace(".", ",")}
+                </p>
+                <Button
+                  onClick={() => buyCredits(pack.id)}
+                  disabled={buyingPackId !== null}
+                  className="w-full"
+                  variant={pack.is_featured ? "default" : "outline"}
+                >
+                  {buyingPackId === pack.id ? (
+                    <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Processando...</>
+                  ) : (
+                    "Comprar"
+                  )}
+                </Button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Plans — filtered, no topups */}
+      <div className="rounded-xl border bg-card p-6 shadow-sm">
         <h2 className="text-lg font-bold text-foreground mb-4">Planos disponíveis</h2>
         {productsLoading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
             {[1, 2, 3].map((i) => <Skeleton key={i} className="h-72 w-full rounded-xl" />)}
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 max-w-5xl">
-            {(products ?? []).map((plan) => {
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4 max-w-5xl">
+            {subscriptionPlans.map((plan) => {
               const isCurrent = (plan.display_name ?? "").toLowerCase() === (quota?.plan_name ?? "").toLowerCase();
               return (
                 <div
@@ -454,59 +520,6 @@ function BillingTab({ orgId }: { orgId: string | undefined }) {
                 </div>
               );
             })}
-          </div>
-        )}
-      </div>
-
-      {/* Credit Packs */}
-      <div>
-        <h2 className="text-lg font-bold text-foreground mb-1">Comprar Créditos Extras</h2>
-        <p className="text-sm text-muted-foreground mb-4">
-          Adicione créditos extras para continuar utilizando as funcionalidades de IA.
-        </p>
-        {packsLoading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-3xl">
-            {[1, 2, 3].map((i) => <Skeleton key={i} className="h-48 w-full rounded-xl" />)}
-          </div>
-        ) : (packs ?? []).length === 0 ? (
-          <p className="text-sm text-muted-foreground">Nenhum pacote disponível no momento.</p>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-3xl">
-            {(packs ?? []).map((pack) => (
-              <div
-                key={pack.id}
-                className={cn(
-                  "rounded-xl border p-5 flex flex-col items-center text-center transition-colors",
-                  pack.is_featured
-                    ? "border-primary/40 ring-1 ring-primary/20 bg-primary/5"
-                    : "border-border/60 bg-card/50"
-                )}
-              >
-                {pack.is_featured && (
-                  <span className="rounded-full bg-primary px-3 py-1 text-[10px] font-bold text-primary-foreground uppercase tracking-wider -mt-8 mb-2">
-                    ⭐ Mais popular
-                  </span>
-                )}
-                <Coins className="h-8 w-8 text-primary mb-3" />
-                <p className="text-3xl font-extrabold text-foreground">{pack.credits}</p>
-                <p className="text-xs text-muted-foreground mb-2">créditos</p>
-                <p className="text-lg font-bold text-foreground mb-4">
-                  R$ {Number(pack.price_brl).toFixed(2).replace(".", ",")}
-                </p>
-                <Button
-                  onClick={() => buyCredits(pack.id)}
-                  disabled={buyingPackId !== null}
-                  className="w-full"
-                  variant={pack.is_featured ? "default" : "outline"}
-                >
-                  {buyingPackId === pack.id ? (
-                    <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Processando...</>
-                  ) : (
-                    "Comprar"
-                  )}
-                </Button>
-              </div>
-            ))}
           </div>
         )}
       </div>
