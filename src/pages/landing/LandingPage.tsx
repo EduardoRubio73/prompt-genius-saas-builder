@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { callEdgeFunction } from "@/lib/edgeFunctions";
 import logo from "@/assets/logo-landing.png";
 import "./landing.css";
 
