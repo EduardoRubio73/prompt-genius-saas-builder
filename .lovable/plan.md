@@ -1,45 +1,63 @@
 
 
-## Fix: Admin Credits Not Saving
+## Plano: Correções Dashboard + Profile (9 itens)
 
-### Root Causes
+### 1. Botão "Compartilhar convite" funcional
+**Arquivo:** `src/components/referral/ReferralBonusCard.tsx`
 
-1. **Missing data**: `admin_users_overview` view doesn't include `plan_credits_total`, `bonus_credits_total`, etc. The form defaults to `0` instead of the real values.
-2. **JS falsy bug**: Line 88 uses `form.plan_credits_total || undefined` — when the value is `0`, `0 || undefined` evaluates to `undefined`, so the field is omitted from the update.
+O botão não faz nada. Implementar `navigator.clipboard.writeText()` com a URL de referral do usuário (ex: `window.location.origin + "?ref=" + orgId`) e toast de confirmação. Receber `orgId` como prop.
 
-### Solution
+### 2. Summary cards clicáveis no Dashboard
+**Arquivo:** `src/pages/Dashboard.tsx`
 
-**1. Fetch actual org data when dialog opens**
-- In `UserDetailDialog`, add a query to fetch the organization record directly from `organizations` table using `user.org_id`
-- Initialize `plan_credits_total` and `bonus_credits_total` from the real org data
+Adicionar prop `onClick` ao `SummaryCard`. Cada card navega para:
+- **Plano Atual** → `/profile?tab=billing` (scroll aos planos)
+- **Cotas Restantes** → `/profile?tab=billing`
+- **Bônus** → `/profile?tab=billing`
+- **Renovação** → `/profile?tab=billing#plans` (foco nos planos)
 
-**2. Fix the save logic**
-- Remove `|| undefined` guards — always send `plan_credits_total` and `bonus_credits_total` to the update call
-- This ensures `0` is a valid value that gets saved
+### 3. Stats cards clicáveis
+**Arquivo:** `src/pages/Dashboard.tsx`
 
-### Files to Edit
+- **Prompts gerados** → `/memory?mode=prompt`
+- **Specs criadas** → `/memory?mode=saas`
+- **Total de ações** → `/history`
+- **Média rating** → `/history`
 
-| File | Change |
-|------|--------|
-| `src/pages/admin/AdminUsers.tsx` | Add org data fetch, fix form init + save logic |
+### 4. Envolver seções em cards
+**Arquivo:** `src/pages/Dashboard.tsx`
 
-### Details
+Envolver "Resumo da Conta", "Modos disponíveis" e "Acesso rápido" cada um dentro de um `div` com `rounded-xl border bg-card p-5 shadow-md`.
 
-```tsx
-// Add useEffect to load real org data
-const [orgData, setOrgData] = useState<any>(null);
-useEffect(() => {
-  if (user.org_id) {
-    supabase.from("organizations").select("plan_credits_total, bonus_credits_total, plan_credits_used, bonus_credits_used").eq("id", user.org_id).single()
-      .then(({ data }) => {
-        if (data) {
-          setForm(f => ({ ...f, plan_credits_total: data.plan_credits_total, bonus_credits_total: data.bonus_credits_total }));
-        }
-      });
-  }
-}, [user.org_id]);
+### 5. Corrigir plano exibido e badge dinâmico
+**Arquivo:** `src/pages/Dashboard.tsx`
 
-// Fix save — no more || undefined
-updates: { plan_tier: form.plan_tier, is_active: form.is_active, plan_credits_total: form.plan_credits_total, bonus_credits_total: form.bonus_credits_total }
-```
+O badge "Plano Free" usa `quota?.plan_name` que vem do backend. Se retorna "Free" quando deveria ser outro, o problema é de dados. Mas vou adicionar cores dinâmicas ao badge:
+- Free → cinza/muted
+- Starter → azul/primary
+- Pro → roxo/accent
+- Enterprise → dourado
+
+### 6. Profile page — conteúdo em cards
+**Arquivo:** `src/pages/ProfilePage.tsx`
+
+Envolver cada tab content (ProfileTab, SecurityTab, NotificationsTab, BillingTab sections) em cards com `rounded-xl border bg-card p-5 shadow-sm`.
+
+### 7. Filtrar topups dos planos na BillingTab
+**Arquivo:** `src/pages/ProfilePage.tsx`
+
+Na query `useBillingProducts`, adicionar `.filter()` para excluir produtos cujo `display_name` começa com "Topup" (mesmo filtro da landing). Corrigir badge "Atual" para só aparecer no plano realmente ativo (comparar com `quota?.plan_name`).
+
+### 8. Melhorar layout dos cards de planos
+**Arquivo:** `src/pages/ProfilePage.tsx`
+
+Adicionar `gap-6` entre cards, padding maior. Mover seção "Comprar Créditos Extras" para ACIMA de "Planos disponíveis".
+
+### Arquivos
+
+| Arquivo | Ação |
+|---------|------|
+| `src/components/referral/ReferralBonusCard.tsx` | Editar — botão funcional com clipboard |
+| `src/pages/Dashboard.tsx` | Editar — cards clicáveis, seções em cards, badge dinâmico |
+| `src/pages/ProfilePage.tsx` | Editar — cards wrapper, filtrar topups, reordenar seções, fix badge |
 
