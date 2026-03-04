@@ -326,31 +326,6 @@ export default function Dashboard() {
             iconClass="bg-primary/15 text-primary"
             loading={isQuotaLoading}
           />
-          <SummaryCard
-            icon={Zap}
-            label="Cotas Restantes"
-            value={creditsRemaining}
-            sub={`de ${creditsLimit}`}
-            iconClass="bg-primary/15 text-primary"
-            loading={isQuotaLoading}
-          />
-          <SummaryCard
-            icon={Gift}
-            label="Bônus"
-            value={bonusRemaining}
-            sub="cotas extras permanentes"
-            iconClass="bg-accent/15 text-accent"
-            loading={isQuotaLoading}
-          />
-          <SummaryCard
-            icon={Calendar}
-            label="Renovação"
-            value={renewalDate}
-            sub="próximo ciclo"
-            iconClass="bg-muted text-muted-foreground"
-            loading={isQuotaLoading}
-          />
-        </div>
       </section>
 
       {/* ── Usage Progress ── */}
