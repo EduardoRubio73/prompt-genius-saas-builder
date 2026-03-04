@@ -268,6 +268,7 @@ export default function LandingPage() {
           sort_order: p.sort_order || 0,
           unit_amount: p.unit_amount ?? null,
           stripe_price_id: p.stripe_price_id ?? null,
+          credit_unit_cost: p.credit_unit_cost ?? 0.87,
         })));
       }
     }
