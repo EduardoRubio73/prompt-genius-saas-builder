@@ -265,6 +265,7 @@ export default function Dashboard() {
   const creditsLimit = quota?.credits_limit ?? 0;
   const creditsRemaining = quota?.credits_remaining ?? 0;
   const bonusRemaining = quota?.bonus_remaining ?? 0;
+  const extraCredits = quota?.extra_credits ?? 0;
   const noQuota = !isQuotaLoading && quota != null && (quota.total_remaining ?? 0) <= 0;
 
   const renewalDate = quota?.current_period_end
