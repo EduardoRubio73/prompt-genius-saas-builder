@@ -239,23 +239,53 @@ export default function LandingPage() {
   const [modal, setModal] = useState<"terms" | "privacy" | "contact" | null>(null);
   const [pricingProducts, setPricingProducts] = useState<PricingProduct[]>([]);
 
-  const handleSubscribe = async (priceId: string | null) => {
-    if (!priceId) {
-      navigate("/login");
+const handleSubscribe = async (priceId: string | null) => {
+
+  if (!priceId) {
+    navigate("/login");
+    return;
+  }
+
+  const { data: { session } } = await supabase.auth.getSession();
+
+  if (!session) {
+    navigate("/login");
+    return;
+  }
+
+  try {
+
+    const { data: org } = await supabase
+      .from("tenant_users")
+      .select("tenant_id")
+      .eq("user_id", session.user.id)
+      .single();
+
+    if (!org?.tenant_id) {
+      console.error("Tenant não encontrado");
       return;
     }
-    const { data: sessionData } = await supabase.auth.getSession();
-    if (!sessionData.session) {
-      window.location.href = "/login";
+
+    const data = await callEdgeFunction(
+      "create-checkout-session",
+      {
+        price_id: priceId,
+        org_id: org.tenant_id
+      }
+    );
+
+    if (!data?.url) {
+      console.error("Checkout URL não retornada");
       return;
     }
-    try {
-      const data = await callEdgeFunction("create-checkout-session", { price_id: priceId });
-      if (data?.url) window.location.href = data.url;
-    } catch (err) {
-      console.error(err);
-    }
-  };
+
+    window.location.href = data.url;
+
+  } catch (err) {
+    console.error("Erro ao iniciar checkout:", err);
+  }
+
+};
 
   useEffect(() => {
     async function fetchPricing() {
