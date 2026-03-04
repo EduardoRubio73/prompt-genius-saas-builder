@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Pencil, RefreshCw, Plus } from "lucide-react";
+import { Pencil, RefreshCw, Plus, Loader2 } from "lucide-react";
 import "./admin.css";
 
 type PlanRow = {
@@ -112,10 +112,23 @@ export default function AdminBillingPlans() {
 
   const syncStripe = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase.functions.invoke("stripe-sync-products", { body: {} });
+      const { data, error } = await supabase.functions.invoke("stripe-sync-products", { body: {} });
       if (error) throw error;
+      return data;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["admin-stripe-plans"] }),
+    onSuccess: (data) => {
+      qc.invalidateQueries({ queryKey: ["admin-stripe-plans"] });
+      const s = data?.summary;
+      toast({
+        title: "✅ Stripe sincronizado",
+        description: s
+          ? `Produtos: ${s.products_created} criados, ${s.products_updated} atualizados, ${s.products_recreated || 0} recriados. Preços: ${s.prices_created} criados, ${s.prices_recreated || 0} recriados.`
+          : "Sincronização concluída com sucesso.",
+      });
+    },
+    onError: (err: any) => {
+      toast({ title: "Erro ao sincronizar Stripe", description: err.message, variant: "destructive" });
+    },
   });
 
   const openNew = () => { setEditing(null); setForm(emptyForm()); setOpen(true); };
@@ -157,7 +170,10 @@ export default function AdminBillingPlans() {
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <h1 className="page-title" style={{ marginBottom: 0 }}>Planos (Stripe Sync)</h1>
         <div style={{ display: "flex", gap: 8 }}>
-          <button className="adm-btn outline" onClick={() => syncStripe.mutate()}><RefreshCw size={14} /> Conferir Stripe</button>
+          <button className="adm-btn outline" disabled={syncStripe.isPending} onClick={() => syncStripe.mutate()}>
+            {syncStripe.isPending ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
+            {syncStripe.isPending ? "Sincronizando…" : "Conferir Stripe"}
+          </button>
           <button className="adm-btn primary" onClick={openNew}><Plus size={14} /> Criar novo plano</button>
         </div>
       </div>
