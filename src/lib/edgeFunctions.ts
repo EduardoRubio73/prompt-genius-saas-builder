@@ -2,8 +2,15 @@ import { supabase } from "@/integrations/supabase/client";
 
 export async function callEdgeFunction(name: string, body?: any) {
 
+  const {
+    data: { session }
+  } = await supabase.auth.getSession();
+
   const { data, error } = await supabase.functions.invoke(name, {
-    body
+    body,
+    headers: {
+      Authorization: `Bearer ${session?.access_token}`
+    }
   });
 
   if (error) {
