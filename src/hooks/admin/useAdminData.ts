@@ -290,8 +290,7 @@ export function useUpdateProduct() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, updates }: { id: string; updates: Record<string, any> }) => {
-      const { error } = await supabase.functions.invoke("update-billing-plan", { body: { product_id: id, ...updates } });
-      if (error) throw error;
+      await callEdgeFunction("update-billing-plan", { product_id: id, ...updates });
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["admin-products"] });
