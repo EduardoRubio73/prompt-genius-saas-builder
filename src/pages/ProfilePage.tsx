@@ -205,6 +205,11 @@ interface BillingProduct {
   plan_tier: string;
   is_featured: boolean;
   credits_limit: number;
+  prompts_limit: number;
+  saas_specs_limit: number;
+  modo_misto_limit: number;
+  build_engine_limit: number;
+  members_limit: number;
   recurring_interval: string | null;
   cta_label: string | null;
   stripe_price_id: string | null;
