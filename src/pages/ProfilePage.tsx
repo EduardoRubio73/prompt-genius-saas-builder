@@ -209,12 +209,12 @@ interface BillingProduct {
   saas_specs_limit: number;
   modo_misto_limit: number;
   build_engine_limit: number;
-  members_limit: number;
+  members_label: string | null;
   recurring_interval: string | null;
   cta_label: string | null;
   stripe_price_id: string | null;
   sort_order: number;
-  unit_amount: number | null;
+  price_brl: number;
   trial_period_days: number | null;
 }
 
@@ -238,12 +238,12 @@ function useBillingProducts() {
         saas_specs_limit: p.saas_specs_limit ?? 0,
         modo_misto_limit: p.modo_misto_limit ?? 0,
         build_engine_limit: p.build_engine_limit ?? 0,
-        members_limit: p.members_limit ?? 1,
+        members_label: p.members_label ?? null,
         recurring_interval: p.recurring_interval ?? null,
         cta_label: p.cta_label ?? "Assinar",
         stripe_price_id: p.stripe_price_id,
         sort_order: p.sort_order || 0,
-        unit_amount: p.unit_amount,
+        price_brl: Number(p.price_brl ?? 0),
         trial_period_days: p.trial_period_days ?? null,
       })) as BillingProduct[];
     },
@@ -403,9 +403,11 @@ function BillingTab({ orgId }: { orgId: string | undefined }) {
 
                   {/* Price */}
                   <div className="mb-1">
-                    <span className="text-sm text-muted-foreground align-top">R$</span>
-                    <span className="text-4xl font-extrabold text-foreground ml-1 tracking-tight">
-                  {plan.unit_amount != null ? (plan.unit_amount / 100).toFixed(0) : "0"}
+                    <span className="text-4xl font-extrabold text-foreground tracking-tight">
+                      {(() => {
+                        const price = Number(plan.price_brl);
+                        return price === 0 ? "R$ 0" : `R$ ${price}`;
+                      })()}
                     </span>
                   </div>
                   {(() => {
@@ -430,7 +432,7 @@ function BillingTab({ orgId }: { orgId: string | undefined }) {
                           {featureRow("🏗️ SaaS Specs (2 cotas)", fmtVal(plan.saas_specs_limit))}
                           {featureRow("⚡ Modo Misto (2 cotas)", fmtVal(plan.modo_misto_limit))}
                           {featureRow("⚙️ BUILD Engine (5 cotas)", fmtVal(plan.build_engine_limit))}
-                          {featureRow("👥 Membros", isUnlimited ? "Ilimitado" : String(plan.members_limit))}
+                          {featureRow("👥 Membros", isUnlimited ? "Ilimitado" : plan.members_label ?? "1")}
                         </div>
                       </>
                     );

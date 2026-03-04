@@ -13,14 +13,14 @@ interface PricingProduct {
   saas_specs_limit: number;
   modo_misto_limit: number;
   build_engine_limit: number;
-  members_limit: number;
+  members_label: string | null;
   plan_tier: string;
   recurring_interval: string | null;
   features: { text: string; included: boolean }[];
   trial_period_days: number | null;
   cta_label: string | null;
   sort_order: number;
-  unit_amount: number | null;
+  price_brl: number;
   stripe_price_id: string | null;
   credit_unit_cost: number;
 }
@@ -259,14 +259,14 @@ export default function LandingPage() {
           saas_specs_limit: p.saas_specs_limit ?? 0,
           modo_misto_limit: p.modo_misto_limit ?? 0,
           build_engine_limit: p.build_engine_limit ?? 0,
-          members_limit: p.members_limit ?? 1,
+          members_label: p.members_label ?? null,
           plan_tier: p.plan_tier ?? "free",
           recurring_interval: p.recurring_interval ?? null,
           features: parsedFeatures(p.features),
           trial_period_days: p.trial_period_days ?? null,
           cta_label: p.cta_label ?? "Assinar",
           sort_order: p.sort_order || 0,
-          unit_amount: p.unit_amount ?? null,
+          price_brl: Number(p.price_brl ?? 0),
           stripe_price_id: p.stripe_price_id ?? null,
           credit_unit_cost: p.credit_unit_cost ?? 0.87,
         })));
@@ -483,7 +483,7 @@ export default function LandingPage() {
           <h2 className="sh" style={{ textAlign: "center", margin: "0 auto" }}>Simples, transparente,<br /><TypeWriter words={["sem surpresas", "sem asteriscos", "sem letras miúdas"]} /></h2>
           <div className="plans-grid">
             {pricingProducts.map((p) => {
-              const price = p.unit_amount != null ? Math.round(p.unit_amount / 100) : 0;
+              const price = Number(p.price_brl);
               const colorClass = p.is_featured ? "v" : p.sort_order === 3 ? "g" : p.sort_order === 1 ? "c" : "";
               const isUnlimited = p.plan_tier === "enterprise";
               const interval = p.recurring_interval ?? "mês";
@@ -493,7 +493,7 @@ export default function LandingPage() {
                   {p.is_featured && <div className="pc-top-badge">⚡ Mais popular</div>}
                   <div className="pc-name" style={p.is_featured ? { color: "var(--v)", marginTop: 24 } : undefined}>{p.display_name}</div>
                   <div className="pc-price" style={p.is_featured ? { background: "linear-gradient(90deg,var(--c),var(--v))", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" } : undefined}>
-                    <sup>R$</sup>{price}
+                    {price === 0 ? "R$ 0" : `R$ ${price}`}
                   </div>
                   <div className="pc-period">por {interval}</div>
                   {p.trial_period_days && p.trial_period_days > 0 && <div className="pc-trial">{p.trial_period_days} dias grátis</div>}
@@ -503,7 +503,7 @@ export default function LandingPage() {
                     <div className="lrow"><span className="ll">🏗️ SaaS Specs (2 cotas)</span><span className={`lv ${colorClass}`}>{fmtVal(p.saas_specs_limit)}</span></div>
                     <div className="lrow"><span className="ll">⚡ Modo Misto (2 cotas)</span><span className={`lv ${colorClass}`}>{fmtVal(p.modo_misto_limit)}</span></div>
                     <div className="lrow"><span className="ll">⚙️ BUILD Engine (5 cotas)</span><span className={`lv ${colorClass}`}>{fmtVal(p.build_engine_limit)}</span></div>
-                    <div className="lrow"><span className="ll">👥 Membros</span><span className={`lv ${colorClass}`}>{isUnlimited ? "Ilimitado" : p.members_limit}</span></div>
+                    <div className="lrow"><span className="ll">👥 Membros</span><span className={`lv ${colorClass}`}>{isUnlimited ? "Ilimitado" : (p.members_label ?? "1")}</span></div>
                     <div className="lrow"><span className="ll">📦 Total</span><span className={`lv ${colorClass}`}>{isUnlimited ? "Ilimitado" : `${p.credits_limit} cotas / ${interval}`}</span></div>
                   </div>
                   <ul className="pc-feats">
