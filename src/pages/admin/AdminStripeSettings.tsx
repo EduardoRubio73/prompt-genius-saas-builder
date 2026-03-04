@@ -58,9 +58,7 @@ export default function AdminStripeSettings() {
 
   const testConnection = useMutation({
     mutationFn: async () => {
-      const { data, error } = await supabase.functions.invoke("stripe-test-connection", { body: {} });
-      if (error) throw error;
-      return data;
+      return await callEdgeFunction("stripe-test-connection", {});
     },
   });
 

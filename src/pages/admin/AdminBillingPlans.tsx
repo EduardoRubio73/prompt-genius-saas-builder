@@ -138,9 +138,7 @@ export default function AdminBillingPlans() {
 
   const syncStripe = useMutation({
     mutationFn: async () => {
-      const { data, error } = await supabase.functions.invoke("stripe-sync-products", { body: {} });
-      if (error) throw error;
-      return data;
+      return await callEdgeFunction("stripe-sync-products", {});
     },
     onSuccess: (data) => {
       qc.invalidateQueries({ queryKey: ["admin-stripe-plans"] });

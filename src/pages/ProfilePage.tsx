@@ -244,21 +244,16 @@ function BillingTab({ orgId }: { orgId: string | undefined }) {
   const { data: products, isLoading: productsLoading } = useBillingProducts();
 
   const subscribe = async (priceId: string) => {
-    const { data, error } = await supabase.functions.invoke("create-checkout-session", {
-      body: { price_id: priceId },
-    });
-
-    if (error) {
+    try {
+      const data = await callEdgeFunction("create-checkout-session", { price_id: priceId });
+      if (data?.url) {
+        window.location.href = data.url;
+        return;
+      }
+      toast.error("Não foi possível redirecionar para o checkout.");
+    } catch (err) {
       toast.error("Não foi possível iniciar a assinatura.");
-      return;
     }
-
-    if (data?.url) {
-      window.location.href = data.url;
-      return;
-    }
-
-    toast.error("Não foi possível redirecionar para o checkout.");
   };
 
   // Quota bars
