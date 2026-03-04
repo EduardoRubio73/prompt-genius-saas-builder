@@ -321,11 +321,6 @@ export default function Dashboard() {
             </div>
           ))}
         </div>
-            value={quota?.plan_name ?? "Free"}
-            sub={`${creditsLimit} cotas / mês`}
-            iconClass="bg-primary/15 text-primary"
-            loading={isQuotaLoading}
-          />
       </section>
 
       {/* ── Usage Progress ── */}
