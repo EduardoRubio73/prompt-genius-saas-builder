@@ -4,27 +4,88 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Prompt Genius SaaS Builder</title>
-    <meta name="description" content="Gere e refine prompts com IA. Crie especificações SaaS completas.">
+    <meta name="description" content="Gere e refine prompts com IA. Crie especificações SaaS completas." />
     <meta name="author" content="Prompt Genius SaaS Builder" />
-    
-    
+    <meta name="theme-color" content="#0f172a" />
+
     <meta property="og:type" content="website" />
     <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192x192.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="/icons/icon-180x180.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=IBM+Plex+Mono:wght@400;500&family=JetBrains+Mono:wght@400;500&family=Outfit:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
-    <meta property="og:title" content="Prompt Genius SaaS Builder">
-  <meta name="twitter:title" content="Prompt Genius SaaS Builder">
-  <meta property="og:description" content="Gere e refine prompts com IA. Crie especificações SaaS completas.">
-  <meta name="twitter:description" content="Gere e refine prompts com IA. Crie especificações SaaS completas.">
-  <meta property="og:image" content="https://storage.googleapis.com/gpt-engineer-file-uploads/z0Y7UIkeyARjywIxQe9YD31L99E3/social-images/social-1772190187735-Logo_Prompt_Genius_SaaS_Builder.webp">
-  <meta name="twitter:image" content="https://storage.googleapis.com/gpt-engineer-file-uploads/z0Y7UIkeyARjywIxQe9YD31L99E3/social-images/social-1772190187735-Logo_Prompt_Genius_SaaS_Builder.webp">
-  <meta name="twitter:card" content="summary_large_image">
-</head>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=IBM+Plex+Mono:wght@400;500&family=JetBrains+Mono:wght@400;500&family=Outfit:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <meta property="og:title" content="Prompt Genius SaaS Builder" />
+    <meta name="twitter:title" content="Prompt Genius SaaS Builder" />
+    <meta property="og:description" content="Gere e refine prompts com IA. Crie especificações SaaS completas." />
+    <meta name="twitter:description" content="Gere e refine prompts com IA. Crie especificações SaaS completas." />
+    <meta
+      property="og:image"
+      content="https://storage.googleapis.com/gpt-engineer-file-uploads/z0Y7UIkeyARjywIxQe9YD31L99E3/social-images/social-1772190187735-Logo_Prompt_Genius_SaaS_Builder.webp"
+    />
+    <meta
+      name="twitter:image"
+      content="https://storage.googleapis.com/gpt-engineer-file-uploads/z0Y7UIkeyARjywIxQe9YD31L99E3/social-images/social-1772190187735-Logo_Prompt_Genius_SaaS_Builder.webp"
+    />
+    <meta name="twitter:card" content="summary_large_image" />
+
+    <style>
+      #lovable-badge {
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      #genius-badge {
+        position: fixed;
+        right: max(12px, env(safe-area-inset-right));
+        bottom: max(12px, env(safe-area-inset-bottom));
+        z-index: 9999;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 0.75rem;
+        border-radius: 9999px;
+        background: rgba(15, 23, 42, 0.9);
+        color: #f8fafc;
+        font-family: "DM Sans", system-ui, -apple-system, sans-serif;
+        font-size: 0.875rem;
+        line-height: 1;
+        font-weight: 700;
+        box-shadow: 0 10px 25px rgba(15, 23, 42, 0.35);
+        backdrop-filter: blur(6px);
+      }
+
+      #genius-badge img {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+      }
+
+      @media (max-width: 480px) {
+        #genius-badge {
+          right: max(10px, env(safe-area-inset-right));
+          bottom: max(10px, env(safe-area-inset-bottom));
+          padding: 0.45rem 0.7rem;
+          font-size: 0.8125rem;
+        }
+      }
+
+      @media (display-mode: standalone) {
+        #genius-badge {
+          bottom: max(16px, env(safe-area-inset-bottom));
+        }
+      }
+    </style>
+  </head>
   <body>
     <div id="root"></div>
+    <div id="genius-badge" role="img" aria-label="Selo Genius">
+      <img src="/icons/icon-192x192.png" alt="Ícone Genius" />
+      <span>Genius</span>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
