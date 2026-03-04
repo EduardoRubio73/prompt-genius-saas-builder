@@ -2385,6 +2385,7 @@ export type Database = {
       reset_monthly_credits:
         | { Args: never; Returns: undefined }
         | { Args: { p_org_id: string }; Returns: undefined }
+      reset_org_credits_bulk: { Args: never; Returns: undefined }
       sync_stripe_price: {
         Args: {
           p_amount: number
