@@ -2109,7 +2109,9 @@ export type Database = {
           display_name: string | null
           name: string | null
           plan_tier: Database["public"]["Enums"]["plan_tier"] | null
+          price_active: boolean | null
           price_id: string | null
+          product_active: boolean | null
           product_id: string | null
           recurring_interval: string | null
           sort_order: number | null
