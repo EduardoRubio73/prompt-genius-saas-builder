@@ -1,45 +1,73 @@
 
 
-## Fix: Admin Credits Not Saving
+## Plano: Webhook topup + Exibir extra_balance no Dashboard e BillingTab
 
-### Root Causes
+### 1. Webhook handler no `stripe-sync` para processar topup
 
-1. **Missing data**: `admin_users_overview` view doesn't include `plan_credits_total`, `bonus_credits_total`, etc. The form defaults to `0` instead of the real values.
-2. **JS falsy bug**: Line 88 uses `form.plan_credits_total || undefined` — when the value is `0`, `0 || undefined` evaluates to `undefined`, so the field is omitted from the update.
+**Arquivo:** `supabase/functions/stripe-sync/index.ts`
 
-### Solution
+No `handleStripeWebhook`, dentro do handler de `checkout.session.completed`, adicionar verificação do `metadata.type === "topup"`:
+- Se `type === "topup"`, chamar `process_credit_purchase` (RPC já existente no banco) passando `purchase_id` e o payment_intent ID
+- Caso contrário, manter o comportamento atual (reset de créditos de plano)
 
-**1. Fetch actual org data when dialog opens**
-- In `UserDetailDialog`, add a query to fetch the organization record directly from `organizations` table using `user.org_id`
-- Initialize `plan_credits_total` and `bonus_credits_total` from the real org data
-
-**2. Fix the save logic**
-- Remove `|| undefined` guards — always send `plan_credits_total` and `bonus_credits_total` to the update call
-- This ensures `0` is a valid value that gets saved
-
-### Files to Edit
-
-| File | Change |
-|------|--------|
-| `src/pages/admin/AdminUsers.tsx` | Add org data fetch, fix form init + save logic |
-
-### Details
-
-```tsx
-// Add useEffect to load real org data
-const [orgData, setOrgData] = useState<any>(null);
-useEffect(() => {
-  if (user.org_id) {
-    supabase.from("organizations").select("plan_credits_total, bonus_credits_total, plan_credits_used, bonus_credits_used").eq("id", user.org_id).single()
-      .then(({ data }) => {
-        if (data) {
-          setForm(f => ({ ...f, plan_credits_total: data.plan_credits_total, bonus_credits_total: data.bonus_credits_total }));
-        }
-      });
-  }
-}, [user.org_id]);
-
-// Fix save — no more || undefined
-updates: { plan_tier: form.plan_tier, is_active: form.is_active, plan_credits_total: form.plan_credits_total, bonus_credits_total: form.bonus_credits_total }
 ```
+if (session.metadata?.type === "topup") {
+  const purchaseId = session.metadata.purchase_id;
+  const paymentIntent = session.payment_intent as string;
+  await admin.rpc("process_credit_purchase", {
+    p_purchase_id: purchaseId,
+    p_stripe_pi_id: paymentIntent ?? ""
+  });
+} else {
+  // existing reset logic
+}
+```
+
+### 2. Expor `extra_balance` no org-dashboard
+
+**Arquivo:** `supabase/functions/org-dashboard/index.ts`
+
+- Buscar `org_credits` para o `org_id` e extrair `extra_balance`
+- Adicionar `extra_credits` ao resultado JSON
+- Somar `extra_credits` no `total_remaining`
+
+### 3. Atualizar hooks para incluir `extra_credits`
+
+**Arquivos:** `src/hooks/useQuotaBalance.ts`, `src/hooks/useOrgDashboard.ts`
+
+- Adicionar campo `extra_credits: number` às interfaces
+- Mapear do response
+
+### 4. Exibir `extra_balance` no QuotaCard
+
+**Arquivo:** `src/components/dashboard/QuotaCard.tsx`
+
+- Adicionar prop `extraCredits`
+- Exibir linha "X créditos extras" abaixo de "restantes" quando > 0
+- Incluir extra no cálculo de `maxActions` nos tooltips
+
+### 5. Exibir `extra_balance` na BillingTab
+
+**Arquivo:** `src/pages/ProfilePage.tsx`
+
+- Na seção "Cotas do Plano", adicionar linha mostrando créditos extras quando > 0
+
+### 6. Passar `extraCredits` no Dashboard
+
+**Arquivo:** `src/pages/Dashboard.tsx`
+
+- Passar `extraCredits` prop ao `QuotaCard`
+- Exibir no SummaryCard de "Cotas Restantes" incluindo extras
+
+### Arquivos
+
+| Arquivo | Ação |
+|---------|------|
+| `supabase/functions/stripe-sync/index.ts` | Editar — handler topup no webhook |
+| `supabase/functions/org-dashboard/index.ts` | Editar — buscar e retornar extra_balance |
+| `src/hooks/useQuotaBalance.ts` | Editar — campo extra_credits |
+| `src/hooks/useOrgDashboard.ts` | Editar — campo extra_credits |
+| `src/components/dashboard/QuotaCard.tsx` | Editar — exibir créditos extras |
+| `src/pages/ProfilePage.tsx` | Editar — exibir créditos extras na BillingTab |
+| `src/pages/Dashboard.tsx` | Editar — passar extraCredits ao QuotaCard |
 
