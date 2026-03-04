@@ -67,6 +67,16 @@ export function AppShell({
           {/* ── Right: Theme toggle + User menu ── */}
           <div className="flex items-center gap-2">
 
+            {/* Admin button (SuperAdmin only) */}
+            {isSuperAdmin && (
+              <Link to="/admin">
+                <Button variant="outline" size="sm" className="flex items-center gap-1.5 h-8 text-xs">
+                  <Shield className="h-3.5 w-3.5" />
+                  Admin
+                </Button>
+              </Link>
+            )}
+
             {/* Theme toggle */}
             <button
               onClick={toggleTheme}
