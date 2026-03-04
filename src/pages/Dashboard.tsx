@@ -401,13 +401,14 @@ export default function Dashboard() {
           )}
         </div>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {MODES.map((mode) => (
-            <ModeActionCard
-              key={mode.title}
-              {...mode}
-              creditsRemaining={creditsRemaining}
-              disabled={noQuota}
-            />
+          {MODES.map((mode, i) => (
+            <div key={mode.title} className="animate-fade-in" style={{ animationDelay: `${700 + i * 100}ms`, animationFillMode: "backwards" }}>
+              <ModeActionCard
+                {...mode}
+                creditsRemaining={creditsRemaining}
+                disabled={noQuota}
+              />
+            </div>
           ))}
         </div>
       </section>
