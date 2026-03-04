@@ -1,34 +1,45 @@
 
 
-## Exibir planos inativos na view e permitir reativação
+## Fix: Admin Credits Not Saving
 
-### Problema
-A view `v_active_stripe_plans` filtra `p.is_active = true AND pr.is_active = true AND pr.stripe_price_id IS NOT NULL`, ocultando planos desativados/arquivados.
+### Root Causes
 
-### Solução
+1. **Missing data**: `admin_users_overview` view doesn't include `plan_credits_total`, `bonus_credits_total`, etc. The form defaults to `0` instead of the real values.
+2. **JS falsy bug**: Line 88 uses `form.plan_credits_total || undefined` — when the value is `0`, `0 || undefined` evaluates to `undefined`, so the field is omitted from the update.
 
-#### 1. Migration: Recriar a view sem filtro de `is_active`
-```sql
-CREATE OR REPLACE VIEW v_active_stripe_plans AS
-SELECT p.id AS product_id, p.name, p.display_name, p.plan_tier, p.sort_order,
-       p.is_active AS product_active,
-       pr.id AS price_id, pr.stripe_price_id, pr.unit_amount, pr.recurring_interval,
-       pr.is_active AS price_active
-FROM billing_products p
-LEFT JOIN billing_prices pr ON pr.product_id = p.id
-ORDER BY p.sort_order;
+### Solution
+
+**1. Fetch actual org data when dialog opens**
+- In `UserDetailDialog`, add a query to fetch the organization record directly from `organizations` table using `user.org_id`
+- Initialize `plan_credits_total` and `bonus_credits_total` from the real org data
+
+**2. Fix the save logic**
+- Remove `|| undefined` guards — always send `plan_credits_total` and `bonus_credits_total` to the update call
+- This ensures `0` is a valid value that gets saved
+
+### Files to Edit
+
+| File | Change |
+|------|--------|
+| `src/pages/admin/AdminUsers.tsx` | Add org data fetch, fix form init + save logic |
+
+### Details
+
+```tsx
+// Add useEffect to load real org data
+const [orgData, setOrgData] = useState<any>(null);
+useEffect(() => {
+  if (user.org_id) {
+    supabase.from("organizations").select("plan_credits_total, bonus_credits_total, plan_credits_used, bonus_credits_used").eq("id", user.org_id).single()
+      .then(({ data }) => {
+        if (data) {
+          setForm(f => ({ ...f, plan_credits_total: data.plan_credits_total, bonus_credits_total: data.bonus_credits_total }));
+        }
+      });
+  }
+}, [user.org_id]);
+
+// Fix save — no more || undefined
+updates: { plan_tier: form.plan_tier, is_active: form.is_active, plan_credits_total: form.plan_credits_total, bonus_credits_total: form.bonus_credits_total }
 ```
-- Remove filtros `is_active = true` e `stripe_price_id IS NOT NULL`
-- Muda JOIN para LEFT JOIN (produtos sem preço também aparecem)
-- Adiciona colunas `product_active` e `price_active`
-
-#### 2. `AdminBillingPlans.tsx` — Mostrar status ativo/inativo
-- Atualizar `PlanRow` com `product_active` e `price_active`
-- Coluna "Status": badge verde "Ativo" ou vermelho "Inativo" baseado em `product_active`
-- Planos inativos aparecem na tabela, permitindo clicar em editar e marcar `is_active = true` para reativar
-
-| Arquivo | Mudança |
-|---------|---------|
-| Migration SQL | Recriar view sem filtros de `is_active` |
-| `src/pages/admin/AdminBillingPlans.tsx` | Badge dinâmico ativo/inativo, tipos atualizados |
 

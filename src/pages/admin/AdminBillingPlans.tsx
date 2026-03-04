@@ -12,12 +12,12 @@ type PlanRow = {
   display_name: string | null;
   plan_tier: string | null;
   price_id: string | null;
-  stripe_product_id: string | null;
   stripe_price_id: string | null;
   unit_amount: number | null;
   recurring_interval: string | null;
   sort_order: number | null;
-  is_active?: boolean;
+  product_active: boolean | null;
+  price_active: boolean | null;
 };
 
 type PlanForm = {
@@ -146,7 +146,7 @@ export default function AdminBillingPlans() {
       trial_days: 0,
       credits_limit: 0,
       members_limit: 1,
-      is_active: row.is_active ?? true,
+      is_active: row.product_active ?? true,
     });
     setOpen(true);
   };
@@ -188,8 +188,12 @@ export default function AdminBillingPlans() {
                 <td>R$ {((p.unit_amount ?? 0) / 100).toFixed(2)}</td>
                 <td>{p.recurring_interval || "—"}</td>
                 <td>{p.plan_tier || "—"}</td>
-                <td><span className="adm-badge active">Ativo</span></td>
-                <td style={{ fontSize: 11, fontFamily: "var(--adm-mono)" }}>{p.stripe_product_id || "—"}</td>
+                <td>
+                  {p.product_active === false
+                    ? <span className="adm-badge inactive">Inativo</span>
+                    : <span className="adm-badge active">Ativo</span>}
+                </td>
+                <td style={{ fontSize: 11, fontFamily: "var(--adm-mono)" }}>{p.product_id || "—"}</td>
                 <td style={{ fontSize: 11, fontFamily: "var(--adm-mono)" }}>{p.stripe_price_id || "—"}</td>
                 <td><button className="adm-btn ghost" onClick={() => openEdit(p)}><Pencil size={14} /></button></td>
               </tr>
