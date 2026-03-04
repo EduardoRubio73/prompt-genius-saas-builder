@@ -34,6 +34,7 @@ import BuildMode from "@/pages/build/BuildMode";
 import MemoryPage from "./pages/MemoryPage";
 import HistoryPage from "./pages/HistoryPage";
 import ProfilePage from "./pages/ProfilePage";
+import BillingSuccess from "./pages/BillingSuccess";
 
 const queryClient = new QueryClient();
 
