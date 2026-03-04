@@ -310,9 +310,17 @@ export default function Dashboard() {
           <InfoTooltip content="Visão geral do seu plano atual, saldo de cotas, bônus e data de renovação." />
         </div>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <SummaryCard
-            icon={Crown}
-            label="Plano Atual"
+          {[
+            { icon: Crown, label: "Plano Atual", value: quota?.plan_name ?? "Free", sub: `${creditsLimit} cotas / mês`, iconClass: "bg-primary/15 text-primary" },
+            { icon: Zap, label: "Cotas Restantes", value: creditsRemaining, sub: `de ${creditsLimit}`, iconClass: "bg-primary/15 text-primary" },
+            { icon: Gift, label: "Bônus", value: bonusRemaining, sub: "cotas extras permanentes", iconClass: "bg-accent/15 text-accent" },
+            { icon: Calendar, label: "Renovação", value: renewalDate, sub: "próximo ciclo", iconClass: "bg-muted text-muted-foreground" },
+          ].map((card, i) => (
+            <div key={card.label} className="animate-fade-in" style={{ animationDelay: `${i * 80}ms`, animationFillMode: "backwards" }}>
+              <SummaryCard {...card} loading={isQuotaLoading} />
+            </div>
+          ))}
+        </div>
             value={quota?.plan_name ?? "Free"}
             sub={`${creditsLimit} cotas / mês`}
             iconClass="bg-primary/15 text-primary"
