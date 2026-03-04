@@ -1,7 +1,11 @@
-import { Moon, Sun, LogOut, Settings, User, ChevronDown, CreditCard } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Moon, Sun, LogOut, Settings, User, ChevronDown, CreditCard, Shield } from "lucide-react";
 import { useTheme } from "@/hooks/useTheme";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import logo from "@/assets/logo.png";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
