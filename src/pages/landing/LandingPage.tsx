@@ -22,6 +22,7 @@ interface PricingProduct {
   sort_order: number;
   unit_amount: number | null;
   stripe_price_id: string | null;
+  credit_unit_cost: number;
 }
 
 /* ── Terms & Privacy Content ── */
