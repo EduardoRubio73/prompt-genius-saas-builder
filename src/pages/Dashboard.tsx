@@ -347,32 +347,16 @@ export default function Dashboard() {
 
       {/* ── Stats ── */}
       <section className="grid grid-cols-2 gap-3 sm:grid-cols-4 mb-6">
-        <SummaryCard
-          icon={Sparkles}
-          label="Prompts gerados"
-          value={isLoading ? "—" : formatNumber(stats?.total_prompts ?? 0)}
-          loading={isLoading}
-        />
-        <SummaryCard
-          icon={FileCode}
-          label="Specs criadas"
-          value={isLoading ? "—" : formatNumber(stats?.total_saas_specs ?? 0)}
-          loading={isLoading}
-        />
-        <SummaryCard
-          icon={TrendingUp}
-          label="Total de ações"
-          value={isLoading ? "—" : formatNumber((stats?.total_prompts ?? 0) + (stats?.total_saas_specs ?? 0))}
-          iconClass="bg-primary/15 text-primary"
-          loading={isLoading}
-        />
-        <SummaryCard
-          icon={Star}
-          label="Média rating"
-          value={isLoading ? "—" : (stats?.avg_prompt_rating ? Number(stats.avg_prompt_rating).toFixed(1) : "—")}
-          sub={`${stats?.total_sessions ?? 0} sessões`}
-          loading={isLoading}
-        />
+        {[
+          { icon: Sparkles, label: "Prompts gerados", value: isLoading ? "—" : formatNumber(stats?.total_prompts ?? 0) },
+          { icon: FileCode, label: "Specs criadas", value: isLoading ? "—" : formatNumber(stats?.total_saas_specs ?? 0) },
+          { icon: TrendingUp, label: "Total de ações", value: isLoading ? "—" : formatNumber((stats?.total_prompts ?? 0) + (stats?.total_saas_specs ?? 0)), iconClass: "bg-primary/15 text-primary" },
+          { icon: Star, label: "Média rating", value: isLoading ? "—" : (stats?.avg_prompt_rating ? Number(stats.avg_prompt_rating).toFixed(1) : "—"), sub: `${stats?.total_sessions ?? 0} sessões` },
+        ].map((card, i) => (
+          <div key={card.label} className="animate-fade-in" style={{ animationDelay: `${450 + i * 80}ms`, animationFillMode: "backwards" }}>
+            <SummaryCard {...card} loading={isLoading} />
+          </div>
+        ))}
       </section>
 
       {/* ── Upgrade banner when quotas exhausted ── */}
