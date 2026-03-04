@@ -1,9 +1,9 @@
-import Stripe from "npm:stripe@16.12.0";
+import Stripe from "npm:stripe@14.21.0";
 import { createClient } from "npm:@supabase/supabase-js@2.49.1";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-org-id, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-org-id",
 };
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
@@ -14,7 +14,7 @@ const successUrl = Deno.env.get("STRIPE_CHECKOUT_SUCCESS_URL")!;
 const cancelUrl = Deno.env.get("STRIPE_CHECKOUT_CANCEL_URL")!;
 
 const stripe = new Stripe(stripeSecretKey, {
-  apiVersion: "2024-06-20",
+  apiVersion: "2023-10-16",
 });
 
 type RequestPayload = {
@@ -69,6 +69,7 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Resolve org_id from payload, header, or user metadata
     const orgIdFromHeader = req.headers.get("x-org-id")?.trim();
     const orgIdFromPayload = payload?.org_id?.trim();
     const orgIdFromMetadata =
@@ -77,10 +78,15 @@ Deno.serve(async (req) => {
 
     let orgId: string | undefined = orgIdFromPayload || orgIdFromHeader || orgIdFromMetadata;
 
+    // Fallback: lookup from profiles table
     if (!orgId) {
-      const { data: orgIdFromClaim, error: orgClaimError } = await supabase.rpc("get_request_org_id");
-      if (!orgClaimError && orgIdFromClaim) {
-        orgId = String(orgIdFromClaim);
+      const { data: profile } = await admin
+        .from("profiles")
+        .select("personal_org_id")
+        .eq("id", user.id)
+        .single();
+      if (profile?.personal_org_id) {
+        orgId = profile.personal_org_id;
       }
     }
 
@@ -88,16 +94,21 @@ Deno.serve(async (req) => {
       return jsonResponse(400, {
         error: {
           code: "missing_org_context",
-          message: "Organization context is required. Provide 'org_id' claim, header 'x-org-id', or payload 'org_id'.",
+          message: "Organization context is required. Provide 'org_id' in payload or header.",
         },
       });
     }
 
-    const { data: hasOrgAccess, error: orgAccessError } = await supabase.rpc("assert_org_context_access", {
-      p_org_id: orgId,
-    });
-    if (orgAccessError) {
-      console.error("create-checkout-session assert_org_context_access error", orgAccessError);
+    // Validate user has access to this org via org_members table
+    const { data: membership, error: membershipError } = await admin
+      .from("org_members")
+      .select("role")
+      .eq("org_id", orgId)
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    if (membershipError) {
+      console.error("create-checkout-session membership check error", membershipError);
       return jsonResponse(403, {
         error: {
           code: "org_context_unavailable",
@@ -106,15 +117,16 @@ Deno.serve(async (req) => {
       });
     }
 
-    if (!hasOrgAccess) {
+    if (!membership) {
       return jsonResponse(403, {
         error: {
           code: "org_access_denied",
-          message: "User does not have access to the provided organization context.",
+          message: "User does not have access to the provided organization.",
         },
       });
     }
 
+    // Lookup billing price
     const { data: localPrice, error: localPriceError } = await admin
       .from("billing_prices")
       .select("id, stripe_price_id, is_active")
@@ -137,6 +149,7 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Lookup organization
     const { data: orgRow, error: orgError } = await admin
       .from("organizations")
       .select("id, name, stripe_customer_id")
@@ -150,6 +163,7 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Create or reuse Stripe customer
     let stripeCustomerId = orgRow.stripe_customer_id;
     if (!stripeCustomerId) {
       const customer = await stripe.customers.create({
@@ -161,16 +175,13 @@ Deno.serve(async (req) => {
       });
       stripeCustomerId = customer.id;
 
-      const { error: updateOrgError } = await admin
+      await admin
         .from("organizations")
         .update({ stripe_customer_id: stripeCustomerId })
         .eq("id", orgRow.id);
-
-      if (updateOrgError) {
-        console.error("create-checkout-session failed updating stripe customer id", updateOrgError);
-      }
     }
 
+    // Create Stripe Checkout session
     const checkoutSession = await stripe.checkout.sessions.create({
       mode: "subscription",
       customer: stripeCustomerId,
