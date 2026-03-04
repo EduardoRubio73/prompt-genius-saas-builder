@@ -304,6 +304,9 @@ function BillingTab({ orgId }: { orgId: string | undefined }) {
             </>
           )}
         </div>
+        <div className="max-w-2xl">
+          <ReferralBonusCard bonusCredits={quota?.bonus_remaining ?? 0} />
+        </div>
       </div>
 
       {/* Plans */}
