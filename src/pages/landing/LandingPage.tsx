@@ -246,24 +246,29 @@ export default function LandingPage() {
         .select("*")
         .order("sort_order");
       if (data) {
+        const parsedFeatures = (raw: any) => {
+          if (!raw) return [];
+          if (Array.isArray(raw)) return raw;
+          try { return JSON.parse(raw); } catch { return []; }
+        };
         setPricingProducts(data.map((p: any) => ({
           id: p.product_id,
           display_name: p.display_name || p.name,
-          is_featured: false,
-          total_quotas_label: "—",
-          prompts_label: "—",
-          prompts_detail: "—",
-          saas_specs_label: "—",
-          saas_specs_detail: "—",
-          misto_label: "—",
-          misto_detail: "—",
-          build_label: "—",
-          build_detail: "—",
-          members_label: "—",
-          features: [],
-          trial_label: null,
-          period_label: p.recurring_interval,
-          cta_label: "Assinar",
+          is_featured: p.is_featured ?? false,
+          total_quotas_label: p.total_quotas_label ?? "—",
+          prompts_label: p.prompts_label ?? "—",
+          prompts_detail: p.prompts_detail ?? null,
+          saas_specs_label: p.saas_specs_label ?? "—",
+          saas_specs_detail: p.saas_specs_detail ?? null,
+          misto_label: p.misto_label ?? "—",
+          misto_detail: p.misto_detail ?? null,
+          build_label: p.build_label ?? "—",
+          build_detail: p.build_detail ?? null,
+          members_label: p.members_label ?? "—",
+          features: parsedFeatures(p.features),
+          trial_label: p.trial_label ?? null,
+          period_label: p.period_label ?? p.recurring_interval,
+          cta_label: p.cta_label ?? "Assinar",
           sort_order: p.sort_order || 0,
           unit_amount: p.unit_amount ?? null,
         })));
