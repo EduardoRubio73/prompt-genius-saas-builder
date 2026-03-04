@@ -162,7 +162,19 @@ async function handleStripeWebhook(req: Request): Promise<Response> {
       if (event.type === "checkout.session.completed") {
         const session = event.data.object as Stripe.Checkout.Session;
         const orgId = session.metadata?.org_id;
-        if (orgId) {
+
+        if (session.metadata?.type === "topup") {
+          // Process credit pack purchase
+          const purchaseId = session.metadata.purchase_id;
+          if (purchaseId) {
+            const { error } = await admin.rpc("process_credit_purchase", {
+              p_purchase_id: purchaseId,
+              p_stripe_pi_id: (session.payment_intent as string) ?? "",
+            });
+            if (error) console.error("Failed to process topup:", error);
+            else console.log("Topup processed for purchase:", purchaseId);
+          }
+        } else if (orgId) {
           // Reset plan credits for new subscription cycle
           const { error } = await admin
             .from("organizations")

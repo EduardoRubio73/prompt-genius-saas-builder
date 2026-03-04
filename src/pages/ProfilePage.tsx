@@ -338,6 +338,11 @@ function BillingTab({ orgId }: { orgId: string | undefined }) {
               <p className="text-xs text-muted-foreground mt-1">
                 <span className="text-foreground font-semibold">{quota?.credits_remaining ?? 0}</span> restantes
               </p>
+              {(quota?.extra_credits ?? 0) > 0 && (
+                <p className="text-xs text-accent mt-1">
+                  + <span className="font-semibold">{quota?.extra_credits}</span> créditos extras
+                </p>
+              )}
               {quota?.current_period_end && (
                 <p className="text-xs text-muted-foreground mt-1">
                   Renova em {new Date(quota.current_period_end).toLocaleDateString("pt-BR")}

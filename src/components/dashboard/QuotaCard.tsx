@@ -9,6 +9,7 @@ interface QuotaCardProps {
   creditsLimit: number;
   creditsRemaining: number;
   percentUsed: number;
+  extraCredits?: number;
   loading?: boolean;
 }
 
@@ -24,8 +25,10 @@ export function QuotaCard({
   creditsLimit,
   creditsRemaining,
   percentUsed,
+  extraCredits = 0,
   loading = false,
 }: QuotaCardProps) {
+  const totalRemaining = creditsRemaining + extraCredits;
   const barColor =
     percentUsed >= 100 ? "bg-destructive" : percentUsed >= 80 ? "bg-yellow-500" : "bg-primary";
 
@@ -68,6 +71,11 @@ export function QuotaCard({
             <p className="text-xs text-muted-foreground tabular-nums">
               <span className="text-foreground font-semibold">{creditsRemaining}</span> restantes
             </p>
+            {extraCredits > 0 && (
+              <p className="text-xs text-accent tabular-nums">
+                + <span className="font-semibold">{extraCredits}</span> créditos extras
+              </p>
+            )}
           </div>
 
           <div className="border-t border-border/50 pt-3">
@@ -76,7 +84,7 @@ export function QuotaCard({
             </p>
             <div className="grid grid-cols-4 gap-2">
               {ACTION_COSTS.map((a) => {
-                const maxActions = Math.floor(creditsRemaining / a.cost);
+                const maxActions = Math.floor(totalRemaining / a.cost);
                 return (
                   <div key={a.label} className="flex flex-col items-center gap-1 text-center">
                     <div className="flex items-center gap-0.5">

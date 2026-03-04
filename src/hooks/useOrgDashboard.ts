@@ -15,6 +15,7 @@ export interface OrgDashboardData {
   bonus_total: number;
   bonus_used: number;
   bonus_remaining: number;
+  extra_credits: number;
   total_remaining: number;
   account_status: string;
   trial_ends_at: string | null;
