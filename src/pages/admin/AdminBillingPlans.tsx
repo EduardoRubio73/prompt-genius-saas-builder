@@ -132,20 +132,31 @@ export default function AdminBillingPlans() {
   });
 
   const openNew = () => { setEditing(null); setForm(emptyForm()); setOpen(true); };
-  const openEdit = (row: PlanRow) => {
+  const openEdit = async (row: PlanRow) => {
     setEditing(row);
+    // Fetch metadata from billing_products and billing_prices
+    const [prodRes, priceRes] = await Promise.all([
+      supabase.from("billing_products").select("is_featured, metadata").eq("id", row.product_id).single(),
+      row.price_id
+        ? supabase.from("billing_prices").select("trial_period_days, metadata").eq("id", row.price_id).single()
+        : Promise.resolve({ data: null }),
+    ]);
+    const prodMeta = (prodRes.data?.metadata as any) || {};
+    const priceMeta = (priceRes.data?.metadata as any) || {};
+    const trialDays = (priceRes.data as any)?.trial_period_days ?? priceMeta.trial_days ?? prodMeta.trial_days ?? 0;
+
     setForm({
       product_id: row.product_id,
       name: row.name || "",
       display_name: row.display_name || "",
       plan_tier: (row.plan_tier as PlanForm["plan_tier"]) || "starter",
       unit_amount_brl: row.unit_amount != null ? (row.unit_amount / 100).toString() : "",
-      recurring_interval: (row.recurring_interval as "month" | "year") || "month",
+      recurring_interval: (row.recurring_interval as "day" | "month" | "year") || "month",
       sort_order: row.sort_order ?? 0,
-      is_featured: false,
-      trial_days: 0,
-      credits_limit: 0,
-      members_limit: 1,
+      is_featured: prodRes.data?.is_featured ?? false,
+      trial_days: trialDays,
+      credits_limit: prodMeta.credits_limit ?? priceMeta.credits_limit ?? 0,
+      members_limit: prodMeta.members_limit ?? priceMeta.members_limit ?? 1,
       is_active: row.product_active ?? true,
     });
     setOpen(true);
