@@ -299,7 +299,7 @@ const handleSubscribe = async (priceId: string | null) => {
           if (Array.isArray(raw)) return raw;
           try { return JSON.parse(raw); } catch { return []; }
         };
-        setPricingProducts(data.map((p: any) => ({
+        setPricingProducts(data.filter((p: any) => !p.name?.startsWith("Topup")).map((p: any) => ({
           id: p.product_id,
           display_name: p.display_name || p.name,
           is_featured: p.is_featured ?? false,
