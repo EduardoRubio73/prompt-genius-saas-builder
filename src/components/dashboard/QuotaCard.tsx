@@ -9,6 +9,7 @@ interface QuotaCardProps {
   creditsLimit: number;
   creditsRemaining: number;
   percentUsed: number;
+  extraCredits?: number;
   loading?: boolean;
 }
 
