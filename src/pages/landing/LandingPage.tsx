@@ -517,9 +517,17 @@ export default function LandingPage() {
             })}
           </div>
 
-          <div className="cost-note rv" style={{ marginTop: 40 }}>
-            <strong>📊 Transparência de custos:</strong> Cada cota equivale a ~R$0,87 (pacote de 15). Um <strong>BUILD Engine</strong> (5 cotas ≈ R$4,35) substitui trabalho manual que custaria <strong>R$25–60</strong>. Um Prompt (1 cota ≈ R$0,87) substitui ~R$8 de trabalho manual.
-          </div>
+          {(() => {
+            const creditCost = pricingProducts[0]?.credit_unit_cost ?? 0.87;
+            const promptCost = (creditCost * 1).toFixed(2).replace(".", ",");
+            const buildCost = (creditCost * 5).toFixed(2).replace(".", ",");
+            const creditCostFmt = creditCost.toFixed(2).replace(".", ",");
+            return (
+              <div className="cost-note rv" style={{ marginTop: 40 }}>
+                <strong>📊 Transparência de custos:</strong> Cada cota equivale a ~R${creditCostFmt}. Um <strong>BUILD Engine</strong> (5 cotas ≈ R${buildCost}) substitui trabalho manual que custaria <strong>R$25–60</strong>. Um Prompt (1 cota ≈ R${promptCost}) substitui ~R$8 de trabalho manual.
+              </div>
+            );
+          })()}
         </div>
       </section>
 
