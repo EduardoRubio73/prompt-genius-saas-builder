@@ -363,7 +363,7 @@ const handleSubscribe = async (priceId: string | null) => {
         <div className="tag"><span className="tag-dot" />IA + SaaS Builder + Programa de Indicação</div>
         <h1>
           Crie prompts e SaaS<br />
-          <span className="grad"><TypeWriter words={["com IA — e ganhe cotas", "em segundos, com IA", "e indique, ganhe mais"]} /></span>
+          <span className="tw-line"><span className="grad"><TypeWriter words={["com IA — ganhe cotas", "1 cota ≈ R$0,87", "em segundos, com IA", "BUILD ≈ R$4,35", "e indique amigos"]} /></span></span>
           <br />indicando amigos
         </h1>
         <p className="hero-sub">Três modos de IA para gerar prompts perfeitos e especificações técnicas completas. Indique um amigo e ambos ganham 5 cotas extras gratuitamente.</p>
