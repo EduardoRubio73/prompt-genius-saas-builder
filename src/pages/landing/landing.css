@@ -533,7 +533,7 @@ html, body {
 
 /* FOOTER */
 .landing-page footer {
-  padding: 36px 48px; border-top: 1px solid var(--br);
+  padding: 36px 48px 90px; border-top: 1px solid var(--br);
   display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px;
 }
 .landing-page .fl { display: flex; align-items: center; gap: 9px; }
