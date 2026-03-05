@@ -281,6 +281,13 @@ export default function LandingPage() {
   const [modal, setModal] = useState<"terms" | "privacy" | "contact" | null>(null);
   const [pricingProducts, setPricingProducts] = useState<PricingProduct[]>([]);
 
+  // Listen for badge CustomEvent
+  useEffect(() => {
+    const handleOpen = () => setModal("contact");
+    document.addEventListener("open-contact-modal", handleOpen);
+    return () => document.removeEventListener("open-contact-modal", handleOpen);
+  }, []);
+
 const handleSubscribe = async (priceId: string | null) => {
 
   if (!priceId) {
