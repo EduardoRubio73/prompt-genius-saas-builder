@@ -1,45 +1,21 @@
 
 
-## Fix: Admin Credits Not Saving
+## Plano: Corrigir faixa branca lateral na Landing Page
 
-### Root Causes
+### Causa raiz
+O `body` tem `bg-background` (cor clara do Tailwind: `hsl(40, 14%, 95%)`). A `.landing-page` tem `background: #05050F` e `max-width: 100vw`, mas o conteúdo não preenche 100% da largura, deixando o fundo claro do `body` visível na lateral direita.
 
-1. **Missing data**: `admin_users_overview` view doesn't include `plan_credits_total`, `bonus_credits_total`, etc. The form defaults to `0` instead of the real values.
-2. **JS falsy bug**: Line 88 uses `form.plan_credits_total || undefined` — when the value is `0`, `0 || undefined` evaluates to `undefined`, so the field is omitted from the update.
+### Solução
+Duas correções complementares:
 
-### Solution
+1. **`src/pages/landing/landing.css`**: Adicionar `width: 100%` e `min-height: 100vh` ao `.landing-page`, e garantir que o `overflow-x: hidden` esteja no container correto.
 
-**1. Fetch actual org data when dialog opens**
-- In `UserDetailDialog`, add a query to fetch the organization record directly from `organizations` table using `user.org_id`
-- Initialize `plan_credits_total` and `bonus_credits_total` from the real org data
+2. **`src/pages/landing/LandingPage.tsx`**: No componente, adicionar um `useEffect` que define `document.body.style.background = '#05050F'` ao montar e restaura ao desmontar. Isso garante que o body tenha a mesma cor escura enquanto a landing está visível.
 
-**2. Fix the save logic**
-- Remove `|| undefined` guards — always send `plan_credits_total` and `bonus_credits_total` to the update call
-- This ensures `0` is a valid value that gets saved
+### Arquivo
 
-### Files to Edit
-
-| File | Change |
-|------|--------|
-| `src/pages/admin/AdminUsers.tsx` | Add org data fetch, fix form init + save logic |
-
-### Details
-
-```tsx
-// Add useEffect to load real org data
-const [orgData, setOrgData] = useState<any>(null);
-useEffect(() => {
-  if (user.org_id) {
-    supabase.from("organizations").select("plan_credits_total, bonus_credits_total, plan_credits_used, bonus_credits_used").eq("id", user.org_id).single()
-      .then(({ data }) => {
-        if (data) {
-          setForm(f => ({ ...f, plan_credits_total: data.plan_credits_total, bonus_credits_total: data.bonus_credits_total }));
-        }
-      });
-  }
-}, [user.org_id]);
-
-// Fix save — no more || undefined
-updates: { plan_tier: form.plan_tier, is_active: form.is_active, plan_credits_total: form.plan_credits_total, bonus_credits_total: form.bonus_credits_total }
-```
+| Arquivo | Ação |
+|---------|------|
+| `src/pages/landing/LandingPage.tsx` | Editar — `useEffect` para forçar body background escuro |
+| `src/pages/landing/landing.css` | Editar — `width: 100%` no `.landing-page` |
 
