@@ -8,29 +8,16 @@
     <meta name="author" content="Prompt Genius SaaS Builder" />
     <meta name="theme-color" content="#0f172a" />
 
-    <meta property="og:type" content="website" />
     <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192x192.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="/icons/icon-180x180.png" />
+
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=IBM+Plex+Mono:wght@400;500&family=JetBrains+Mono:wght@400;500&family=Outfit:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap"
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
-    <meta property="og:title" content="Prompt Genius SaaS Builder" />
-    <meta name="twitter:title" content="Prompt Genius SaaS Builder" />
-    <meta property="og:description" content="Gere e refine prompts com IA. Crie especificações SaaS completas." />
-    <meta name="twitter:description" content="Gere e refine prompts com IA. Crie especificações SaaS completas." />
-    <meta
-      property="og:image"
-      content="https://storage.googleapis.com/gpt-engineer-file-uploads/z0Y7UIkeyARjywIxQe9YD31L99E3/social-images/social-1772190187735-Logo_Prompt_Genius_SaaS_Builder.webp"
-    />
-    <meta
-      name="twitter:image"
-      content="https://storage.googleapis.com/gpt-engineer-file-uploads/z0Y7UIkeyARjywIxQe9YD31L99E3/social-images/social-1772190187735-Logo_Prompt_Genius_SaaS_Builder.webp"
-    />
-    <meta name="twitter:card" content="summary_large_image" />
 
     <style>
       #lovable-badge {
@@ -38,54 +25,185 @@
         pointer-events: none;
       }
 
+      /* ============================= */
+      /* BADGE PRINCIPAL */
+      /* ============================= */
       #genius-badge {
         position: fixed;
-        right: max(12px, env(safe-area-inset-right));
-        bottom: max(12px, env(safe-area-inset-bottom));
+        right: max(18px, env(safe-area-inset-right));
+        bottom: max(18px, env(safe-area-inset-bottom));
         z-index: 9999;
+
         display: inline-flex;
         align-items: center;
-        gap: 0.5rem;
-        padding: 0.5rem 0.75rem;
-        border-radius: 9999px;
-        background: rgba(15, 23, 42, 0.9);
+        gap: 0.6rem;
+
+        padding: 0.65rem 1.1rem;
+        border-radius: 999px;
+
+        background: linear-gradient(135deg, #0f172a, #1e293b);
         color: #f8fafc;
+
         font-family: "DM Sans", system-ui, -apple-system, sans-serif;
-        font-size: 0.875rem;
-        line-height: 1;
+        font-size: 0.9rem;
         font-weight: 700;
-        box-shadow: 0 10px 25px rgba(15, 23, 42, 0.35);
-        backdrop-filter: blur(6px);
+
+        box-shadow:
+          0 15px 40px rgba(0,0,0,0.5),
+          inset 0 0 0 1px rgba(255,255,255,0.08);
+
+        backdrop-filter: blur(14px);
+        cursor: pointer;
+
+        transition: all 0.25s ease;
+      }
+
+      #genius-badge:hover {
+        transform: translateY(-4px);
+        box-shadow:
+          0 20px 50px rgba(0,0,0,0.6),
+          inset 0 0 0 1px rgba(255,255,255,0.12);
       }
 
       #genius-badge img {
-        width: 20px;
-        height: 20px;
+        width: 22px;
+        height: 22px;
         border-radius: 50%;
+      }
+
+      /* ============================= */
+      /* DROPUP MENU */
+      /* ============================= */
+      #genius-menu {
+        position: fixed;
+        right: max(18px, env(safe-area-inset-right));
+        bottom: 95px;
+        z-index: 9998;
+
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+
+        padding: 14px;
+        min-width: 230px;
+
+        background: rgba(15, 23, 42, 0.98);
+        border-radius: 20px;
+
+        box-shadow:
+          0 25px 70px rgba(0,0,0,0.65),
+          inset 0 0 0 1px rgba(255,255,255,0.05);
+
+        backdrop-filter: blur(20px);
+
+        opacity: 0;
+        transform: translateY(20px) scale(0.95);
+        pointer-events: none;
+
+        transition: all 0.25s cubic-bezier(.2,.8,.2,1);
+      }
+
+      #genius-menu.open {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+        pointer-events: auto;
+      }
+
+      #genius-menu a,
+      #genius-menu button {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+
+        padding: 10px 14px;
+        border-radius: 14px;
+
+        text-decoration: none;
+        color: #fff;
+        font-size: 0.875rem;
+        font-weight: 500;
+
+        background: transparent;
+        border: none;
+        cursor: pointer;
+
+        transition: all 0.2s ease;
+      }
+
+      #genius-menu a:hover,
+      #genius-menu button:hover {
+        background: linear-gradient(
+          135deg,
+          rgba(255,255,255,0.08),
+          rgba(255,255,255,0.04)
+        );
+        transform: translateX(4px);
+      }
+
+      #genius-menu svg {
+        width: 18px;
+        height: 18px;
+        opacity: 0.85;
       }
 
       @media (max-width: 480px) {
         #genius-badge {
-          right: max(10px, env(safe-area-inset-right));
-          bottom: max(10px, env(safe-area-inset-bottom));
-          padding: 0.45rem 0.7rem;
-          font-size: 0.8125rem;
-        }
-      }
-
-      @media (display-mode: standalone) {
-        #genius-badge {
-          bottom: max(16px, env(safe-area-inset-bottom));
+          font-size: 0.85rem;
         }
       }
     </style>
   </head>
+
   <body>
     <div id="root"></div>
-    <div id="genius-badge" role="img" aria-label="Selo Genius">
+
+    <!-- BADGE -->
+    <div id="genius-badge" aria-label="Selo Genius">
       <img src="/icons/icon-192x192.png" alt="Ícone Genius" />
       <span>Genius</span>
     </div>
+
+    <!-- DROPUP MENU -->
+    <div id="genius-menu">
+
+      <!-- Home -->
+      <a href="/">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path d="M3 10.5L12 3l9 7.5V21a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1V10.5z"/>
+        </svg>
+        Home
+      </a>
+
+      <!-- Contato / Suporte -->
+      <button onclick="abrirModalContato()">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z"/>
+        </svg>
+        Contato / Suporte
+      </button>
+
+    </div>
+
+    <script>
+      const badge = document.getElementById("genius-badge");
+      const menu = document.getElementById("genius-menu");
+
+      badge.addEventListener("click", () => {
+        menu.classList.toggle("open");
+      });
+
+      document.addEventListener("click", (e) => {
+        if (!badge.contains(e.target) && !menu.contains(e.target)) {
+          menu.classList.remove("open");
+        }
+      });
+
+      function abrirModalContato() {
+        alert("Abrir modal: Contato com a equipe zragency");
+        menu.classList.remove("open");
+      }
+    </script>
+
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
