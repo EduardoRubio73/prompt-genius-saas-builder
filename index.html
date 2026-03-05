@@ -199,7 +199,7 @@
       });
 
       function abrirModalContato() {
-        alert("Abrir modal: Contato com a equipe zragency");
+        document.dispatchEvent(new CustomEvent("open-contact-modal"));
         menu.classList.remove("open");
       }
     </script>

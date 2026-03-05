@@ -2,7 +2,9 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { callEdgeFunction } from "@/lib/edgeFunctions";
+import { toast } from "sonner";
 import logo from "@/assets/logo-landing.png";
+import logoZr from "@/assets/logo-zragency.png";
 import "./landing.css";
 
 interface PricingProduct {
@@ -138,13 +140,17 @@ function Modal({ open, onClose, children }: {open: boolean;onClose: () => void;c
 }
 
 /* ── Contact Modal Content ── */
+const CONTACT_CATEGORIES = ["Dúvida", "Sugestão", "Elogios", "Críticas", "Dicas / Ideias"];
+
 function ContactModalContent() {
   const [message, setMessage] = useState("");
-  const baseBody = "Venho através da página Prompt Genius SaaS Builder e gostaria de informações: ";
+  const [category, setCategory] = useState("");
+
+  const baseBody = `[${category || "Geral"}] Venho através da página Prompt Genius SaaS Builder: `;
 
   const handleEmail = () => {
     const body = baseBody + (message || "digite aqui sua dúvida");
-    const mailto = `mailto:zragencyia@gmail.com?subject=${encodeURIComponent("Contato com a equipe zragency")}&body=${encodeURIComponent(body)}`;
+    const mailto = `mailto:zragencyia@gmail.com?subject=${encodeURIComponent(`[${category || "Contato"}] Prompt Genius SaaS Builder`)}&body=${encodeURIComponent(body)}`;
     window.open(mailto, "_blank");
   };
 
@@ -154,15 +160,44 @@ function ContactModalContent() {
     window.open(url, "_blank");
   };
 
+  const handleShare = async () => {
+    const url = window.location.origin;
+    const text = "Conheça o Prompt Genius SaaS Builder — crie prompts e especificações com IA!";
+    if (navigator.share) {
+      try { await navigator.share({ title: "Prompt Genius", text, url }); } catch {}
+    } else {
+      await navigator.clipboard.writeText(`${text} ${url}`);
+      toast.success("Link copiado!");
+    }
+  };
+
   return (
     <>
+      <div className="contact-logo">
+        <a href="https://zragency.com.br" target="_blank" rel="noopener noreferrer">
+          <img src={logoZr} alt="ZR Agency" />
+        </a>
+      </div>
       <h2>📬 Contato com a equipe zragency</h2>
       <p style={{ color: "var(--mu)", fontSize: "14px", marginBottom: "8px" }}>
-        Escolha o canal e nos envie sua dúvida. Responderemos o mais breve possível.
+        Escolha o tipo de mensagem e o canal. Responderemos o mais breve possível.
       </p>
+
+      <div className="contact-categories">
+        {CONTACT_CATEGORIES.map((cat) => (
+          <button
+            key={cat}
+            className={`contact-cat-btn${category === cat ? " active" : ""}`}
+            onClick={() => setCategory(category === cat ? "" : cat)}
+          >
+            {cat}
+          </button>
+        ))}
+      </div>
+
       <textarea
         className="contact-textarea"
-        placeholder="Digite aqui sua dúvida..."
+        placeholder="Digite aqui sua mensagem..."
         value={message}
         onChange={(e) => setMessage(e.target.value)}
         maxLength={1000} />
@@ -173,6 +208,13 @@ function ContactModalContent() {
         </button>
         <button className="contact-btn contact-btn-whatsapp" onClick={handleWhatsApp}>
           💬 Enviar por WhatsApp
+        </button>
+      </div>
+
+      <div className="contact-share">
+        <p>🚀 Gostou de nossa plataforma? Compartilhe!</p>
+        <button className="contact-share-btn" onClick={handleShare}>
+          📤 Compartilhar
         </button>
       </div>
     </>);
@@ -238,6 +280,13 @@ export default function LandingPage() {
   const navigate = useNavigate();
   const [modal, setModal] = useState<"terms" | "privacy" | "contact" | null>(null);
   const [pricingProducts, setPricingProducts] = useState<PricingProduct[]>([]);
+
+  // Listen for badge CustomEvent
+  useEffect(() => {
+    const handleOpen = () => setModal("contact");
+    document.addEventListener("open-contact-modal", handleOpen);
+    return () => document.removeEventListener("open-contact-modal", handleOpen);
+  }, []);
 
 const handleSubscribe = async (priceId: string | null) => {
 
@@ -631,7 +680,6 @@ const handleSubscribe = async (priceId: string | null) => {
         <div className="flinks">
           <button onClick={() => setModal("terms")}>Termos</button>
           <button onClick={() => setModal("privacy")}>Privacidade</button>
-          <button onClick={() => setModal("contact")}>Contato</button>
         </div>
       </footer>
 
