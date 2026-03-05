@@ -281,6 +281,13 @@ export default function LandingPage() {
   const [modal, setModal] = useState<"terms" | "privacy" | "contact" | null>(null);
   const [pricingProducts, setPricingProducts] = useState<PricingProduct[]>([]);
 
+  // Force dark body background to prevent white strip
+  useEffect(() => {
+    const originalBg = document.body.style.background;
+    document.body.style.background = '#05050F';
+    return () => { document.body.style.background = originalBg; };
+  }, []);
+
   // Listen for badge CustomEvent
   useEffect(() => {
     const handleOpen = () => setModal("contact");
