@@ -2803,6 +2803,10 @@ export type Database = {
         Args: { p_code: string; p_invitee_org: string; p_invitee_user: string }
         Returns: string
       }
+      reward_referral_if_paid: {
+        Args: { p_org_id: string }
+        Returns: undefined
+      }
       sync_stripe_price: {
         Args: {
           p_amount: number
