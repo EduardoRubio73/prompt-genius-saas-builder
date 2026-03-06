@@ -328,14 +328,14 @@ export default function Dashboard() {
         )}
       </section>
 
-      {/* ── Collapsible: Resumo + Acesso Rápido ── */}
-      <Collapsible open={detailsOpen} onOpenChange={setDetailsOpen}>
-        <div className="rounded-xl border bg-card p-5 shadow-md mb-6">
+      {/* ── Card 1: Resumo da Conta (azul, recolhido) ── */}
+      <Collapsible open={resumoOpen} onOpenChange={setResumoOpen}>
+        <div className="rounded-xl border border-blue-200 dark:border-blue-800/40 bg-blue-50/50 dark:bg-blue-950/20 p-5 shadow-md mb-4">
           <CollapsibleTrigger className="flex items-center justify-between w-full cursor-pointer">
-            <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
-              Resumo da Conta & Acesso Rápido
+            <p className="text-sm font-semibold text-blue-700 dark:text-blue-300 uppercase tracking-wider">
+              Resumo da Conta
             </p>
-            <ChevronDown className={cn("h-4 w-4 text-muted-foreground transition-transform duration-200", detailsOpen && "rotate-180")} />
+            <ChevronDown className={cn("h-4 w-4 text-blue-500 transition-transform duration-200", resumoOpen && "rotate-180")} />
           </CollapsibleTrigger>
 
           <CollapsibleContent className="mt-4 space-y-6">
@@ -343,7 +343,7 @@ export default function Dashboard() {
             <div>
               <div className="flex items-center gap-1.5 mb-3">
                 <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
-                  Resumo da Conta
+                  Visão Geral
                 </p>
                 <InfoTooltip content="Visão geral do seu plano atual, saldo de cotas, bônus e data de renovação." />
               </div>
@@ -417,13 +417,49 @@ export default function Dashboard() {
                 </button>
               </div>
             )}
+          </CollapsibleContent>
+        </div>
+      </Collapsible>
 
-            {/* Quick access + Referral */}
+      {/* ── Card 2: Modos disponíveis (rosa, expandido) ── */}
+      <Collapsible open={modosOpen} onOpenChange={setModosOpen}>
+        <div className="rounded-xl border border-pink-200 dark:border-pink-800/40 bg-pink-50/50 dark:bg-pink-950/20 p-5 shadow-md mb-4">
+          <CollapsibleTrigger className="flex items-center justify-between w-full cursor-pointer">
+            <p className="text-sm font-semibold text-pink-700 dark:text-pink-300 uppercase tracking-wider">
+              Modos disponíveis
+            </p>
+            <ChevronDown className={cn("h-4 w-4 text-pink-500 transition-transform duration-200", modosOpen && "rotate-180")} />
+          </CollapsibleTrigger>
+
+          <CollapsibleContent className="mt-4">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              {MODES.map((mode, i) => (
+                <div key={mode.title} className="animate-fade-in" style={{ animationDelay: `${i * 100}ms`, animationFillMode: "backwards" }}>
+                  <ModeActionCard
+                    {...mode}
+                    creditsRemaining={creditsRemaining + extraCredits}
+                    disabled={noQuota}
+                  />
+                </div>
+              ))}
+            </div>
+          </CollapsibleContent>
+        </div>
+      </Collapsible>
+
+      {/* ── Card 3: Acesso rápido (amarelo, recolhido) ── */}
+      <Collapsible open={acessoOpen} onOpenChange={setAcessoOpen}>
+        <div className="rounded-xl border border-yellow-200 dark:border-yellow-800/40 bg-yellow-50/50 dark:bg-yellow-950/20 p-5 shadow-md mb-4">
+          <CollapsibleTrigger className="flex items-center justify-between w-full cursor-pointer">
+            <p className="text-sm font-semibold text-yellow-700 dark:text-yellow-300 uppercase tracking-wider">
+              Acesso rápido
+            </p>
+            <ChevronDown className={cn("h-4 w-4 text-yellow-500 transition-transform duration-200", acessoOpen && "rotate-180")} />
+          </CollapsibleTrigger>
+
+          <CollapsibleContent className="mt-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="rounded-xl border bg-card p-5 shadow-md space-y-3">
-                <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
-                  Acesso rápido
-                </p>
+              <div className="space-y-3">
                 <QuickActionCard
                   title="Minha memória"
                   description="Veja prompts e specs salvos"
