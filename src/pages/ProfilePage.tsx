@@ -711,7 +711,7 @@ export default function ProfilePage() {
         <nav className="flex sm:flex-col gap-1 sm:w-48 shrink-0 overflow-x-auto pb-2 sm:pb-0 sm:overflow-x-visible">
           <button
             onClick={() => navigate("/dashboard")}
-            className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors text-left text-muted-foreground hover:bg-muted hover:text-foreground"
+            className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors text-left text-muted-foreground hover:bg-muted hover:text-foreground whitespace-nowrap shrink-0"
           >
             <LayoutDashboard className="h-4 w-4" /> Dashboard
           </button>
