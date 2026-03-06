@@ -1,4 +1,5 @@
-import { Sparkles, FileCode, Layers, Rocket, Crown, Zap, Gift, Calendar, ArrowRight, BarChart3, Clock, Star, TrendingUp } from "lucide-react";
+import { useState } from "react";
+import { Sparkles, FileCode, Layers, Rocket, Crown, Zap, Gift, Calendar, ArrowRight, BarChart3, Clock, Star, TrendingUp, ChevronDown } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { Skeleton } from "@/components/ui/skeleton";
 import { InfoTooltip } from "@/components/ui/info-tooltip";
