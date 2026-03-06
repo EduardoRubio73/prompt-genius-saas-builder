@@ -35,6 +35,7 @@ import MemoryPage from "./pages/MemoryPage";
 import HistoryPage from "./pages/HistoryPage";
 import ProfilePage from "./pages/ProfilePage";
 import BillingSuccess from "./pages/BillingSuccess";
+import ReferralPage from "./pages/ReferralPage";
 
 const queryClient = new QueryClient();
 
@@ -111,6 +112,11 @@ function App() {
             <Route
               path="/billing/success"
               element={<AuthGuard><BillingSuccess /></AuthGuard>}
+            />
+
+            <Route
+              path="/indicacoes"
+              element={<AuthGuard><ReferralPage /></AuthGuard>}
             />
 
             {/* Admin */}

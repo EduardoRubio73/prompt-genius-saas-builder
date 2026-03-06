@@ -91,6 +91,39 @@ export default function Login() {
             await supabase.auth.signOut();
             return;
           }
+
+          // Process referral code if present
+          const refCode = new URLSearchParams(window.location.search).get("ref");
+          if (refCode) {
+            const { data: prof } = await supabase
+              .from("profiles")
+              .select("personal_org_id")
+              .eq("id", authData.user.id)
+              .single();
+
+            if (prof?.personal_org_id) {
+              const { data: result } = await supabase.rpc("process_referral", {
+                p_code: refCode,
+                p_invitee_org: prof.personal_org_id,
+                p_invitee_user: authData.user.id,
+              });
+
+              if (result === "ok_trial") {
+                toast({
+                  title: "Convite registrado!",
+                  description: "O bônus será liberado após ativação de plano pago.",
+                });
+              } else if (result === "invalid_code") {
+                toast({ title: "Código inválido", variant: "destructive" });
+              } else if (result === "own_code") {
+                toast({ title: "Você não pode usar seu próprio código", variant: "destructive" });
+              } else if (result === "already_used") {
+                toast({ title: "Código já utilizado", variant: "destructive" });
+              }
+            }
+            // Clean URL
+            window.history.replaceState({}, "", "/login");
+          }
         }
 
         navigate("/dashboard");

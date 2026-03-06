@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Moon, Sun, LogOut, Settings, User, ChevronDown, CreditCard, Shield } from "lucide-react";
+import { Moon, Sun, LogOut, Settings, User, ChevronDown, CreditCard, Shield, Gift } from "lucide-react";
 import { useTheme } from "@/hooks/useTheme";
 import { useNavigate, Link } from "react-router-dom";
 import logo from "@/assets/logo.png";
@@ -120,6 +120,9 @@ export function AppShell({
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => navigate("/profile?tab=billing")} className="gap-2 text-sm cursor-pointer">
                   <CreditCard className="h-4 w-4" /> Plano & Cobrança
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate("/indicacoes")} className="gap-2 text-sm cursor-pointer">
+                  <Gift className="h-4 w-4" /> Indicações
                 </DropdownMenuItem>
 
                 <DropdownMenuSeparator />
