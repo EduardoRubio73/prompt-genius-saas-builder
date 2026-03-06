@@ -733,10 +733,10 @@ export default function ProfilePage() {
               </button>
             );
           })}
-          <div className="border-b sm:border-b sm:my-1" />
+          <div className="hidden sm:block border-b sm:my-1" />
           <a
             href={buildSupportMailto(profile?.full_name ?? "", profile?.email ?? "")}
-            className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors text-left text-muted-foreground hover:bg-muted hover:text-foreground"
+            className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors text-left text-muted-foreground hover:bg-muted hover:text-foreground whitespace-nowrap shrink-0"
           >
             <Mail className="h-4 w-4" /> Suporte
           </a>
