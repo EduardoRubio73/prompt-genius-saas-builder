@@ -274,7 +274,9 @@ export default function Dashboard() {
   const { data: stats, isLoading: statsLoading } = useOrgStats(orgId);
   const { data: quota, isLoading: quotaLoading } = useQuotaBalance(orgId);
   const navigate = useNavigate();
-  const [detailsOpen, setDetailsOpen] = useState(false);
+  const [resumoOpen, setResumoOpen] = useState(false);
+  const [modosOpen, setModosOpen] = useState(true);
+  const [acessoOpen, setAcessoOpen] = useState(false);
 
   const firstName = profile?.full_name?.split(" ")[0] ?? "";
   const isLoading = profileLoading || statsLoading;

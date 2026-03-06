@@ -1788,6 +1788,30 @@ export type Database = {
           },
         ]
       }
+      referral_clicks: {
+        Row: {
+          created_at: string | null
+          id: string
+          ip: string | null
+          referral_code: string
+          user_agent: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          ip?: string | null
+          referral_code: string
+          user_agent?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          ip?: string | null
+          referral_code?: string
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       referral_codes: {
         Row: {
           code: string
