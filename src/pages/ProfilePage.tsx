@@ -640,108 +640,12 @@ function BillingTab({ orgId, planName }: { orgId: string | undefined; planName: 
   );
 }
 
-// ── Support mailto helper ──
-function buildSupportMailto(name: string, email: string) {
-  const now = new Date().toLocaleString("pt-BR");
-  const subject = encodeURIComponent(`À equipe de suporte da Genius - ${name || "Usuário"}`);
-  const body = encodeURIComponent(
-`Olá equipe de suporte,
-
-Nome: ${name || "N/A"}
-Email: ${email || "N/A"}
-Data: ${now}
-
-Preciso de ajuda técnica com:
-
-[Escreva sua mensagem aqui...]
-
-Prints/Anexos (se aplicável):
-- [Cole prints ou descreva o problema]
-
-Aguardo retorno,
-${name || "Usuário"}`
-  );
-  return `mailto:zragencyia@gmail.com?subject=${subject}&body=${body}`;
-}
-
-// ── Main ──
-export default function ProfilePage() {
-  const { user, signOut } = useAuth();
-  const { data: profile, refetch } = useProfile(user?.id);
-  const orgId = profile?.personal_org_id ?? undefined;
-  const [searchParams, setSearchParams] = useSearchParams();
-  const navigate = useNavigate();
-
-  // Fetch org to get plan_tier
-  const { data: org } = useQuery({
-    queryKey: ["org-plan-tier", orgId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("organizations")
-        .select("plan_tier")
-        .eq("id", orgId!)
-        .single();
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!orgId,
-  });
-
-  const activeTab = (searchParams.get("tab") as TabKey) || "profile";
-  const setTab = (tab: TabKey) => setSearchParams({ tab });
-
-  return (
-    <AppShell
-      userName={profile?.full_name}
-      userEmail={profile?.email}
-      avatarUrl={profile?.avatar_url}
-      onSignOut={signOut}
-    >
-      <section className="mb-6">
-        <h1 className="font-heading text-2xl font-bold tracking-tight sm:text-3xl">Minha conta</h1>
-      </section>
-
-      <div className="flex flex-col gap-6 sm:flex-row">
-        <nav className="flex sm:flex-col gap-1 sm:w-48 shrink-0 overflow-x-auto pb-2 sm:pb-0 sm:overflow-x-visible">
-          <button
-            onClick={() => navigate("/dashboard")}
-            className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors text-left text-muted-foreground hover:bg-muted hover:text-foreground whitespace-nowrap shrink-0"
-          >
-            <LayoutDashboard className="h-4 w-4" /> Dashboard
-          </button>
-          <div className="hidden sm:block border-b sm:my-1" />
-          {TABS.map((tab) => {
-            const Icon = tab.icon;
-            return (
-              <button
-                key={tab.key}
-                onClick={() => setTab(tab.key)}
-                className={cn(
-                  "flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors text-left whitespace-nowrap shrink-0",
-                  activeTab === tab.key
-                    ? "bg-primary/10 text-primary"
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                )}
-              >
-                <Icon className="h-4 w-4" /> {tab.label}
-              </button>
-            );
-          })}
-          <div className="hidden sm:block border-b sm:my-1" />
-          <button
-            onClick={() => navigate("/indicacoes")}
-            className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors text-left text-muted-foreground hover:bg-muted hover:text-foreground whitespace-nowrap shrink-0"
-          >
-            <Gift className="h-4 w-4" /> Indicações
-          </button>
-          <div className="hidden sm:block border-b sm:my-1" />
-          <a
-            href={buildSupportMailto(profile?.full_name ?? "", profile?.email ?? "")}
-            className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors text-left text-muted-foreground hover:bg-muted hover:text-foreground whitespace-nowrap shrink-0"
-          >
-            <Mail className="h-4 w-4" /> Suporte
-          </a>
-        </nav>
+        <AccountSidebar
+          activeTab={activeTab}
+          onTabChange={setTab}
+          userName={profile?.full_name}
+          userEmail={profile?.email}
+        />
 
         <div className="flex-1 min-w-0">
           {activeTab === "profile" && user && (
