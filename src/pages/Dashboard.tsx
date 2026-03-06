@@ -268,8 +268,8 @@ function QuickActionCard({
 // ── Dashboard Page ──
 
 export default function Dashboard() {
-  const { user, signOut } = useAuth();
-  const { data: profile, isLoading: profileLoading } = useProfile(user?.id);
+  const navigate = useNavigate();
+  const [detailsOpen, setDetailsOpen] = useState(false);
   const orgId = profile?.personal_org_id ?? undefined;
   const { data: stats, isLoading: statsLoading } = useOrgStats(orgId);
   const { data: quota, isLoading: quotaLoading } = useQuotaBalance(orgId);
