@@ -715,7 +715,7 @@ export default function ProfilePage() {
           >
             <LayoutDashboard className="h-4 w-4" /> Dashboard
           </button>
-          <div className="border-b sm:border-b sm:my-1" />
+          <div className="hidden sm:block border-b sm:my-1" />
           {TABS.map((tab) => {
             const Icon = tab.icon;
             return (
