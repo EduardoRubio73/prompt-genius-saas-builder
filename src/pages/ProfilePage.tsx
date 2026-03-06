@@ -708,14 +708,14 @@ export default function ProfilePage() {
       </section>
 
       <div className="flex flex-col gap-6 sm:flex-row">
-        <nav className="flex sm:flex-col gap-1 sm:w-48 shrink-0">
+        <nav className="flex sm:flex-col gap-1 sm:w-48 shrink-0 overflow-x-auto pb-2 sm:pb-0 sm:overflow-x-visible">
           <button
             onClick={() => navigate("/dashboard")}
-            className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors text-left text-muted-foreground hover:bg-muted hover:text-foreground"
+            className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors text-left text-muted-foreground hover:bg-muted hover:text-foreground whitespace-nowrap shrink-0"
           >
             <LayoutDashboard className="h-4 w-4" /> Dashboard
           </button>
-          <div className="border-b sm:border-b sm:my-1" />
+          <div className="hidden sm:block border-b sm:my-1" />
           {TABS.map((tab) => {
             const Icon = tab.icon;
             return (
@@ -723,7 +723,7 @@ export default function ProfilePage() {
                 key={tab.key}
                 onClick={() => setTab(tab.key)}
                 className={cn(
-                  "flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors text-left",
+                  "flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors text-left whitespace-nowrap shrink-0",
                   activeTab === tab.key
                     ? "bg-primary/10 text-primary"
                     : "text-muted-foreground hover:bg-muted hover:text-foreground"
@@ -733,10 +733,10 @@ export default function ProfilePage() {
               </button>
             );
           })}
-          <div className="border-b sm:border-b sm:my-1" />
+          <div className="hidden sm:block border-b sm:my-1" />
           <a
             href={buildSupportMailto(profile?.full_name ?? "", profile?.email ?? "")}
-            className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors text-left text-muted-foreground hover:bg-muted hover:text-foreground"
+            className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors text-left text-muted-foreground hover:bg-muted hover:text-foreground whitespace-nowrap shrink-0"
           >
             <Mail className="h-4 w-4" /> Suporte
           </a>
