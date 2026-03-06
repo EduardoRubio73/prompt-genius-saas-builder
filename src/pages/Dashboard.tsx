@@ -326,150 +326,122 @@ export default function Dashboard() {
         )}
       </section>
 
-      {/* ── Account Summary ── */}
-      <section className="mb-6">
-        <div className="rounded-xl border bg-card p-5 shadow-md">
-          <div className="flex items-center gap-1.5 mb-3">
+      {/* ── Collapsible: Resumo + Acesso Rápido ── */}
+      <Collapsible open={detailsOpen} onOpenChange={setDetailsOpen}>
+        <div className="rounded-xl border bg-card p-5 shadow-md mb-6">
+          <CollapsibleTrigger className="flex items-center justify-between w-full cursor-pointer">
             <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
-              Resumo da Conta
+              Resumo da Conta & Acesso Rápido
             </p>
-            <InfoTooltip content="Visão geral do seu plano atual, saldo de cotas, bônus e data de renovação." />
-          </div>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            {[
-              { icon: Crown, label: "Plano Atual", value: (quota?.plan_name ?? "Free").replace(/^\w/, c => c.toUpperCase()), sub: `${creditsLimit} cotas / mês`, iconClass: "bg-primary/15 text-primary", onClick: () => navigate("/profile?tab=billing") },
-              { icon: Zap, label: "Cotas Restantes", value: creditsRemaining + extraCredits, sub: extraCredits > 0 ? `${creditsRemaining} plano + ${extraCredits} extras` : `de ${creditsLimit}`, iconClass: "bg-primary/15 text-primary", onClick: () => navigate("/profile?tab=billing") },
-              { icon: Gift, label: "Bônus", value: bonusRemaining, sub: "cotas extras permanentes", iconClass: "bg-accent/15 text-accent", onClick: () => navigate("/profile?tab=billing") },
-              { icon: Calendar, label: "Renovação", value: renewalDate, sub: "próximo ciclo", iconClass: "bg-muted text-muted-foreground", onClick: () => navigate("/profile?tab=billing") },
-            ].map((card, i) => (
-              <div key={card.label} className="animate-fade-in" style={{ animationDelay: `${i * 80}ms`, animationFillMode: "backwards" }}>
-                <SummaryCard {...card} loading={isQuotaLoading} />
+            <ChevronDown className={cn("h-4 w-4 text-muted-foreground transition-transform duration-200", detailsOpen && "rotate-180")} />
+          </CollapsibleTrigger>
+
+          <CollapsibleContent className="mt-4 space-y-6">
+            {/* Account Summary */}
+            <div>
+              <div className="flex items-center gap-1.5 mb-3">
+                <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+                  Resumo da Conta
+                </p>
+                <InfoTooltip content="Visão geral do seu plano atual, saldo de cotas, bônus e data de renovação." />
               </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── Usage Progress ── */}
-      <section className="mb-6 animate-fade-in" style={{ animationDelay: "350ms", animationFillMode: "backwards" }}>
-        <div className="rounded-xl border bg-card shadow-md p-5">
-          <div className="flex items-center gap-1.5 mb-3">
-            <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
-              Uso do período
-            </p>
-            <InfoTooltip content="Todas as ações utilizam a mesma bolsa de cotas. Você pode combinar diferentes ações até consumir seu limite mensal." />
-          </div>
-          {isQuotaLoading ? (
-            <Skeleton className="h-10 w-full" />
-          ) : (
-            <UsageProgressBar used={creditsUsed} limit={creditsLimit} />
-          )}
-        </div>
-      </section>
-
-      {/* ── Stats ── */}
-      <section className="mb-6">
-        <div className="rounded-xl border bg-card p-5 shadow-md">
-          <div className="flex items-center gap-1.5 mb-3">
-            <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
-              Estatísticas
-            </p>
-          </div>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            {[
-              { icon: Sparkles, label: "Prompts gerados", value: isLoading ? "—" : formatNumber(stats?.total_prompts ?? 0), onClick: () => navigate("/memory?mode=prompt") },
-              { icon: FileCode, label: "Specs criadas", value: isLoading ? "—" : formatNumber(stats?.total_saas_specs ?? 0), onClick: () => navigate("/memory?mode=saas") },
-              { icon: TrendingUp, label: "Total de ações", value: isLoading ? "—" : formatNumber((stats?.total_prompts ?? 0) + (stats?.total_saas_specs ?? 0)), iconClass: "bg-primary/15 text-primary", onClick: () => navigate("/history") },
-              { icon: Star, label: "Média rating", value: isLoading ? "—" : (stats?.avg_prompt_rating ? Number(stats.avg_prompt_rating).toFixed(1) : "—"), sub: `${stats?.total_sessions ?? 0} sessões`, onClick: () => navigate("/history") },
-            ].map((card, i) => (
-              <div key={card.label} className="animate-fade-in" style={{ animationDelay: `${450 + i * 80}ms`, animationFillMode: "backwards" }}>
-                <SummaryCard {...card} loading={isLoading} />
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                {[
+                  { icon: Crown, label: "Plano Atual", value: (quota?.plan_name ?? "Free").replace(/^\w/, c => c.toUpperCase()), sub: `${creditsLimit} cotas / mês`, iconClass: "bg-primary/15 text-primary", onClick: () => navigate("/profile?tab=billing") },
+                  { icon: Zap, label: "Cotas Restantes", value: creditsRemaining + extraCredits, sub: extraCredits > 0 ? `${creditsRemaining} plano + ${extraCredits} extras` : `de ${creditsLimit}`, iconClass: "bg-primary/15 text-primary", onClick: () => navigate("/profile?tab=billing") },
+                  { icon: Gift, label: "Bônus", value: bonusRemaining, sub: "cotas extras permanentes", iconClass: "bg-accent/15 text-accent", onClick: () => navigate("/profile?tab=billing") },
+                  { icon: Calendar, label: "Renovação", value: renewalDate, sub: "próximo ciclo", iconClass: "bg-muted text-muted-foreground", onClick: () => navigate("/profile?tab=billing") },
+                ].map((card, i) => (
+                  <div key={card.label} className="animate-fade-in" style={{ animationDelay: `${i * 80}ms`, animationFillMode: "backwards" }}>
+                    <SummaryCard {...card} loading={isQuotaLoading} />
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
-        </div>
-      </section>
+            </div>
 
-      {/* ── Upgrade banner when quotas exhausted ── */}
-      {noQuota && (
-        <section className="mb-6 animate-fade-in" style={{ animationDelay: "600ms", animationFillMode: "backwards" }}>
-          <div className="rounded-xl border border-destructive/40 bg-destructive/5 p-5 flex flex-col sm:flex-row items-start sm:items-center gap-4">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-destructive/15 text-destructive">
-              <Crown className="h-5 w-5" />
+            {/* Usage Progress */}
+            <div>
+              <div className="flex items-center gap-1.5 mb-3">
+                <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                  Uso do período
+                </p>
+                <InfoTooltip content="Todas as ações utilizam a mesma bolsa de cotas. Você pode combinar diferentes ações até consumir seu limite mensal." />
+              </div>
+              {isQuotaLoading ? (
+                <Skeleton className="h-10 w-full" />
+              ) : (
+                <UsageProgressBar used={creditsUsed} limit={creditsLimit} />
+              )}
             </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-bold text-foreground">Suas cotas acabaram!</p>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                Faça upgrade ou adquira cotas avulsas para continuar criando.
-              </p>
-            </div>
-            <button
-              onClick={() => navigate("/profile?tab=billing")}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground hover:bg-primary/90 transition-colors shrink-0"
-            >
-              <Crown className="h-3.5 w-3.5" /> Ver planos
-            </button>
-          </div>
-        </section>
-      )}
 
-      {/* ── Mode cards ── */}
-      <section className="mb-6">
-        <div className="rounded-xl border bg-card p-5 shadow-md">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-1.5">
-              <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
-                Modos disponíveis
-              </p>
-              <InfoTooltip content="Cada modo consome uma quantidade diferente de cotas. Escolha o modo adequado para sua necessidade." />
+            {/* Stats */}
+            <div>
+              <div className="flex items-center gap-1.5 mb-3">
+                <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+                  Estatísticas
+                </p>
+              </div>
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                {[
+                  { icon: Sparkles, label: "Prompts gerados", value: isLoading ? "—" : formatNumber(stats?.total_prompts ?? 0), onClick: () => navigate("/memory?mode=prompt") },
+                  { icon: FileCode, label: "Specs criadas", value: isLoading ? "—" : formatNumber(stats?.total_saas_specs ?? 0), onClick: () => navigate("/memory?mode=saas") },
+                  { icon: TrendingUp, label: "Total de ações", value: isLoading ? "—" : formatNumber((stats?.total_prompts ?? 0) + (stats?.total_saas_specs ?? 0)), iconClass: "bg-primary/15 text-primary", onClick: () => navigate("/history") },
+                  { icon: Star, label: "Média rating", value: isLoading ? "—" : (stats?.avg_prompt_rating ? Number(stats.avg_prompt_rating).toFixed(1) : "—"), sub: `${stats?.total_sessions ?? 0} sessões`, onClick: () => navigate("/history") },
+                ].map((card, i) => (
+                  <div key={card.label} className="animate-fade-in" style={{ animationDelay: `${450 + i * 80}ms`, animationFillMode: "backwards" }}>
+                    <SummaryCard {...card} loading={isLoading} />
+                  </div>
+                ))}
+              </div>
             </div>
+
+            {/* Upgrade banner */}
             {noQuota && (
-              <button
-                onClick={() => navigate("/profile?tab=billing")}
-                className="text-xs font-semibold text-primary hover:underline"
-              >
-                Adquirir cotas →
-              </button>
+              <div className="rounded-xl border border-destructive/40 bg-destructive/5 p-5 flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-destructive/15 text-destructive">
+                  <Crown className="h-5 w-5" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-bold text-foreground">Suas cotas acabaram!</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Faça upgrade ou adquira cotas avulsas para continuar criando.
+                  </p>
+                </div>
+                <button
+                  onClick={() => navigate("/profile?tab=billing")}
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground hover:bg-primary/90 transition-colors shrink-0"
+                >
+                  <Crown className="h-3.5 w-3.5" /> Ver planos
+                </button>
+              </div>
             )}
-          </div>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {MODES.map((mode, i) => (
-              <div key={mode.title} className="animate-fade-in" style={{ animationDelay: `${700 + i * 100}ms`, animationFillMode: "backwards" }}>
-                <ModeActionCard
-                  {...mode}
-                  creditsRemaining={creditsRemaining}
-                  disabled={noQuota}
+
+            {/* Quick access + Referral */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="rounded-xl border bg-card p-5 shadow-md space-y-3">
+                <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+                  Acesso rápido
+                </p>
+                <QuickActionCard
+                  title="Minha memória"
+                  description="Veja prompts e specs salvos"
+                  icon={BarChart3}
+                  href="/memory"
+                  accent="text-secondary"
+                />
+                <QuickActionCard
+                  title="Histórico de sessões"
+                  description={`${stats?.total_sessions ?? 0} sessões realizadas`}
+                  icon={Clock}
+                  href="/history"
+                  accent="text-accent"
                 />
               </div>
-            ))}
-          </div>
+              <ReferralBonusCard bonusCredits={bonusRemaining} orgId={orgId} />
+            </div>
+          </CollapsibleContent>
         </div>
-      </section>
-
-      {/* ── Quick access + Referral ── */}
-      <section className="grid grid-cols-1 sm:grid-cols-2 gap-4 animate-fade-in" style={{ animationDelay: "1100ms", animationFillMode: "backwards" }}>
-        <div className="rounded-xl border bg-card p-5 shadow-md space-y-3">
-          <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
-            Acesso rápido
-          </p>
-          <QuickActionCard
-            title="Minha memória"
-            description="Veja prompts e specs salvos"
-            icon={BarChart3}
-            href="/memory"
-            accent="text-secondary"
-          />
-          <QuickActionCard
-            title="Histórico de sessões"
-            description={`${stats?.total_sessions ?? 0} sessões realizadas`}
-            icon={Clock}
-            href="/history"
-            accent="text-accent"
-          />
-        </div>
-
-        <ReferralBonusCard bonusCredits={bonusRemaining} orgId={orgId} />
-      </section>
+      </Collapsible>
     </AppShell>
   );
 }
