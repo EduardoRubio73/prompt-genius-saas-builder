@@ -35,3 +35,6 @@ verify_jwt = false
 
 [functions.create-topup-checkout]
 verify_jwt = false
+
+[functions.sync-credit-packs]
+verify_jwt = false
