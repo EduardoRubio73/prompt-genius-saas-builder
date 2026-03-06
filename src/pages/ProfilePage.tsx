@@ -708,7 +708,7 @@ export default function ProfilePage() {
       </section>
 
       <div className="flex flex-col gap-6 sm:flex-row">
-        <nav className="flex sm:flex-col gap-1 sm:w-48 shrink-0">
+        <nav className="flex sm:flex-col gap-1 sm:w-48 shrink-0 overflow-x-auto pb-2 sm:pb-0 sm:overflow-x-visible">
           <button
             onClick={() => navigate("/dashboard")}
             className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors text-left text-muted-foreground hover:bg-muted hover:text-foreground"
