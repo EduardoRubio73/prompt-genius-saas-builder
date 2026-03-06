@@ -1549,7 +1549,9 @@ export type Database = {
       }
       profiles: {
         Row: {
+          ativo: boolean | null
           avatar_url: string | null
+          celular: number | null
           created_at: string
           email: string
           full_name: string | null
@@ -1560,7 +1562,9 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          ativo?: boolean | null
           avatar_url?: string | null
+          celular?: number | null
           created_at?: string
           email: string
           full_name?: string | null
@@ -1571,7 +1575,9 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          ativo?: boolean | null
           avatar_url?: string | null
+          celular?: number | null
           created_at?: string
           email?: string
           full_name?: string | null
