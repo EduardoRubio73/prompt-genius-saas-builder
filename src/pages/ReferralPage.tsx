@@ -109,12 +109,12 @@ export default function ReferralPage() {
   };
 
   const sharePlatform = async () => {
-    const url = "https://genius-engineer.lovable.app";
+    const url = referralLink || "https://genius-engineer.lovable.app";
     if (navigator.share) {
       await navigator.share({ title: "Prompt Genius SaaS Builder", url });
     } else {
       await navigator.clipboard.writeText(url);
-      toast({ title: "Link copiado!" });
+      toast({ title: "Link copiado!", description: "Cole e compartilhe com seus contatos." });
     }
   };
 
