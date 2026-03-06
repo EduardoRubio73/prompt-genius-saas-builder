@@ -1455,6 +1455,8 @@ export type Database = {
           plan_credits_total: number
           plan_credits_used: number
           plan_tier: Database["public"]["Enums"]["plan_tier"]
+          referral_first_bonus_paid: boolean | null
+          referral_rewards_paid: number | null
           slug: string
           stripe_customer_id: string | null
           trial_ends_at: string | null
@@ -1478,6 +1480,8 @@ export type Database = {
           plan_credits_total?: number
           plan_credits_used?: number
           plan_tier?: Database["public"]["Enums"]["plan_tier"]
+          referral_first_bonus_paid?: boolean | null
+          referral_rewards_paid?: number | null
           slug: string
           stripe_customer_id?: string | null
           trial_ends_at?: string | null
@@ -1501,6 +1505,8 @@ export type Database = {
           plan_credits_total?: number
           plan_credits_used?: number
           plan_tier?: Database["public"]["Enums"]["plan_tier"]
+          referral_first_bonus_paid?: boolean | null
+          referral_rewards_paid?: number | null
           slug?: string
           stripe_customer_id?: string | null
           trial_ends_at?: string | null

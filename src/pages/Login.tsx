@@ -111,7 +111,7 @@ export default function Login() {
               if (result === "ok_trial") {
                 toast({
                   title: "Convite registrado!",
-                  description: "O bônus será liberado após ativação de um plano pago.",
+                  description: "O bônus será liberado após ativação do plano.",
                 });
               } else if (result === "invalid_code") {
                 toast({ title: "Código de convite inválido.", variant: "destructive" });
@@ -119,6 +119,8 @@ export default function Login() {
                 toast({ title: "Você não pode usar seu próprio código.", variant: "destructive" });
               } else if (result === "already_used") {
                 toast({ title: "Este convite já foi utilizado.", variant: "destructive" });
+              } else if (result === "limit_reached") {
+                toast({ title: "Este código atingiu o limite de utilizações.", variant: "destructive" });
               }
             }
             // Clean URL

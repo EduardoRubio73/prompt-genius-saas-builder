@@ -1,54 +1,45 @@
 
 
-## Plano: Redesign completo da página /indicacoes + ajuste no Login
+## Fix: Admin Credits Not Saving
 
-### Alterações
+### Root Causes
 
-#### 1. `src/pages/ReferralPage.tsx` -- Reescrever completamente
+1. **Missing data**: `admin_users_overview` view doesn't include `plan_credits_total`, `bonus_credits_total`, etc. The form defaults to `0` instead of the real values.
+2. **JS falsy bug**: Line 88 uses `form.plan_credits_total || undefined` — when the value is `0`, `0 || undefined` evaluates to `undefined`, so the field is omitted from the update.
 
-**Dados carregados:**
-- `organizations`: `plan_tier`, `bonus_credits_total`, `bonus_credits_used`, `referral_rewards_paid`, `referral_first_bonus_paid`
-- `generate_referral_code` RPC (retorna code ou `plan_required`)
-- `referrals` table: filtrar por `referrer_user_id`, contar `status = 'rewarded'` para métricas
+### Solution
 
-**Layout (plano pago):**
+**1. Fetch actual org data when dialog opens**
+- In `UserDetailDialog`, add a query to fetch the organization record directly from `organizations` table using `user.org_id`
+- Initialize `plan_credits_total` and `bonus_credits_total` from the real org data
 
-1. **Header card** -- "Programa de Indicações"
-   - Descrição: "Convide outras empresas para usar a plataforma Genius."
-   - Info sobre primeira indicação: +5 créditos para ambos
-   - Info sobre a cada 10 confirmadas: +10 créditos extras
+**2. Fix the save logic**
+- Remove `|| undefined` guards — always send `plan_credits_total` and `bonus_credits_total` to the update call
+- This ensures `0` is a valid value that gets saved
 
-2. **Métricas** -- 3 mini cards lado a lado
-   - Indicações confirmadas (count de `status === 'rewarded'`)
-   - Próximo bônus (10 - (confirmed % 10) restantes)
-   - Créditos ganhos (`bonus_credits_total`)
+### Files to Edit
 
-3. **Barra de progresso**
-   - `progress = confirmed % 10`
-   - Visual: `X / 10 indicações` com Progress component
-   - Mensagem: "Faltam Y indicações para ganhar +10 créditos."
+| File | Change |
+|------|--------|
+| `src/pages/admin/AdminUsers.tsx` | Add org data fetch, fix form init + save logic |
 
-4. **Link de convite** -- card com code + botão Copiar link
+### Details
 
-5. **Lista de indicações** -- tabela com data e status (manter existente)
-
-**Layout (free):**
-- Mensagem + botão "Compartilhar plataforma" (já existe, manter)
-
-**Toast de primeira indicação:**
-- Ao carregar, se `referral_first_bonus_paid === true` e existir pelo menos 1 referral `rewarded`, verificar via `localStorage` se já mostrou o toast (`genius_first_referral_shown`). Se não, mostrar dialog/toast especial com mensagem de parabéns e marcar no localStorage.
-
-#### 2. `src/pages/Login.tsx` -- Adicionar `limit_reached`
-
-Adicionar tratamento para `limit_reached`:
 ```tsx
-} else if (result === "limit_reached") {
-  toast({ title: "Este código atingiu o limite de utilizações.", variant: "destructive" });
-}
-```
+// Add useEffect to load real org data
+const [orgData, setOrgData] = useState<any>(null);
+useEffect(() => {
+  if (user.org_id) {
+    supabase.from("organizations").select("plan_credits_total, bonus_credits_total, plan_credits_used, bonus_credits_used").eq("id", user.org_id).single()
+      .then(({ data }) => {
+        if (data) {
+          setForm(f => ({ ...f, plan_credits_total: data.plan_credits_total, bonus_credits_total: data.bonus_credits_total }));
+        }
+      });
+  }
+}, [user.org_id]);
 
-| Arquivo | Ação |
-|---------|------|
-| `src/pages/ReferralPage.tsx` | Reescrever com métricas, barra de progresso, card explicativo |
-| `src/pages/Login.tsx` | Adicionar tratamento `limit_reached` |
+// Fix save — no more || undefined
+updates: { plan_tier: form.plan_tier, is_active: form.is_active, plan_credits_total: form.plan_credits_total, bonus_credits_total: form.bonus_credits_total }
+```
 
