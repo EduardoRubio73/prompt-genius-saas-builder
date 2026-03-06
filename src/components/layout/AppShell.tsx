@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Moon, Sun, LogOut, Settings, User, ChevronDown, CreditCard, Shield } from "lucide-react";
+import { Moon, Sun, LogOut, Settings, User, ChevronDown, CreditCard, Shield, Gift } from "lucide-react";
 import { useTheme } from "@/hooks/useTheme";
 import { useNavigate, Link } from "react-router-dom";
 import logo from "@/assets/logo.png";
