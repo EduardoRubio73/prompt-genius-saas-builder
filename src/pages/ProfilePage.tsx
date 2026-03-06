@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { User, Lock, Bell, CreditCard, Upload, Save, Check, LayoutDashboard, Coins, Loader2, Mail, ShieldAlert } from "lucide-react";
+import { User, Lock, Bell, CreditCard, Upload, Save, Check, LayoutDashboard, Coins, Loader2, Mail, ShieldAlert, Gift } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { AppShell } from "@/components/layout/AppShell";
 import { useAuth } from "@/hooks/useAuth";
@@ -733,6 +733,13 @@ export default function ProfilePage() {
               </button>
             );
           })}
+          <div className="hidden sm:block border-b sm:my-1" />
+          <button
+            onClick={() => navigate("/indicacoes")}
+            className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors text-left text-muted-foreground hover:bg-muted hover:text-foreground whitespace-nowrap shrink-0"
+          >
+            <Gift className="h-4 w-4" /> Indicações
+          </button>
           <div className="hidden sm:block border-b sm:my-1" />
           <a
             href={buildSupportMailto(profile?.full_name ?? "", profile?.email ?? "")}
