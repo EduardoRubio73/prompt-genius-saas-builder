@@ -19,13 +19,7 @@ Deno.serve(async (req) => {
     const admin = createClient(supabaseUrl, serviceRoleKey);
     const stripe = new Stripe(stripeSecretKey, { apiVersion: "2023-10-16" });
 
-    // Skip auth for service-role calls (admin utility)
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader?.startsWith("Bearer ")) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    // Admin utility - no user auth required (verify_jwt=false in config.toml)
 
     // Fetch all credit packs without stripe_price_id
     const { data: packs, error: packsError } = await admin
