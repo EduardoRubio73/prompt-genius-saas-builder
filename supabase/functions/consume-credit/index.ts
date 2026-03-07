@@ -20,14 +20,13 @@ Deno.serve(async (req) => {
       global: { headers: { Authorization: authHeader } },
     });
 
-    const token = authHeader.replace("Bearer ", "");
-    const { data: claimsData, error: claimsErr } = await anonClient.auth.getClaims(token);
-    if (claimsErr || !claimsData?.claims) {
+    const { data: { user }, error: userErr } = await anonClient.auth.getUser();
+    if (userErr || !user) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: corsHeaders });
     }
 
     // Use authenticated user ID from JWT, never from request body
-    const authenticatedUserId = claimsData.claims.sub;
+    const authenticatedUserId = user.id;
 
     const { org_id, session_id } = await req.json();
     if (!org_id || !session_id) {
