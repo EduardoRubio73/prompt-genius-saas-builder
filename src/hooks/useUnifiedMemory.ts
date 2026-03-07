@@ -88,7 +88,7 @@ export function useUnifiedMemory({
         // ── Normalize prompt entries ───────────────────────────────────
         const normalized_prompts: UnifiedMemoryEntry[] = (pData ?? []).map((e) => ({
           id: e.id,
-          type: "prompt" as MemoryMode,
+          type: (e.categoria === "misto" ? "mixed" : "prompt") as MemoryMode,
           title: e.especialidade || e.categoria || "Prompt sem título",
           preview: e.prompt_gerado?.slice(0, 120) || "",
           fullContent: e.prompt_gerado || "",
@@ -196,9 +196,9 @@ export function useUnifiedMemory({
   const counts = useMemo(
     () => ({
       all: promptEntries.length + saasEntries.length,
-      prompt: promptEntries.length,
+      prompt: promptEntries.filter((e) => e.type === "prompt").length,
       saas: saasEntries.length,
-      mixed: 0,
+      mixed: promptEntries.filter((e) => e.type === "mixed").length,
       build: 0,
       favorites: [...promptEntries, ...saasEntries].filter((e) => e.is_favorite).length,
     }),

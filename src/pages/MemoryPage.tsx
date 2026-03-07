@@ -37,6 +37,10 @@ function MemoryCard({
   const timeAgo = entry.created_at
     ? formatDistanceToNow(new Date(entry.created_at), { addSuffix: true, locale: ptBR })
     : "";
+  const formattedDate = entry.created_at
+    ? new Date(entry.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })
+      + " " + new Date(entry.created_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })
+    : "";
 
   return (
     <button
@@ -54,7 +58,7 @@ function MemoryCard({
               {"★".repeat(entry.rating)}{"☆".repeat(5 - entry.rating)}
             </span>
           )}
-          <span className="ml-1">{timeAgo}</span>
+          <span className="ml-1" title={timeAgo}>{formattedDate}</span>
         </div>
       </div>
       <p className="text-sm font-semibold text-foreground line-clamp-1">{entry.title}</p>
@@ -123,6 +127,7 @@ export default function MemoryPage() {
     { key: "all", label: "Todos", icon: "🧠", count: counts.all },
     { key: "prompt", label: "Prompts", icon: "✨", count: counts.prompt },
     { key: "saas", label: "Specs", icon: "📄", count: counts.saas },
+    { key: "mixed", label: "Misto", icon: "⚡", count: counts.mixed },
     { key: "build", label: "Build", icon: "🏗️", count: (counts as any).build ?? 0 },
   ];
 

@@ -131,6 +131,10 @@ export default function MistoMode() {
 
       setTimeElapsed((Date.now() - startTime.current) / 1000);
       setStep("results");
+
+      // Mark session as completed
+      await supabase.from("sessions").update({ completed: true, raw_input: userInput }).eq("id", currentSessionId);
+
       fetchBalance();
       toast.success("💰 Modo Misto concluído! Você economizou ~R$ 25,00 vs fazer manualmente.");
     } catch (err: any) {

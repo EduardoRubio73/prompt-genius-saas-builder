@@ -67,14 +67,12 @@ function SessionCard({ session }: { session: Session }) {
           <span className="tabular-nums">{session.tokens_total.toLocaleString("pt-BR")} tok</span>
           <span>{formatDistanceToNow(new Date(session.created_at), { addSuffix: true, locale: ptBR })}</span>
           <span className="text-[10px] opacity-60">{getDuration(session.created_at, session.updated_at)}</span>
-          {session.completed && (
-            <button
-              onClick={() => navigate(`${meta.route}?session=${session.id}`)}
-              className="flex items-center gap-1 rounded-lg border border-border px-2 py-1 text-xs font-medium text-foreground hover:bg-muted transition-colors"
-            >
-              <Eye className="h-3 w-3" /> Ver
-            </button>
-          )}
+          <button
+            onClick={() => navigate(`${meta.route}?session=${session.id}`)}
+            className="flex items-center gap-1 rounded-lg border border-border px-2 py-1 text-xs font-medium text-foreground hover:bg-muted transition-colors"
+          >
+            <Eye className="h-3 w-3" /> Ver
+          </button>
           {longInput && (
             <button onClick={() => setExpanded(!expanded)} className="text-muted-foreground hover:text-foreground transition-colors">
               {expanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
