@@ -7,12 +7,11 @@ export interface ConsumeResult {
 
 export async function consumeCredit(
   orgId: string,
-  userId: string,
+  _userId: string,
   sessionId: string
 ): Promise<ConsumeResult> {
   const res = await callEdgeFunction("consume-credit", {
     org_id: orgId,
-    user_id: userId,
     session_id: sessionId,
   });
   return res as ConsumeResult;

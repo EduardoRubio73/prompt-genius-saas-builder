@@ -14,7 +14,6 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: corsHeaders });
     }
 
-    // Validate JWT with anon client
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     const anonClient = createClient(supabaseUrl, supabaseAnonKey, {
@@ -27,9 +26,12 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: corsHeaders });
     }
 
-    const { org_id, user_id, session_id } = await req.json();
-    if (!org_id || !user_id || !session_id) {
-      return new Response(JSON.stringify({ error: "org_id, user_id, session_id required" }), {
+    // Use authenticated user ID from JWT, never from request body
+    const authenticatedUserId = claimsData.claims.sub;
+
+    const { org_id, session_id } = await req.json();
+    if (!org_id || !session_id) {
+      return new Response(JSON.stringify({ error: "org_id, session_id required" }), {
         status: 400,
         headers: corsHeaders,
       });
@@ -41,13 +43,12 @@ Deno.serve(async (req) => {
 
     const { data, error } = await adminClient.rpc("consume_credit", {
       p_org_id: org_id,
-      p_user_id: user_id,
+      p_user_id: authenticatedUserId,
       p_session_id: session_id,
     });
 
     if (error) throw error;
 
-    // consume_credit returns a text: 'ok', 'no_credits', 'trial_expired', 'suspended'
     const result = data as string;
 
     if (result !== "ok") {
@@ -60,7 +61,8 @@ Deno.serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (err) {
-    return new Response(JSON.stringify({ error: err.message }), {
+    console.error("consume-credit error:", err);
+    return new Response(JSON.stringify({ error: "Internal server error" }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

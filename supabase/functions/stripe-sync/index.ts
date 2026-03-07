@@ -3,17 +3,14 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-webhook-source",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-webhook-source, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
 const stripeSecret = Deno.env.get("STRIPE_SECRET_KEY")!;
 const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
 const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-const stripe = new Stripe(stripeSecret, {
-  apiVersion: "2024-06-20",
-});
-
+const stripe = new Stripe(stripeSecret, { apiVersion: "2024-06-20" });
 const admin = createClient(supabaseUrl, serviceRoleKey);
 
 type SyncPayload = {
@@ -164,7 +161,6 @@ async function handleStripeWebhook(req: Request): Promise<Response> {
         const orgId = session.metadata?.org_id;
 
         if (session.metadata?.type === "topup") {
-          // Process credit pack purchase
           const purchaseId = session.metadata.purchase_id;
           if (purchaseId) {
             const { error } = await admin.rpc("process_credit_purchase", {
@@ -175,7 +171,6 @@ async function handleStripeWebhook(req: Request): Promise<Response> {
             else console.log("Topup processed for purchase:", purchaseId);
           }
         } else if (orgId) {
-          // Reset plan credits for new subscription cycle
           const { error } = await admin
             .from("organizations")
             .update({ plan_credits_used: 0, updated_at: new Date().toISOString() })
@@ -217,8 +212,7 @@ async function handleStripeWebhook(req: Request): Promise<Response> {
     }
   }
 
-  // No signature = not a webhook, fall through
-  return new Response(null, { status: 0 }); // sentinel
+  return new Response(null, { status: 0 });
 }
 
 Deno.serve(async (req) => {
@@ -227,10 +221,30 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // Check if this is a Stripe webhook (has signature header)
+    // Check if this is a Stripe webhook (has signature header) — webhooks are authenticated via signature
     const sig = req.headers.get("stripe-signature");
     if (sig) {
       return await handleStripeWebhook(req);
+    }
+
+    // For non-webhook calls, require auth + super admin
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    const anonClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY")!, {
+      global: { headers: { Authorization: authHeader } },
+    });
+    const token = authHeader.replace("Bearer ", "");
+    const { data: claimsData, error: claimsErr } = await anonClient.auth.getClaims(token);
+    if (claimsErr || !claimsData?.claims) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    const { data: isAdmin } = await admin.rpc("is_super_admin").setHeader("Authorization", authHeader);
+    if (!isAdmin) {
+      return new Response(JSON.stringify({ error: "Forbidden" }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
     const payload: SyncPayload = await req.json();
@@ -266,8 +280,8 @@ Deno.serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {
-    console.error("stripe-sync error", error);
-    return new Response(JSON.stringify({ error: String(error) }), {
+    console.error("stripe-sync error:", error);
+    return new Response(JSON.stringify({ error: "Internal server error" }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
