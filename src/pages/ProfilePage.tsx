@@ -389,7 +389,7 @@ function BillingTab({ orgId, planName }: { orgId: string | undefined; planName: 
         org_id: orgId,
       });
       if (data?.url) {
-        window.location.href = data.url;
+        window.open(data.url, "_blank");
         return;
       }
       toast.error("Não foi possível redirecionar para o checkout.");
