@@ -1,0 +1,1 @@
+UPDATE public.credit_packs SET stripe_price_id = NULL WHERE stripe_price_id IS NOT NULL;
