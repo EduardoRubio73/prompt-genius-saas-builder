@@ -123,6 +123,7 @@ export default function MemoryPage() {
     { key: "all", label: "Todos", icon: "🧠", count: counts.all },
     { key: "prompt", label: "Prompts", icon: "✨", count: counts.prompt },
     { key: "saas", label: "Specs", icon: "📄", count: counts.saas },
+    { key: "mixed", label: "Misto", icon: "⚡", count: counts.mixed },
     { key: "build", label: "Build", icon: "🏗️", count: (counts as any).build ?? 0 },
   ];
 
