@@ -1,45 +1,51 @@
 
 
-## Fix: Admin Credits Not Saving
+## Analysis
 
-### Root Causes
+After reviewing the codebase, here's what I found:
 
-1. **Missing data**: `admin_users_overview` view doesn't include `plan_credits_total`, `bonus_credits_total`, etc. The form defaults to `0` instead of the real values.
-2. **JS falsy bug**: Line 88 uses `form.plan_credits_total || undefined` — when the value is `0`, `0 || undefined` evaluates to `undefined`, so the field is omitted from the update.
+1. **`created_at` already exists** in both DB tables (`prompt_memory`, `saas_specs`) with `DEFAULT now()` -- it's always populated server-side.
+2. **`UnifiedMemoryEntry` interface** already has `created_at: string | null` (line 16 of `useUnifiedMemory.ts`).
+3. **The save flow in MistoMode** (lines 145-159) does NOT explicitly set `created_at` -- it relies on the DB default, which is correct, but the interface type allows `null`.
 
-### Solution
+The real work is in **sorting logic** and **type tightening**.
 
-**1. Fetch actual org data when dialog opens**
-- In `UserDetailDialog`, add a query to fetch the organization record directly from `organizations` table using `user.org_id`
-- Initialize `plan_credits_total` and `bonus_credits_total` from the real org data
+## Plan
 
-**2. Fix the save logic**
-- Remove `|| undefined` guards — always send `plan_credits_total` and `bonus_credits_total` to the update call
-- This ensures `0` is a valid value that gets saved
+### 1. Tighten the `created_at` type in `UnifiedMemoryEntry`
 
-### Files to Edit
+Change `created_at: string | null` to `created_at: string` in the interface. In the normalization code, fallback to `new Date().toISOString()` if somehow null.
 
+### 2. Refactor sorting in `useUnifiedMemory.ts`
+
+Current sort (line 142-147): favorites first → rating desc → date desc.
+
+New sort: favorites first → `created_at` desc (primary) → `title` asc (secondary, for same timestamp).
+
+```typescript
+let combined = [...promptEntries, ...saasEntries].sort((a, b) => {
+  if (a.is_favorite !== b.is_favorite) return a.is_favorite ? -1 : 1;
+  const dateCompare = new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+  if (dateCompare !== 0) return dateCompare;
+  return (a.title ?? "").localeCompare(b.title ?? "", "pt-BR");
+});
+```
+
+### 3. Update DB query ordering in `useUnifiedMemory.ts`
+
+Change `.order("rating", { ascending: false })` to `.order("created_at", { ascending: false })` as primary, keeping consistency with the client-side sort.
+
+### 4. Ensure `created_at` is explicitly set on save in `MistoMode.tsx`
+
+Add `created_at: new Date().toISOString()` to both `prompt_memory` and `saas_specs` insert calls for explicit timestamp capture (not relying solely on DB default).
+
+### 5. Apply same sorting in `MemoryPage.tsx`
+
+The Memory page grid currently delegates to `useUnifiedMemory`, so changes there will automatically propagate -- no separate change needed.
+
+### Files to modify
 | File | Change |
 |------|--------|
-| `src/pages/admin/AdminUsers.tsx` | Add org data fetch, fix form init + save logic |
-
-### Details
-
-```tsx
-// Add useEffect to load real org data
-const [orgData, setOrgData] = useState<any>(null);
-useEffect(() => {
-  if (user.org_id) {
-    supabase.from("organizations").select("plan_credits_total, bonus_credits_total, plan_credits_used, bonus_credits_used").eq("id", user.org_id).single()
-      .then(({ data }) => {
-        if (data) {
-          setForm(f => ({ ...f, plan_credits_total: data.plan_credits_total, bonus_credits_total: data.bonus_credits_total }));
-        }
-      });
-  }
-}, [user.org_id]);
-
-// Fix save — no more || undefined
-updates: { plan_tier: form.plan_tier, is_active: form.is_active, plan_credits_total: form.plan_credits_total, bonus_credits_total: form.bonus_credits_total }
-```
+| `src/hooks/useUnifiedMemory.ts` | Tighten type, update sort logic, update query ordering |
+| `src/pages/misto/MistoMode.tsx` | Add explicit `created_at` on both inserts |
 
