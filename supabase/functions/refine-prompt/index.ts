@@ -197,6 +197,14 @@ Deno.serve(async (req) => {
       });
     }
 
+    const allowedActions = new Set(["distribute", "refine", "saas-spec", "build"]);
+    if (typeof action !== "string" || !allowedActions.has(action)) {
+      return new Response(JSON.stringify({ error: "Unknown action" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     console.log(`Action: ${action}, sessionId: ${sessionId}, user: ${user.id}`);
 
     // Server-side credit consumption before AI generation (mandatory)
