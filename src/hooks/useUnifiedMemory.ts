@@ -13,7 +13,7 @@ export interface UnifiedMemoryEntry {
   is_favorite: boolean;
   tags: string[] | null;
   categoria: string | null;
-  created_at: string | null;
+  created_at: string;
   // Prompt-specific
   especialidade?: string | null;
   persona?: string | null;
