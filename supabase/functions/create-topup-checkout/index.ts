@@ -136,6 +136,26 @@ Deno.serve(async (req) => {
     }
 
     const { data: purchase, error: purchaseError } = await admin
+      .from("credit_purchases")
+      .insert({
+        org_id: orgId,
+        user_id: user.id,
+        pack_id: pack.id,
+        credits_granted: pack.credits,
+        amount_paid_brl: pack.price_brl,
+        status: "pending",
+      })
+      .select("id")
+      .single();
+
+    if (purchaseError || !purchase) {
+      return jsonResponse(500, { error: "Failed to create purchase record." });
+    }
+
+    const checkoutSession = await stripe.checkout.sessions.create({
+      mode: "payment",
+      customer: stripeCustomerId,
+      line_items: lineItems,
       success_url: successUrl,
       cancel_url: cancelUrl,
       metadata: {
