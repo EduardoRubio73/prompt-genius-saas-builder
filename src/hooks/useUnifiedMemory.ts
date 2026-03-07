@@ -62,7 +62,6 @@ export function useUnifiedMemory({
             "id, categoria, especialidade, rating, prompt_gerado, created_at, tags, persona, tarefa, objetivo, contexto, formato, restricoes, referencias, destino, session_id, is_favorite"
           )
           .eq("org_id", orgId)
-          .order("rating", { ascending: false })
           .order("created_at", { ascending: false })
           .limit(40);
 
