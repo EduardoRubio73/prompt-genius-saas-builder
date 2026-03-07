@@ -77,7 +77,6 @@ export function useUnifiedMemory({
             "id, project_name, spec_md, rating, created_at, is_favorite, answers, session_id, prompt_memory_id"
           )
           .eq("org_id", orgId)
-          .order("rating", { ascending: false })
           .order("created_at", { ascending: false })
           .limit(40);
 
