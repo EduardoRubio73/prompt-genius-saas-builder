@@ -10,8 +10,8 @@ const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
 const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
 const supabaseServiceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const stripeSecretKey = Deno.env.get("STRIPE_SECRET_KEY")!;
-const successUrl = Deno.env.get("STRIPE_CHECKOUT_SUCCESS_URL") || "https://prompt-genius-saas-builder.lovable.app/billing/success";
-const cancelUrl = Deno.env.get("STRIPE_CHECKOUT_CANCEL_URL") || "https://prompt-genius-saas-builder.lovable.app/profile?tab=billing";
+const successUrl = Deno.env.get("STRIPE_CHECKOUT_SUCCESS_URL") || "https://genius-engineer.lovable.app/billing/success";
+const cancelUrl = Deno.env.get("STRIPE_CHECKOUT_CANCEL_URL") || "https://genius-engineer.lovable.app/profile?tab=billing";
 
 const stripe = new Stripe(stripeSecretKey, { apiVersion: "2023-10-16" });
 

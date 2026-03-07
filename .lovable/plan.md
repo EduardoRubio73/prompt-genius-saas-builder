@@ -1,42 +1,45 @@
 
 
-## Problem
+## Fix: Admin Credits Not Saving
 
-Two issues identified:
+### Root Causes
 
-1. **Wrong redirect URL**: The `create-topup-checkout` Edge Function has hardcoded fallback URLs pointing to `prompt-genius-saas-builder.lovable.app` (old/dead project). After Stripe checkout completes, the user lands on a "Project not found" page. The correct published URL is `genius-engineer.lovable.app`.
+1. **Missing data**: `admin_users_overview` view doesn't include `plan_credits_total`, `bonus_credits_total`, etc. The form defaults to `0` instead of the real values.
+2. **JS falsy bug**: Line 88 uses `form.plan_credits_total || undefined` — when the value is `0`, `0 || undefined` evaluates to `undefined`, so the field is omitted from the update.
 
-2. **Credits not credited**: The webhook flow (`stripe-sync` function) should call `process_credit_purchase` RPC when a topup checkout completes. This may be working but the user couldn't verify because of the broken redirect. We should also confirm the `STRIPE_CHECKOUT_SUCCESS_URL` and `STRIPE_CHECKOUT_CANCEL_URL` env vars are set in Supabase — if they are not set, the `create-checkout-session` function (which uses `!` instead of `||`) would fail, while `create-topup-checkout` falls back to the wrong URL.
+### Solution
 
-## Plan
+**1. Fetch actual org data when dialog opens**
+- In `UserDetailDialog`, add a query to fetch the organization record directly from `organizations` table using `user.org_id`
+- Initialize `plan_credits_total` and `bonus_credits_total` from the real org data
 
-### 1. Fix hardcoded fallback URLs in `create-topup-checkout`
+**2. Fix the save logic**
+- Remove `|| undefined` guards — always send `plan_credits_total` and `bonus_credits_total` to the update call
+- This ensures `0` is a valid value that gets saved
 
-**File: `supabase/functions/create-topup-checkout/index.ts`** (lines 13-14)
+### Files to Edit
 
-Update the fallback URLs from `prompt-genius-saas-builder.lovable.app` to `genius-engineer.lovable.app`:
+| File | Change |
+|------|--------|
+| `src/pages/admin/AdminUsers.tsx` | Add org data fetch, fix form init + save logic |
 
-```typescript
-const successUrl = Deno.env.get("STRIPE_CHECKOUT_SUCCESS_URL") || "https://genius-engineer.lovable.app/billing/success";
-const cancelUrl = Deno.env.get("STRIPE_CHECKOUT_CANCEL_URL") || "https://genius-engineer.lovable.app/profile?tab=billing";
+### Details
+
+```tsx
+// Add useEffect to load real org data
+const [orgData, setOrgData] = useState<any>(null);
+useEffect(() => {
+  if (user.org_id) {
+    supabase.from("organizations").select("plan_credits_total, bonus_credits_total, plan_credits_used, bonus_credits_used").eq("id", user.org_id).single()
+      .then(({ data }) => {
+        if (data) {
+          setForm(f => ({ ...f, plan_credits_total: data.plan_credits_total, bonus_credits_total: data.bonus_credits_total }));
+        }
+      });
+  }
+}, [user.org_id]);
+
+// Fix save — no more || undefined
+updates: { plan_tier: form.plan_tier, is_active: form.is_active, plan_credits_total: form.plan_credits_total, bonus_credits_total: form.bonus_credits_total }
 ```
-
-### 2. Add same fallback pattern to `create-checkout-session`
-
-**File: `supabase/functions/create-checkout-session/index.ts`** (lines 13-14)
-
-Change from `!` (crash if missing) to `||` with correct fallback:
-
-```typescript
-const successUrl = Deno.env.get("STRIPE_CHECKOUT_SUCCESS_URL") || "https://genius-engineer.lovable.app/billing/success";
-const cancelUrl = Deno.env.get("STRIPE_CHECKOUT_CANCEL_URL") || "https://genius-engineer.lovable.app/profile?tab=billing";
-```
-
-### 3. Redeploy both Edge Functions
-
-After the URL fix, redeploy `create-topup-checkout` and `create-checkout-session`.
-
-### 4. Verify credit was granted
-
-Check the `credit_purchases` table for the user's recent purchase to confirm whether the webhook processed it. If the purchase status is still `pending`, the webhook may not have fired or the RPC failed — we can manually process it.
 
