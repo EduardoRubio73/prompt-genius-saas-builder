@@ -3,7 +3,7 @@ import { createClient } from "npm:@supabase/supabase-js@2.49.1";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
@@ -28,7 +28,6 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // Auth
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
       return jsonResponse(401, { error: "Missing authorization header." });
@@ -44,39 +43,25 @@ Deno.serve(async (req) => {
       return jsonResponse(401, { error: "Invalid token." });
     }
 
-    // Payload
     const { pack_id, org_id: payloadOrgId } = await req.json();
     if (!pack_id) {
       return jsonResponse(400, { error: "Field 'pack_id' is required." });
     }
 
-    // Resolve org_id
     let orgId = payloadOrgId?.trim();
     if (!orgId) {
-      const { data: profile } = await admin
-        .from("profiles")
-        .select("personal_org_id")
-        .eq("id", user.id)
-        .single();
+      const { data: profile } = await admin.from("profiles").select("personal_org_id").eq("id", user.id).single();
       orgId = profile?.personal_org_id;
     }
     if (!orgId) {
       return jsonResponse(400, { error: "org_id is required." });
     }
 
-    // Validate membership
-    const { data: membership } = await admin
-      .from("org_members")
-      .select("role")
-      .eq("org_id", orgId)
-      .eq("user_id", user.id)
-      .maybeSingle();
-
+    const { data: membership } = await admin.from("org_members").select("role").eq("org_id", orgId).eq("user_id", user.id).maybeSingle();
     if (!membership) {
       return jsonResponse(403, { error: "User does not belong to this organization." });
     }
 
-    // Fetch credit pack
     const { data: pack, error: packError } = await admin
       .from("credit_packs")
       .select("id, credits, price_brl, stripe_price_id, display_name, is_active")
@@ -84,7 +69,6 @@ Deno.serve(async (req) => {
       .single();
 
     if (packError || !pack) {
-      console.error("Pack lookup error", packError);
       return jsonResponse(404, { error: "Credit pack not found." });
     }
 
@@ -96,13 +80,7 @@ Deno.serve(async (req) => {
       return jsonResponse(400, { error: "Credit pack has no Stripe price configured." });
     }
 
-    // Get or create Stripe customer
-    const { data: orgRow } = await admin
-      .from("organizations")
-      .select("id, name, stripe_customer_id")
-      .eq("id", orgId)
-      .single();
-
+    const { data: orgRow } = await admin.from("organizations").select("id, name, stripe_customer_id").eq("id", orgId).single();
     if (!orgRow) {
       return jsonResponse(404, { error: "Organization not found." });
     }
@@ -114,13 +92,9 @@ Deno.serve(async (req) => {
         metadata: { org_id: orgRow.id, created_by_user_id: user.id },
       });
       stripeCustomerId = customer.id;
-      await admin
-        .from("organizations")
-        .update({ stripe_customer_id: stripeCustomerId })
-        .eq("id", orgRow.id);
+      await admin.from("organizations").update({ stripe_customer_id: stripeCustomerId }).eq("id", orgRow.id);
     }
 
-    // Create pending purchase record
     const { data: purchase, error: purchaseError } = await admin
       .from("credit_purchases")
       .insert({
@@ -135,11 +109,9 @@ Deno.serve(async (req) => {
       .single();
 
     if (purchaseError || !purchase) {
-      console.error("Purchase insert error", purchaseError);
       return jsonResponse(500, { error: "Failed to create purchase record." });
     }
 
-    // Create Stripe Checkout (payment mode)
     const checkoutSession = await stripe.checkout.sessions.create({
       mode: "payment",
       customer: stripeCustomerId,
@@ -155,15 +127,11 @@ Deno.serve(async (req) => {
       },
     });
 
-    // Save checkout session id
-    await admin
-      .from("credit_purchases")
-      .update({ stripe_checkout_session: checkoutSession.id })
-      .eq("id", purchase.id);
+    await admin.from("credit_purchases").update({ stripe_checkout_session: checkoutSession.id }).eq("id", purchase.id);
 
     return jsonResponse(200, { url: checkoutSession.url });
   } catch (error) {
-    console.error("create-topup-checkout error", error);
-    return jsonResponse(500, { error: "Unexpected error.", details: String(error) });
+    console.error("create-topup-checkout error:", error);
+    return jsonResponse(500, { error: "Unexpected error." });
   }
 });

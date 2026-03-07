@@ -31,7 +31,7 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ error: "org_id required" }), { status: 400, headers: corsHeaders });
     }
 
-    // Fetch org data
+    // Fetch org data (RLS will scope to user's orgs)
     const { data: org, error: orgErr } = await supabase
       .from("organizations")
       .select("*")
@@ -39,7 +39,6 @@ Deno.serve(async (req) => {
       .single();
     if (orgErr) throw orgErr;
 
-    // Fetch active subscription
     const { data: sub } = await supabase
       .from("billing_subscriptions")
       .select("*, billing_prices(*, billing_products(*))")
@@ -49,7 +48,6 @@ Deno.serve(async (req) => {
       .limit(1)
       .maybeSingle();
 
-    // Fetch last credit transaction
     const { data: lastTx } = await supabase
       .from("credit_transactions")
       .select("created_at, amount, description")
@@ -58,7 +56,6 @@ Deno.serve(async (req) => {
       .limit(1)
       .maybeSingle();
 
-    // Fetch extra credits from org_credits
     const serviceRole = createClient(supabaseUrl, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
     const { data: orgCredits } = await serviceRole
       .from("org_credits")
@@ -100,7 +97,8 @@ Deno.serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (err) {
-    return new Response(JSON.stringify({ error: err.message }), {
+    console.error("org-dashboard error:", err);
+    return new Response(JSON.stringify({ error: "Internal server error" }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

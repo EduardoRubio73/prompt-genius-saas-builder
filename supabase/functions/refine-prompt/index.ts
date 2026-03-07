@@ -30,9 +30,9 @@ async function callLLM(systemPrompt: string, userPrompt: string): Promise<string
   if (!res.ok) {
     const err = await res.text();
     console.error("AI Gateway error:", res.status, err);
-    if (res.status === 429) throw new Error("Rate limit exceeded, please try again later.");
-    if (res.status === 402) throw new Error("Payment required, please add credits.");
-    throw new Error("AI Gateway error");
+    if (res.status === 429) throw new Error("rate_limit");
+    if (res.status === 402) throw new Error("payment_required");
+    throw new Error("ai_gateway_error");
   }
 
   const data = await res.json();
@@ -40,7 +40,6 @@ async function callLLM(systemPrompt: string, userPrompt: string): Promise<string
 }
 
 function parseJsonFromLLM(text: string): Record<string, unknown> {
-  // Try to extract JSON from markdown code blocks or raw text
   const jsonMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/) || text.match(/(\{[\s\S]*\})/);
   if (jsonMatch) {
     try {
@@ -56,7 +55,6 @@ function parseJsonFromLLM(text: string): Record<string, unknown> {
   }
 }
 
-// === ACTION: distribute ===
 async function handleDistribute(freeText: string, destino: string) {
   const system = `Você é um assistente especializado em engenharia de prompt. 
 Dado um texto livre do usuário, extraia e distribua as informações nos seguintes campos JSON:
@@ -74,7 +72,6 @@ Responda APENAS com JSON válido, sem markdown. Exemplo:
   return parseJsonFromLLM(result);
 }
 
-// === ACTION: refine ===
 async function handleRefine(fields: Record<string, string>, destino: string) {
   const system = `Você é um engenheiro de prompt sênior. Receba campos estruturados e:
 1. Melhore cada campo com mais clareza e especificidade
@@ -90,7 +87,6 @@ Responda APENAS com JSON válido contendo os campos melhorados + "prompt_gerado"
   return parseJsonFromLLM(result);
 }
 
-// === ACTION: saas-spec ===
 async function handleSaasSpec(
   promptFields: Record<string, string>,
   originalInput: string,
@@ -128,7 +124,6 @@ ${JSON.stringify(promptFields, null, 2)}`;
   const result = await callLLM(system, userMsg);
   const parsed = parseJsonFromLLM(result);
 
-  // If the LLM returned the markdown directly instead of JSON
   if (!parsed.spec_md && parsed.raw) {
     return { spec_md: parsed.raw };
   }
@@ -136,7 +131,6 @@ ${JSON.stringify(promptFields, null, 2)}`;
   return parsed;
 }
 
-// === ACTION: build ===
 async function handleBuild(answers: Record<string, unknown>) {
   const system = `Você é um arquiteto de software sênior e product manager experiente.
 Com base nas respostas do wizard de construção de SaaS fornecidas, gere TODOS os documentos técnicos necessários.
@@ -176,11 +170,11 @@ Deno.serve(async (req) => {
       });
     }
 
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_ANON_KEY")!,
-      { global: { headers: { Authorization: authHeader } } }
-    );
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } },
+    });
 
     const { data: { user }, error: userError } = await supabase.auth.getUser();
     if (userError || !user) {
@@ -193,6 +187,49 @@ Deno.serve(async (req) => {
     const body = await req.json();
     const { action, freeText, fields, destino, promptFields, originalInput, answers, sessionId } = body;
     console.log(`Action: ${action}, sessionId: ${sessionId}, user: ${user.id}`);
+
+    // Server-side credit consumption before AI generation
+    if (sessionId) {
+      const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+      const adminClient = createClient(supabaseUrl, serviceRoleKey);
+
+      // Get user's org_id from profile
+      const { data: profile } = await adminClient
+        .from("profiles")
+        .select("personal_org_id")
+        .eq("id", user.id)
+        .single();
+
+      const orgId = profile?.personal_org_id;
+      if (!orgId) {
+        return new Response(JSON.stringify({ error: "no_org" }), {
+          status: 403,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // Consume credit server-side
+      const { data: creditResult, error: creditError } = await adminClient.rpc("consume_credit", {
+        p_org_id: orgId,
+        p_user_id: user.id,
+        p_session_id: sessionId,
+      });
+
+      if (creditError) {
+        const errMsg = creditError.message || "";
+        if (errMsg.includes("no_credits")) {
+          return new Response(JSON.stringify({ error: "no_credits" }), {
+            status: 402,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        console.error("Credit consumption error:", creditError);
+        return new Response(JSON.stringify({ error: "credit_error" }), {
+          status: 402,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
 
     let result: Record<string, unknown>;
 
@@ -214,7 +251,7 @@ Deno.serve(async (req) => {
         result = await handleBuild(answers || {});
         break;
       default:
-        return new Response(JSON.stringify({ error: `Unknown action: ${action}` }), {
+        return new Response(JSON.stringify({ error: "Unknown action" }), {
           status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
@@ -225,9 +262,9 @@ Deno.serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (err) {
-    console.error("Edge function error:", err);
+    console.error("refine-prompt error:", err);
     return new Response(
-      JSON.stringify({ error: (err as Error).message || "Internal error" }),
+      JSON.stringify({ error: "Internal server error" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }

@@ -31,7 +31,6 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ error: "org_id required" }), { status: 400, headers: corsHeaders });
     }
 
-    // Fetch active subscription with price and product
     const { data: sub, error: subErr } = await supabase
       .from("billing_subscriptions")
       .select("id, status, current_period_start, current_period_end, trial_start, trial_end, cancel_at, canceled_at, billing_prices(unit_amount, currency, recurring_interval, billing_products(name, display_name, plan_tier))")
@@ -80,7 +79,8 @@ Deno.serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (err) {
-    return new Response(JSON.stringify({ error: err.message }), {
+    console.error("org-subscription error:", err);
+    return new Response(JSON.stringify({ error: "Internal server error" }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
