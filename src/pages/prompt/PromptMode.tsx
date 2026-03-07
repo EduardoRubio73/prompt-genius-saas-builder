@@ -132,10 +132,6 @@ export default function PromptMode() {
         setPromptGerado(r.prompt_gerado || "");
       }
 
-      // Consume credit via edge function
-      const creditResult = await callEdgeFunction("consume-credit", { org_id: orgId, user_id: user.id, session_id: currentSessionId });
-      if (creditResult.error) { setCreditModal(creditResult.error); setStep("input"); return; }
-
       setTimeElapsed((Date.now() - startTime.current) / 1000);
       setStep("results");
       fetchBalance();
