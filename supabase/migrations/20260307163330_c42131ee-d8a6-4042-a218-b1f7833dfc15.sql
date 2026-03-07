@@ -1,0 +1,1 @@
+ALTER TYPE public.credit_origin ADD VALUE IF NOT EXISTS 'ai_session';

@@ -2844,6 +2844,7 @@ export type Database = {
         | "referral_got"
         | "bonus"
         | "plan_reset"
+        | "ai_session"
       credit_pack_size: "pack_5" | "pack_15" | "pack_40"
       destination_platform:
         | "lovable"
@@ -3006,6 +3007,7 @@ export const Constants = {
         "referral_got",
         "bonus",
         "plan_reset",
+        "ai_session",
       ],
       credit_pack_size: ["pack_5", "pack_15", "pack_40"],
       destination_platform: [
