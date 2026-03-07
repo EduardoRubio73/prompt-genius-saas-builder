@@ -9,17 +9,10 @@ import { toast } from "sonner";
 import { callEdgeFunction } from "@/lib/edgeFunctions";
 import JSZip from "jszip";
 
-import { BuildStepper } from "@/components/build/BuildStepper.tsx";
-import { BuildStep1 } from "@/components/build/BuildStep1.tsx";
-import { BuildStep2 } from "@/components/build/BuildStep2.tsx";
-import { BuildStep3 } from "@/components/build/BuildStep3.tsx";
-import { BuildStep4 } from "@/components/build/BuildStep4.tsx";
-import { BuildStep5 } from "@/components/build/BuildStep5.tsx";
-import { BuildStep6 } from "@/components/build/BuildStep6.tsx";
-import { BuildStep7 } from "@/components/build/BuildStep7.tsx";
-import { BuildStep8 } from "@/components/build/BuildStep8.tsx";
-import { BuildStep9 } from "@/components/build/BuildStep9.tsx";
-import { BuildStep10 } from "@/components/build/BuildStep10.tsx";
+import {
+  BuildStepper, BuildStep1, BuildStep2, BuildStep3, BuildStep4,
+  BuildStep5, BuildStep6, BuildStep7, BuildStep8, BuildStep9, BuildStep10,
+} from "@/components/build/BuildWizardSteps";
 import { MistoSpecLoading } from "@/components/misto/MistoSpecLoading";
 import { CreditModal } from "@/components/misto/CreditModal";
 import { UnifiedMemorySidebar } from "@/components/UnifiedMemorySidebar";
