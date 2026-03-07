@@ -7,20 +7,26 @@ import { useToast } from "@/hooks/use-toast";
 import { Pencil, RefreshCw, Plus, Loader2 } from "lucide-react";
 import "./admin.css";
 
+/* ── View column types (v_active_stripe_plans) ── */
 type PlanRow = {
-  product_id: string;
+  id: string;
   name: string | null;
   display_name: string | null;
-  plan_tier: string | null;
-  price_id: string | null;
-  stripe_price_id: string | null;
-  unit_amount: number | null;
-  recurring_interval: string | null;
-  sort_order: number | null;
-  product_active: boolean | null;
-  price_active: boolean | null;
-  credits_limit: number | null;
+  price_brl: number | null;
+  currency: string | null;
+  billing_interval: string | null;
   credit_unit_cost: number | null;
+  credits_limit: number | null;
+  is_featured: boolean | null;
+  is_active: boolean | null;
+  sort_order: number | null;
+  stripe_price_id: string | null;
+  prompts_limit: number | null;
+  saas_specs_limit: number | null;
+  modo_misto_limit: number | null;
+  build_engine_limit: number | null;
+  // enriched from billing_products join
+  plan_tier?: string | null;
 };
 
 type PlanForm = {
@@ -78,12 +84,21 @@ export default function AdminBillingPlans() {
     }
   }, [form.unit_amount_brl, form.credit_unit_cost]);
 
+  /* ── Fetch plans from view + enrich with plan_tier ── */
   const { data: plans, isLoading } = useQuery({
     queryKey: ["admin-stripe-plans"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("v_active_stripe_plans").select("*").order("sort_order");
-      if (error) throw error;
-      return (data ?? []) as PlanRow[];
+      const [viewRes, prodRes] = await Promise.all([
+        supabase.from("v_active_stripe_plans").select("*").order("sort_order"),
+        supabase.from("billing_products").select("id, plan_tier"),
+      ]);
+      if (viewRes.error) throw viewRes.error;
+      const tierMap = new Map<string, string>();
+      (prodRes.data ?? []).forEach((p: any) => tierMap.set(p.id, p.plan_tier));
+      return ((viewRes.data ?? []) as PlanRow[]).map((row) => ({
+        ...row,
+        plan_tier: tierMap.get(row.id) ?? null,
+      }));
     },
   });
 
@@ -156,37 +171,39 @@ export default function AdminBillingPlans() {
   });
 
   const openNew = () => { setEditing(null); setForm(emptyForm()); setOpen(true); };
+
   const openEdit = async (row: PlanRow) => {
     setEditing(row);
+
+    // Fetch full product + price data using row.id (= product id)
     const [prodRes, priceRes] = await Promise.all([
-      supabase.from("billing_products").select("is_featured, metadata, credit_unit_cost, credit_costs").eq("id", row.product_id).single(),
-      row.price_id
-        ? supabase.from("billing_prices").select("trial_period_days, metadata").eq("id", row.price_id).single()
-        : Promise.resolve({ data: null }),
+      supabase.from("billing_products").select("plan_tier, is_featured, metadata, credit_unit_cost, credit_costs, credits_limit").eq("id", row.id).single(),
+      supabase.from("billing_prices").select("id, trial_period_days, recurring_interval, unit_amount, metadata").eq("product_id", row.id).eq("is_active", true).limit(1).single(),
     ]);
-    const prodMeta = (prodRes.data?.metadata as any) || {};
-    const priceMeta = (priceRes.data?.metadata as any) || {};
-    const creditCosts = (prodRes.data as any)?.credit_costs || {};
-    const trialDays = (priceRes.data as any)?.trial_period_days ?? priceMeta.trial_days ?? prodMeta.trial_days ?? 0;
+
+    const prod = prodRes.data as any;
+    const price = priceRes.data as any;
+    const creditCosts = prod?.credit_costs || {};
+    const prodMeta = (prod?.metadata as any) || {};
 
     setForm({
-      product_id: row.product_id,
+      product_id: row.id,
       name: row.name || "",
       display_name: row.display_name || "",
-      plan_tier: (row.plan_tier as PlanForm["plan_tier"]) || "starter",
-      unit_amount_brl: row.unit_amount != null ? (row.unit_amount / 100).toString() : "",
-      recurring_interval: (row.recurring_interval as "day" | "month" | "year") || "month",
+      plan_tier: (prod?.plan_tier as PlanForm["plan_tier"]) || "starter",
+      unit_amount_brl: row.price_brl != null ? String(row.price_brl) : (price?.unit_amount != null ? (price.unit_amount / 100).toString() : ""),
+      recurring_interval: (row.billing_interval as "day" | "month" | "year") || (price?.recurring_interval as any) || "month",
       sort_order: row.sort_order ?? 0,
-      is_featured: prodRes.data?.is_featured ?? false,
-      trial_days: trialDays,
-      credits_limit: row.credits_limit ?? prodMeta.credits_limit ?? 0,
+      is_featured: prod?.is_featured ?? row.is_featured ?? false,
+      trial_days: price?.trial_period_days ?? prodMeta.trial_days ?? 0,
+      credits_limit: row.credits_limit ?? prod?.credits_limit ?? 0,
       members_limit: prodMeta.members_limit ?? 1,
-      is_active: row.product_active ?? true,
-      credit_unit_cost: (prodRes.data as any)?.credit_unit_cost ?? prodMeta.credit_unit_cost ?? 0.87,
-      prompt_cost: creditCosts.prompt_cost ?? prodMeta.prompt_cost ?? 1,
-      saas_specs_cost: creditCosts.saas_specs_cost ?? prodMeta.saas_specs_cost ?? 2,
-      modo_misto_cost: creditCosts.modo_misto_cost ?? prodMeta.modo_misto_cost ?? 2,
-      build_engine_cost: creditCosts.build_engine_cost ?? prodMeta.build_engine_cost ?? 5,
+      is_active: row.is_active ?? true,
+      credit_unit_cost: prod?.credit_unit_cost ?? row.credit_unit_cost ?? 0.87,
+      prompt_cost: creditCosts.prompt ?? creditCosts.prompt_cost ?? 1,
+      saas_specs_cost: creditCosts.saas_specs ?? creditCosts.saas_specs_cost ?? 2,
+      modo_misto_cost: creditCosts.modo_misto ?? creditCosts.modo_misto_cost ?? 2,
+      build_engine_cost: creditCosts.build_engine ?? creditCosts.build_engine_cost ?? 5,
     });
     setOpen(true);
   };
@@ -229,14 +246,14 @@ export default function AdminBillingPlans() {
           <thead><tr>{["Nome", "Preço", "Cotas", "Intervalo", "Tier", "Status", "Stripe Price", "Ações"].map((h) => <th key={h}>{h}</th>)}</tr></thead>
           <tbody>
             {rows.map((p) => (
-              <tr key={`${p.product_id}-${p.price_id ?? "no-price"}`}>
+              <tr key={p.id}>
                 <td style={{ fontWeight: 600 }}>{p.display_name || p.name || "—"}</td>
-                <td>R$ {((p.unit_amount ?? 0) / 100).toFixed(2)}</td>
+                <td>R$ {(p.price_brl ?? 0).toFixed(2)}</td>
                 <td>{p.credits_limit ?? 0}</td>
-                <td>{p.recurring_interval || "—"}</td>
+                <td>{p.billing_interval || "—"}</td>
                 <td>{p.plan_tier || "—"}</td>
                 <td>
-                  {p.product_active === false
+                  {p.is_active === false
                     ? <span className="adm-badge inactive">Inativo</span>
                     : <span className="adm-badge active">Ativo</span>}
                 </td>
