@@ -67,6 +67,284 @@ const DOC_LABELS: Record<string, string> = {
 
 const DOC_KEYS = Object.keys(DOC_LABELS);
 
+type StepProps = {
+  answers: BuildAnswers;
+  onChange: (partial: Partial<BuildAnswers>) => void;
+  onNext: () => void;
+  onPrev?: () => void;
+  canNext: boolean;
+};
+
+type FinalStepProps = {
+  answers: BuildAnswers;
+  onChange: (partial: Partial<BuildAnswers>) => void;
+  onGenerate: () => void;
+  onPrev: () => void;
+  canNext: boolean;
+};
+
+const WIZARD_STEPS = [
+  { num: 1, label: "Produto" },
+  { num: 2, label: "Público" },
+  { num: 3, label: "Features" },
+  { num: 4, label: "Modelo" },
+  { num: 5, label: "Stack" },
+  { num: 6, label: "Infra" },
+  { num: 7, label: "Auth" },
+  { num: 8, label: "Admin" },
+  { num: 9, label: "Integrações" },
+  { num: 10, label: "Branding" },
+];
+
+function BuildStepper({ currentStep }: { currentStep: number }) {
+  return (
+    <div className="misto-stepper" style={{ maxWidth: 1000 }}>
+      <div className="step-track">
+        {WIZARD_STEPS.map((s) => {
+          const isDone = s.num < currentStep;
+          const isActive = s.num === currentStep;
+          return (
+            <div key={s.num} className={`step-node ${isDone ? "done" : isActive ? "active" : "future"}`}>
+              <div className={`step-circle ${isDone ? "sc-done" : isActive ? "sc-active" : "sc-future"}`}>
+                {isDone ? "✓" : s.num}
+              </div>
+              <div className={`step-label ${isDone ? "sl-done" : isActive ? "sl-active" : "sl-future"}`}>
+                {s.label}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function BuildStep1({ answers, onChange, onNext, canNext }: StepProps) {
+  return (
+    <div className="misto-step-enter">
+      <div className="saas-wizard-card">
+        <div className="saas-step-title">1. Nome e Problema</div>
+        <div className="prompt-field-group">
+          <div className="prompt-field-label">📛 Nome do Produto</div>
+          <input
+            className="prompt-field-input"
+            value={answers.productName}
+            onChange={(e) => onChange({ productName: e.target.value })}
+            placeholder="Ex: WhatsFlow"
+          />
+        </div>
+        <div className="prompt-field-group">
+          <div className="prompt-field-label">🎯 Problema</div>
+          <textarea
+            className="misto-textarea"
+            style={{ minHeight: 160 }}
+            value={answers.problema}
+            onChange={(e) => onChange({ problema: e.target.value })}
+            placeholder="Descreva o problema com detalhes..."
+          />
+        </div>
+        <div className="saas-nav-row">
+          <div />
+          <button className="saas-nav-btn saas-nav-btn-primary" onClick={onNext} disabled={!canNext}>Próximo →</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function BuildStep2({ answers, onChange, onNext, onPrev, canNext }: StepProps) {
+  return (
+    <div className="misto-step-enter">
+      <div className="saas-wizard-card">
+        <div className="saas-step-title">2. Público-Alvo</div>
+        <div className="prompt-field-group">
+          <div className="prompt-field-label">🏢 Segmento</div>
+          <input className="prompt-field-input" value={answers.segmento} onChange={(e) => onChange({ segmento: e.target.value })} />
+        </div>
+        <div className="prompt-field-group">
+          <div className="prompt-field-label">👤 Cargo</div>
+          <input className="prompt-field-input" value={answers.cargo} onChange={(e) => onChange({ cargo: e.target.value })} />
+        </div>
+        <div className="prompt-field-group">
+          <div className="prompt-field-label">😣 Principal Dor</div>
+          <input className="prompt-field-input" value={answers.dor} onChange={(e) => onChange({ dor: e.target.value })} />
+        </div>
+        <div className="saas-nav-row">
+          <button className="saas-nav-btn" onClick={() => onPrev?.()}>← Anterior</button>
+          <button className="saas-nav-btn saas-nav-btn-primary" onClick={onNext} disabled={!canNext}>Próximo →</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function BuildStep3({ answers, onChange, onNext, onPrev, canNext }: StepProps) {
+  const updateFeature = (idx: number, value: string) => {
+    const next = [...answers.features];
+    next[idx] = value;
+    onChange({ features: next });
+  };
+
+  return (
+    <div className="misto-step-enter">
+      <div className="saas-wizard-card">
+        <div className="saas-step-title">3. Funcionalidades Core</div>
+        <div className="saas-feature-list">
+          {answers.features.map((feature, idx) => (
+            <div key={idx} className="saas-feature-item">
+              <span>{idx + 1}.</span>
+              <input value={feature} onChange={(e) => updateFeature(idx, e.target.value)} placeholder={`Feature ${idx + 1}`} />
+            </div>
+          ))}
+        </div>
+        <div className="saas-nav-row">
+          <button className="saas-nav-btn" onClick={() => onPrev?.()}>← Anterior</button>
+          <button className="saas-nav-btn saas-nav-btn-primary" onClick={onNext} disabled={!canNext}>Próximo →</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function BuildStep4({ answers, onChange, onNext, onPrev, canNext }: StepProps) {
+  const modelos = ["saas_subscription", "freemium", "marketplace", "pay_per_use", "license"];
+  return (
+    <div className="misto-step-enter">
+      <div className="saas-wizard-card">
+        <div className="saas-step-title">4. Modelo de Negócio</div>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+          {modelos.map((m) => (
+            <button key={m} className={`saas-chip ${answers.modelo === m ? "sel" : ""}`} onClick={() => onChange({ modelo: m })}>
+              {m}
+            </button>
+          ))}
+        </div>
+        <div className="prompt-field-group" style={{ marginTop: 12 }}>
+          <div className="prompt-field-label">💰 Pricing</div>
+          <input className="prompt-field-input" value={answers.pricing} onChange={(e) => onChange({ pricing: e.target.value })} />
+        </div>
+        <div className="saas-nav-row">
+          <button className="saas-nav-btn" onClick={() => onPrev?.()}>← Anterior</button>
+          <button className="saas-nav-btn saas-nav-btn-primary" onClick={onNext} disabled={!canNext}>Próximo →</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function BuildStep5({ answers, onChange, onNext, onPrev, canNext }: StepProps) {
+  return (
+    <div className="misto-step-enter">
+      <div className="saas-wizard-card">
+        <div className="saas-step-title">5. Stack Técnica</div>
+        <div className="prompt-field-group"><div className="prompt-field-label">Frontend</div><input className="prompt-field-input" value={answers.stackFrontend} onChange={(e) => onChange({ stackFrontend: e.target.value })} /></div>
+        <div className="prompt-field-group"><div className="prompt-field-label">Backend</div><input className="prompt-field-input" value={answers.stackBackend} onChange={(e) => onChange({ stackBackend: e.target.value })} /></div>
+        <div className="prompt-field-group"><div className="prompt-field-label">Database</div><input className="prompt-field-input" value={answers.stackDatabase} onChange={(e) => onChange({ stackDatabase: e.target.value })} /></div>
+        <div className="saas-nav-row"><button className="saas-nav-btn" onClick={() => onPrev?.()}>← Anterior</button><button className="saas-nav-btn saas-nav-btn-primary" onClick={onNext} disabled={!canNext}>Próximo →</button></div>
+      </div>
+    </div>
+  );
+}
+
+function BuildStep6({ answers, onChange, onNext, onPrev, canNext }: StepProps) {
+  return (
+    <div className="misto-step-enter">
+      <div className="saas-wizard-card">
+        <div className="saas-step-title">6. Infraestrutura</div>
+        <div className="prompt-field-group"><div className="prompt-field-label">Hosting</div><input className="prompt-field-input" value={answers.hosting} onChange={(e) => onChange({ hosting: e.target.value })} /></div>
+        <div className="prompt-field-group"><div className="prompt-field-label">CI/CD</div><input className="prompt-field-input" value={answers.cicd} onChange={(e) => onChange({ cicd: e.target.value })} /></div>
+        <div className="prompt-field-group"><div className="prompt-field-label">Monitoring</div><input className="prompt-field-input" value={answers.monitoring} onChange={(e) => onChange({ monitoring: e.target.value })} /></div>
+        <div className="saas-nav-row"><button className="saas-nav-btn" onClick={() => onPrev?.()}>← Anterior</button><button className="saas-nav-btn saas-nav-btn-primary" onClick={onNext} disabled={!canNext}>Próximo →</button></div>
+      </div>
+    </div>
+  );
+}
+
+function BuildStep7({ answers, onChange, onNext, onPrev, canNext }: StepProps) {
+  const authOpts = ["email_password", "magic_link", "oauth", "sso_saml"];
+  const updateRole = (idx: number, value: string) => {
+    const next = [...answers.roles];
+    next[idx] = value;
+    onChange({ roles: next });
+  };
+
+  return (
+    <div className="misto-step-enter">
+      <div className="saas-wizard-card">
+        <div className="saas-step-title">7. Auth & Roles</div>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 12 }}>
+          {authOpts.map((opt) => (
+            <button key={opt} className={`saas-chip ${answers.authMethod === opt ? "sel" : ""}`} onClick={() => onChange({ authMethod: opt })}>{opt}</button>
+          ))}
+        </div>
+        <div className="prompt-field-group">
+          <div className="prompt-field-label">Roles</div>
+          {answers.roles.map((role, idx) => (
+            <input key={idx} className="prompt-field-input" style={{ marginBottom: 8 }} value={role} onChange={(e) => updateRole(idx, e.target.value)} />
+          ))}
+        </div>
+        <div className="saas-nav-row"><button className="saas-nav-btn" onClick={() => onPrev?.()}>← Anterior</button><button className="saas-nav-btn saas-nav-btn-primary" onClick={onNext} disabled={!canNext}>Próximo →</button></div>
+      </div>
+    </div>
+  );
+}
+
+function BuildStep8({ answers, onChange, onNext, onPrev, canNext }: StepProps) {
+  const opts = ["Users", "Billing", "Audit", "Feature Flags", "API Keys"];
+  const toggle = (item: string) => onChange({
+    adminFeatures: answers.adminFeatures.includes(item)
+      ? answers.adminFeatures.filter((x) => x !== item)
+      : [...answers.adminFeatures, item],
+  });
+
+  return (
+    <div className="misto-step-enter">
+      <div className="saas-wizard-card">
+        <div className="saas-step-title">8. Painel Admin</div>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>{opts.map((o) => (<button key={o} className={`saas-chip ${answers.adminFeatures.includes(o) ? "sel" : ""}`} onClick={() => toggle(o)}>{o}</button>))}</div>
+        <div className="saas-nav-row" style={{ marginTop: 16 }}><button className="saas-nav-btn" onClick={() => onPrev?.()}>← Anterior</button><button className="saas-nav-btn saas-nav-btn-primary" onClick={onNext} disabled={!canNext}>Próximo →</button></div>
+      </div>
+    </div>
+  );
+}
+
+function BuildStep9({ answers, onChange, onNext, onPrev, canNext }: StepProps) {
+  const opts = ["Stripe", "SendGrid", "S3", "Analytics", "Webhooks", "WhatsApp"];
+  const toggle = (item: string) => onChange({
+    integracoes: answers.integracoes.includes(item)
+      ? answers.integracoes.filter((x) => x !== item)
+      : [...answers.integracoes, item],
+  });
+
+  return (
+    <div className="misto-step-enter">
+      <div className="saas-wizard-card">
+        <div className="saas-step-title">9. Integrações</div>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>{opts.map((o) => (<button key={o} className={`saas-chip ${answers.integracoes.includes(o) ? "sel" : ""}`} onClick={() => toggle(o)}>{o}</button>))}</div>
+        <div className="prompt-field-group" style={{ marginTop: 12 }}>
+          <div className="prompt-field-label">Outras integrações</div>
+          <input className="prompt-field-input" value={answers.integracoesCustom} onChange={(e) => onChange({ integracoesCustom: e.target.value })} />
+        </div>
+        <div className="saas-nav-row"><button className="saas-nav-btn" onClick={() => onPrev?.()}>← Anterior</button><button className="saas-nav-btn saas-nav-btn-primary" onClick={onNext} disabled={!canNext}>Próximo →</button></div>
+      </div>
+    </div>
+  );
+}
+
+function BuildStep10({ answers, onChange, onGenerate, onPrev, canNext }: FinalStepProps) {
+  return (
+    <div className="misto-step-enter">
+      <div className="saas-wizard-card">
+        <div className="saas-step-title">10. Branding</div>
+        <div className="prompt-field-group"><div className="prompt-field-label">App Name</div><input className="prompt-field-input" value={answers.appName} onChange={(e) => onChange({ appName: e.target.value })} /></div>
+        <div className="prompt-field-group"><div className="prompt-field-label">Color Palette</div><input className="prompt-field-input" value={answers.colorPalette} onChange={(e) => onChange({ colorPalette: e.target.value })} /></div>
+        <div className="prompt-field-group"><div className="prompt-field-label">Tone</div><input className="prompt-field-input" value={answers.tone} onChange={(e) => onChange({ tone: e.target.value })} /></div>
+        <div className="saas-nav-row"><button className="saas-nav-btn" onClick={onPrev}>← Anterior</button><button className="saas-nav-btn saas-nav-btn-primary" onClick={onGenerate} disabled={!canNext}>🚀 Gerar Projeto BUILD — 5 cotas</button></div>
+      </div>
+    </div>
+  );
+}
+
 export default function BuildMode() {
   const navigate = useNavigate();
   const { user } = useAuth();
