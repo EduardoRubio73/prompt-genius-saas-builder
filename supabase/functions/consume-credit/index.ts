@@ -35,9 +35,24 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Use service role to call consume_credit RPC (returns void)
+    // Use service role for privileged operations
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const adminClient = createClient(supabaseUrl, serviceRoleKey);
+
+    // Verify the authenticated user is a member of the org
+    const { data: membership } = await adminClient
+      .from("org_members")
+      .select("role")
+      .eq("org_id", org_id)
+      .eq("user_id", authenticatedUserId)
+      .maybeSingle();
+
+    if (!membership) {
+      return new Response(JSON.stringify({ error: "Forbidden" }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     const { error } = await adminClient.rpc("consume_credit", {
       p_org_id: org_id,
