@@ -99,7 +99,7 @@ async function checkInstanceConnected(config: { url: string; apiKey: string; ins
 }
 
 /* Envia mensagem via Evolution API */
-async function sendWhatsAppCode(phone: string, code: string): Promise<void> {
+async function sendWhatsAppCode(phone: string, code: string, userName?: string): Promise<void> {
   const config = await getEvolutionConfig();
 
   // Pre-flight: verifica se instância está conectada
