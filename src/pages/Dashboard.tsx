@@ -287,7 +287,8 @@ export default function Dashboard() {
   const creditsRemaining = quota?.credits_remaining ?? 0;
   const bonusRemaining = quota?.bonus_remaining ?? 0;
   const extraCredits = quota?.extra_credits ?? 0;
-  const noQuota = !isQuotaLoading && quota != null && (quota.total_remaining ?? 0) <= 0;
+  const totalRemaining = creditsRemaining + bonusRemaining + extraCredits;
+  const noQuota = !isQuotaLoading && quota != null && totalRemaining <= 0;
 
   const renewalDate = quota?.current_period_end
     ? new Date(quota.current_period_end).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })
