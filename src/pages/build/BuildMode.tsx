@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Sun, Moon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -12,6 +12,7 @@ import JSZip from "jszip";
 import { MistoSpecLoading } from "@/components/misto/MistoSpecLoading";
 import { CreditModal } from "@/components/misto/CreditModal";
 import { UnifiedMemorySidebar } from "@/components/UnifiedMemorySidebar";
+import { InfoTooltip } from "@/components/ui/info-tooltip";
 
 import "../misto/misto.css";
 
@@ -82,6 +83,85 @@ type FinalStepProps = {
   onPrev: () => void;
   canNext: boolean;
 };
+
+/* ── Dynamic suggestion engine ── */
+const SEGMENT_MAP: Record<string, string[]> = {
+  saude: ["Saúde", "Clínicas", "Hospitais", "Telemedicina"],
+  medic: ["Saúde", "Clínicas", "Hospitais"],
+  financ: ["Fintech", "Bancos", "Seguradoras", "Contabilidade"],
+  educa: ["EdTech", "Escolas", "Universidades", "Cursos Online"],
+  imobili: ["Imobiliário", "Corretoras", "Construtoras"],
+  juridi: ["Jurídico", "Escritórios de Advocacia", "LegalTech"],
+  logist: ["Logística", "Transportes", "Supply Chain"],
+  aliment: ["Food Tech", "Restaurantes", "Delivery"],
+  agro: ["AgroTech", "Fazendas", "Cooperativas"],
+  rh: ["RH", "Recrutamento", "Gestão de Pessoas"],
+  market: ["Marketing", "Agências", "Growth"],
+  ecommerce: ["E-commerce", "Varejo", "Marketplace"],
+  arquitet: ["Arquitetura", "Engenharia Civil", "Construção"],
+  contab: ["Contabilidade", "Auditoria", "Finanças"],
+  whats: ["Atendimento", "Suporte", "Comunicação"],
+};
+
+const CARGO_MAP: Record<string, string[]> = {
+  saude: ["Médico", "Enfermeiro", "Gestor Clínico", "Paciente"],
+  financ: ["CFO", "Contador", "Analista Financeiro", "Investidor"],
+  educa: ["Professor", "Aluno", "Coordenador", "Diretor"],
+  imobili: ["Corretor", "Proprietário", "Inquilino", "Síndico"],
+  juridi: ["Advogado", "Paralegal", "Cliente", "Juiz"],
+  logist: ["Motorista", "Despachante", "Gerente de Frota"],
+  rh: ["Recrutador", "Gestor de RH", "Candidato", "Colaborador"],
+  market: ["CMO", "Analista de Marketing", "Designer", "Copywriter"],
+  ecommerce: ["Lojista", "Comprador", "Gestor de Estoque"],
+};
+
+const FEATURE_SUGGESTIONS_BASE = [
+  "Dashboard analítico", "Gestão de usuários", "Notificações",
+  "Relatórios PDF", "Chat interno", "API REST",
+  "Faturamento", "Agenda/Calendário", "Upload de arquivos",
+  "Busca avançada", "Multi-idioma", "Exportar dados",
+];
+
+function getKeywordMatch(text: string): string {
+  const lower = text.toLowerCase();
+  for (const key of Object.keys(SEGMENT_MAP)) {
+    if (lower.includes(key)) return key;
+  }
+  return "";
+}
+
+function getSuggestions(text: string, map: Record<string, string[]>, fallback: string[]): string[] {
+  const key = getKeywordMatch(text);
+  return key && map[key] ? map[key] : fallback;
+}
+
+function ChipSelector({ options, value, onChange, multi = false }: {
+  options: string[]; value: string | string[]; onChange: (v: any) => void; multi?: boolean;
+}) {
+  if (multi) {
+    const arr = value as string[];
+    return (
+      <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+        {options.map(o => (
+          <button key={o} type="button" className={`saas-chip ${arr.includes(o) ? "sel" : ""}`}
+            onClick={() => onChange(arr.includes(o) ? arr.filter(x => x !== o) : [...arr, o])}>
+            {arr.includes(o) ? "✓ " : ""}{o}
+          </button>
+        ))}
+      </div>
+    );
+  }
+  return (
+    <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+      {options.map(o => (
+        <button key={o || "ia"} type="button" className={`saas-chip ${value === o ? "sel" : ""}`}
+          onClick={() => onChange(o)}>
+          {o || "🤖 IA decide"}
+        </button>
+      ))}
+    </div>
+  );
+}
 
 const WIZARD_STEPS = [
   { num: 1, label: "Produto" },
