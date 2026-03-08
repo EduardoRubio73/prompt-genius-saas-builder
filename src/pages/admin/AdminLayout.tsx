@@ -3,7 +3,7 @@ import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutGrid, Users, Sparkles, CreditCard, Settings,
   FileText, PanelLeftClose, PanelLeftOpen, Search, LogOut,
-  Sun, Moon,
+  Sun, Moon, MessageCircle,
 } from "lucide-react";
 import { useProfile } from "@/hooks/useProfile";
 import { useAuth } from "@/hooks/useAuth";
@@ -27,6 +27,7 @@ const navSections = [
   {
     label: "Sistema",
     items: [
+      { to: "/admin/settings/whatsapp", icon: MessageCircle, label: "Config. WhatsApp" },
       { to: "/admin/logs", icon: FileText, label: "Logs e Auditoria" },
     ],
   },

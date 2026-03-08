@@ -25,6 +25,7 @@ import AdminStripeSettings from "./pages/admin/AdminStripeSettings";
 import AdminAIConfig from "./pages/admin/AdminAIConfig";
 import AdminAuditLogs from "./pages/admin/AdminAuditLogs";
 import AdminFlags from "./pages/admin/AdminFlags";
+import WhatsAppSettings from "./pages/admin/WhatsAppSettings";
 
 import MistoMode from "./pages/misto/MistoMode";
 import PromptMode from "./pages/prompt/PromptMode";
@@ -132,6 +133,7 @@ function App() {
               <Route path="billing/plans" element={<AdminBillingPlans />} />
               <Route path="settings/stripe" element={<AdminStripeSettings />} />
               <Route path="ai-config" element={<AdminAIConfig />} />
+              <Route path="settings/whatsapp" element={<WhatsAppSettings />} />
               <Route path="logs" element={<AdminAuditLogs />} />
               <Route path="flags" element={<AdminFlags />} />
             </Route>

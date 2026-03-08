@@ -18,11 +18,32 @@ import {
 import logo from "@/assets/logo.png";
 
 // ────────────────────────────────────────────────────────────────────────────────
-// CONFIG — variáveis de ambiente
+// CONFIG — busca dinâmica do admin_settings (category = "whatsapp")
 // ────────────────────────────────────────────────────────────────────────────────
-const EVOLUTION_API_URL = import.meta.env.VITE_EVOLUTION_API_URL;
-const EVOLUTION_API_KEY = import.meta.env.VITE_EVOLUTION_API_KEY;
-const EVOLUTION_INSTANCE = import.meta.env.VITE_EVOLUTION_INSTANCE;
+async function getEvolutionConfig() {
+  const { data, error } = await supabase
+    .from("admin_settings")
+    .select("key, value")
+    .eq("category", "whatsapp")
+    .in("key", ["evolution_api_url", "evolution_api_key", "evolution_instance"]);
+
+  if (error || !data || data.length === 0) {
+    throw new Error("Configuração da Evolution API não encontrada. Peça ao admin para configurar em /admin/settings/whatsapp");
+  }
+
+  const map: Record<string, string> = {};
+  data.forEach((r) => { map[r.key] = r.value; });
+
+  if (!map.evolution_api_url || !map.evolution_api_key || !map.evolution_instance) {
+    throw new Error("Configuração incompleta da Evolution API.");
+  }
+
+  return {
+    url: map.evolution_api_url,
+    apiKey: map.evolution_api_key,
+    instance: map.evolution_instance,
+  };
+}
 
 function buildReactivationMailto(name: string, email: string, userId: string) {
   const now = new Date().toLocaleString("pt-BR");
@@ -58,14 +79,15 @@ function normalizePhone(phone: string): string {
 
 /* Envia mensagem via Evolution API */
 async function sendWhatsAppCode(phone: string, code: string): Promise<void> {
+  const config = await getEvolutionConfig();
   const normalized = normalizePhone(phone);
   const response = await fetch(
-    `${EVOLUTION_API_URL}/message/sendText/${EVOLUTION_INSTANCE}`,
+    `${config.url}/message/sendText/${config.instance}`,
     {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        apikey: EVOLUTION_API_KEY,
+        apikey: config.apiKey,
       },
       body: JSON.stringify({
         number: normalized,
