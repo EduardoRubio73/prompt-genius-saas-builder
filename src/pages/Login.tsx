@@ -444,8 +444,18 @@ export default function Login() {
             />
           </div>
 
-          <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? "Carregando..." : isSignUp ? "Criar conta" : "Entrar"}
+          <Button
+            type="submit"
+            className="w-full"
+            disabled={loading || (isSignUp && signupCooldown > 0)}
+          >
+            {loading
+              ? "Carregando..."
+              : isSignUp && signupCooldown > 0
+                ? `Aguarde ${signupCooldown}s`
+                : isSignUp
+                  ? "Criar conta"
+                  : "Entrar"}
           </Button>
         </form>
 
