@@ -2649,6 +2649,36 @@ export type Database = {
         }
         Relationships: []
       }
+      phone_verifications_status: {
+        Row: {
+          attempts: number | null
+          created_at: string | null
+          expires_at: string | null
+          id: string | null
+          phone: string | null
+          user_id: string | null
+          verified_at: string | null
+        }
+        Insert: {
+          attempts?: number | null
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string | null
+          phone?: string | null
+          user_id?: string | null
+          verified_at?: string | null
+        }
+        Update: {
+          attempts?: number | null
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string | null
+          phone?: string | null
+          user_id?: string | null
+          verified_at?: string | null
+        }
+        Relationships: []
+      }
       v_active_stripe_plans: {
         Row: {
           billing_interval: string | null
