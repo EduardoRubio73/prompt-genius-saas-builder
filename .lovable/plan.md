@@ -1,45 +1,32 @@
 
 
-## Fix: Admin Credits Not Saving
+## Problem
 
-### Root Causes
+The `useEffect` on line 163-165 watches the `user` state and auto-navigates to `/dashboard` as soon as a session exists. Since `signInWithPassword` immediately creates a session, the `useAuth` hook fires `setUser`, and the redirect happens before the verification modal can be used.
 
-1. **Missing data**: `admin_users_overview` view doesn't include `plan_credits_total`, `bonus_credits_total`, etc. The form defaults to `0` instead of the real values.
-2. **JS falsy bug**: Line 88 uses `form.plan_credits_total || undefined` — when the value is `0`, `0 || undefined` evaluates to `undefined`, so the field is omitted from the update.
-
-### Solution
-
-**1. Fetch actual org data when dialog opens**
-- In `UserDetailDialog`, add a query to fetch the organization record directly from `organizations` table using `user.org_id`
-- Initialize `plan_credits_total` and `bonus_credits_total` from the real org data
-
-**2. Fix the save logic**
-- Remove `|| undefined` guards — always send `plan_credits_total` and `bonus_credits_total` to the update call
-- This ensures `0` is a valid value that gets saved
-
-### Files to Edit
-
-| File | Change |
-|------|--------|
-| `src/pages/admin/AdminUsers.tsx` | Add org data fetch, fix form init + save logic |
-
-### Details
-
-```tsx
-// Add useEffect to load real org data
-const [orgData, setOrgData] = useState<any>(null);
+```typescript
+// This fires immediately after successful signInWithPassword
 useEffect(() => {
-  if (user.org_id) {
-    supabase.from("organizations").select("plan_credits_total, bonus_credits_total, plan_credits_used, bonus_credits_used").eq("id", user.org_id).single()
-      .then(({ data }) => {
-        if (data) {
-          setForm(f => ({ ...f, plan_credits_total: data.plan_credits_total, bonus_credits_total: data.bonus_credits_total }));
-        }
-      });
-  }
-}, [user.org_id]);
-
-// Fix save — no more || undefined
-updates: { plan_tier: form.plan_tier, is_active: form.is_active, plan_credits_total: form.plan_credits_total, bonus_credits_total: form.bonus_credits_total }
+  if (user) navigate("/dashboard", { replace: true });
+}, [user, navigate]);
 ```
+
+## Fix
+
+**File: `src/pages/Login.tsx`**
+
+1. Add a `verificationPending` ref (not state, to avoid re-render race) that is set to `true` when WhatsApp verification is needed.
+2. Guard the auto-redirect `useEffect` to skip navigation when `verificationPending` is `true`.
+3. On successful verification (`handleVerifyCode`), set `verificationPending` to `false` and then navigate.
+4. If the user closes the modal without verifying, sign them out (block access).
+
+Key changes:
+
+| Area | Change |
+|------|--------|
+| New ref | `const verificationPending = useRef(false)` |
+| Auto-redirect guard | `if (user && !verificationPending.current) navigate(...)` |
+| Before opening modal | `verificationPending.current = true` |
+| After successful verify | `verificationPending.current = false; navigate("/dashboard")` |
+| Modal `onOpenChange(false)` | Sign out + reset state (user cannot bypass) |
 
