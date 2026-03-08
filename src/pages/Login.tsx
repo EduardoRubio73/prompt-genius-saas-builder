@@ -73,6 +73,12 @@ function normalizePhone(phone: string): string {
   return "55" + digits;
 }
 
+function parseAuthRateLimitSeconds(message: string): number {
+  const match = message.match(/after\s+(\d+)\s+seconds/i);
+  if (match?.[1]) return Number(match[1]);
+  return 60;
+}
+
 /* Envia mensagem via Evolution API */
 async function sendWhatsAppCode(phone: string, code: string): Promise<void> {
   const config = await getEvolutionConfig();
