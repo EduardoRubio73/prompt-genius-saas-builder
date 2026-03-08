@@ -38,3 +38,6 @@ verify_jwt = false
 
 [functions.sync-credit-packs]
 verify_jwt = false
+
+[functions.evolution-webhook]
+verify_jwt = false
