@@ -25,7 +25,6 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: corsHeaders });
     }
 
-    // Use authenticated user ID from JWT, never from request body
     const authenticatedUserId = user.id;
 
     const { org_id, session_id } = await req.json();
@@ -36,24 +35,24 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Use service role to call consume_credit RPC
+    // Use service role to call consume_credit RPC (returns void)
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const adminClient = createClient(supabaseUrl, serviceRoleKey);
 
-    const { data, error } = await adminClient.rpc("consume_credit", {
+    const { error } = await adminClient.rpc("consume_credit", {
       p_org_id: org_id,
       p_user_id: authenticatedUserId,
       p_session_id: session_id,
     });
 
-    if (error) throw error;
-
-    const result = data as string;
-
-    if (result !== "ok") {
-      return new Response(JSON.stringify({ success: false, error: result }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    if (error) {
+      // Check if it's the "no_credits" exception
+      if (error.message?.includes("no_credits")) {
+        return new Response(JSON.stringify({ success: false, error: "no_credits" }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      throw error;
     }
 
     return new Response(JSON.stringify({ success: true }), {
