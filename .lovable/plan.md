@@ -1,45 +1,32 @@
 
 
-## Fix: Admin Credits Not Saving
+## Plan: Implement WhatsApp Verification on Login.tsx
 
-### Root Causes
+### What will be done
 
-1. **Missing data**: `admin_users_overview` view doesn't include `plan_credits_total`, `bonus_credits_total`, etc. The form defaults to `0` instead of the real values.
-2. **JS falsy bug**: Line 88 uses `form.plan_credits_total || undefined` — when the value is `0`, `0 || undefined` evaluates to `undefined`, so the field is omitted from the update.
+Replace `src/pages/Login.tsx` entirely with the code from the uploaded instruction file. This adds:
 
-### Solution
+1. **New signup fields**: Full name + WhatsApp number (with DDD)
+2. **WhatsApp verification modal**: 6 individual digit inputs with keyboard navigation, paste support, backspace handling, and resend cooldown (60s)
+3. **Evolution API integration**: Sends 6-digit verification code via WhatsApp using env vars (`VITE_EVOLUTION_API_URL`, `VITE_EVOLUTION_API_KEY`, `VITE_EVOLUTION_INSTANCE`)
+4. **Verification flow**: Code stored in `phone_verifications` table (already exists in DB), validated against expiry and attempt limits (max 5)
 
-**1. Fetch actual org data when dialog opens**
-- In `UserDetailDialog`, add a query to fetch the organization record directly from `organizations` table using `user.org_id`
-- Initialize `plan_credits_total` and `bonus_credits_total` from the real org data
+### Security Note
 
-**2. Fix the save logic**
-- Remove `|| undefined` guards — always send `plan_credits_total` and `bonus_credits_total` to the update call
-- This ensures `0` is a valid value that gets saved
+The current implementation calls the Evolution API directly from the frontend, exposing the API key in client-side code. This is acceptable for development/staging per the project context, but should be moved to an Edge Function before production.
 
-### Files to Edit
+### Changes
 
-| File | Change |
+| File | Action |
 |------|--------|
-| `src/pages/admin/AdminUsers.tsx` | Add org data fetch, fix form init + save logic |
+| `src/pages/Login.tsx` | Full replacement with new code from instruction |
 
-### Details
+No other files need to be modified. All imports already exist in the project. The DB schema changes (`phone_verifications` table, `celular` column type) are already applied per the instruction.
 
-```tsx
-// Add useEffect to load real org data
-const [orgData, setOrgData] = useState<any>(null);
-useEffect(() => {
-  if (user.org_id) {
-    supabase.from("organizations").select("plan_credits_total, bonus_credits_total, plan_credits_used, bonus_credits_used").eq("id", user.org_id).single()
-      .then(({ data }) => {
-        if (data) {
-          setForm(f => ({ ...f, plan_credits_total: data.plan_credits_total, bonus_credits_total: data.bonus_credits_total }));
-        }
-      });
-  }
-}, [user.org_id]);
+### Environment Variables Required
 
-// Fix save — no more || undefined
-updates: { plan_tier: form.plan_tier, is_active: form.is_active, plan_credits_total: form.plan_credits_total, bonus_credits_total: form.bonus_credits_total }
-```
+The user must configure these in Lovable secrets:
+- `VITE_EVOLUTION_API_URL`
+- `VITE_EVOLUTION_API_KEY`
+- `VITE_EVOLUTION_INSTANCE`
 
