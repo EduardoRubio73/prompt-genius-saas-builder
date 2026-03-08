@@ -237,9 +237,10 @@ export default function Login() {
         return;
       }
 
+      verificationPending.current = false;
       setVerifyModal(false);
       toast({ title: "✔ WhatsApp verificado!" });
-      navigate("/dashboard");
+      navigate("/dashboard", { replace: true });
     } catch (err: any) {
       toast({ title: "Erro na verificação", description: err.message, variant: "destructive" });
     } finally {
