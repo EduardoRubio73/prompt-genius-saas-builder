@@ -1,45 +1,75 @@
 
 
-## Fix: Admin Credits Not Saving
+## Evolution API Webhook
 
-### Root Causes
+You're right — for a robust WhatsApp integration, a webhook endpoint is needed. The Evolution API sends events (delivery status, connection changes, incoming messages) to a configured URL. Currently, your integration is **one-directional only** (send OTP), with no way to know if the message was actually delivered or if the instance disconnected.
 
-1. **Missing data**: `admin_users_overview` view doesn't include `plan_credits_total`, `bonus_credits_total`, etc. The form defaults to `0` instead of the real values.
-2. **JS falsy bug**: Line 88 uses `form.plan_credits_total || undefined` — when the value is `0`, `0 || undefined` evaluates to `undefined`, so the field is omitted from the update.
+### What the webhook would handle
 
-### Solution
+| Event | Purpose |
+|-------|---------|
+| `messages.upsert` | Detect incoming replies (future: conversational flows) |
+| `connection.update` | Know when instance connects/disconnects — update a status flag in `admin_settings` |
+| `messages.update` | Delivery receipts (sent, delivered, read) |
 
-**1. Fetch actual org data when dialog opens**
-- In `UserDetailDialog`, add a query to fetch the organization record directly from `organizations` table using `user.org_id`
-- Initialize `plan_credits_total` and `bonus_credits_total` from the real org data
+### Architecture
 
-**2. Fix the save logic**
-- Remove `|| undefined` guards — always send `plan_credits_total` and `bonus_credits_total` to the update call
-- This ensures `0` is a valid value that gets saved
+```text
+Evolution API Instance
+        │
+        ▼  POST /functions/v1/evolution-webhook
+┌──────────────────────┐
+│  evolution-webhook    │
+│  (Edge Function)     │
+│                      │
+│  1. Validate apikey  │
+│  2. Parse event type │
+│  3. Update DB status │
+└──────────────────────┘
+```
 
-### Files to Edit
+### Plan
+
+#### 1. Create Edge Function `evolution-webhook`
+
+**File:** `supabase/functions/evolution-webhook/index.ts`
+
+- Accept POST from Evolution API
+- Validate the request using the `apikey` header (same Evolution API key stored in `admin_settings`)
+- Parse event type from the body
+- For `connection.update`: upsert `admin_settings` key `evolution_connection_status` with value `open`/`close`
+- For `messages.update`: optionally log delivery status
+- Return 200 OK
+
+#### 2. Add to `supabase/config.toml`
+
+```toml
+[functions.evolution-webhook]
+verify_jwt = false
+```
+
+JWT disabled because Evolution API sends raw HTTP — authentication via apikey header matching the stored secret.
+
+#### 3. Update Admin WhatsApp Settings
+
+- Display the webhook URL for easy copy: `https://pcaebfncvuvdguyjmyxm.supabase.co/functions/v1/evolution-webhook`
+- Show real-time connection status from `evolution_connection_status` setting
+- Add instructions for configuring the webhook in Evolution API dashboard
+
+### Configuration Required (on Evolution API side)
+
+After deploying, you configure the webhook URL in your Evolution API instance:
+```
+https://pcaebfncvuvdguyjmyxm.supabase.co/functions/v1/evolution-webhook
+```
+
+With events: `CONNECTION_UPDATE`, `MESSAGES_UPDATE`, `MESSAGES_UPSERT`
+
+### Files Changed
 
 | File | Change |
 |------|--------|
-| `src/pages/admin/AdminUsers.tsx` | Add org data fetch, fix form init + save logic |
-
-### Details
-
-```tsx
-// Add useEffect to load real org data
-const [orgData, setOrgData] = useState<any>(null);
-useEffect(() => {
-  if (user.org_id) {
-    supabase.from("organizations").select("plan_credits_total, bonus_credits_total, plan_credits_used, bonus_credits_used").eq("id", user.org_id).single()
-      .then(({ data }) => {
-        if (data) {
-          setForm(f => ({ ...f, plan_credits_total: data.plan_credits_total, bonus_credits_total: data.bonus_credits_total }));
-        }
-      });
-  }
-}, [user.org_id]);
-
-// Fix save — no more || undefined
-updates: { plan_tier: form.plan_tier, is_active: form.is_active, plan_credits_total: form.plan_credits_total, bonus_credits_total: form.bonus_credits_total }
-```
+| `supabase/functions/evolution-webhook/index.ts` | New edge function to receive Evolution API events |
+| `supabase/config.toml` | Add `evolution-webhook` with `verify_jwt = false` |
+| `src/pages/admin/WhatsAppSettings.tsx` | Show webhook URL + connection status indicator |
 
