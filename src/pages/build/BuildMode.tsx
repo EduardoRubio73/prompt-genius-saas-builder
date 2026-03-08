@@ -767,6 +767,7 @@ function BuildStep10({ answers, onChange, onGenerate, onPrev, canNext }: FinalSt
     </div>
   );
 }
+export default function BuildMode() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { data: profile } = useProfile(user?.id);
