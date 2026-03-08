@@ -326,12 +326,18 @@ export default function Login() {
     } catch (err: any) {
       const message = err?.message ?? "Erro inesperado ao autenticar.";
 
-      if (isSignUp && /email rate limit exceeded|for security purposes/i.test(message)) {
+      if (isSignUp && (err?.status === 429 || err?.code === "over_email_send_rate_limit" || /email rate limit exceeded/i.test(message))) {
         const retryAfter = parseAuthRateLimitSeconds(message);
-        setSignupCooldown(retryAfter);
+
+        if (retryAfter && retryAfter > 0) {
+          setSignupCooldown(retryAfter);
+        }
+
         toast({
           title: "Limite de envio atingido",
-          description: `Aguarde ${retryAfter}s e tente novamente. Verifique também sua caixa de entrada (e spam).`,
+          description: retryAfter
+            ? `Aguarde ${retryAfter}s e tente novamente. Verifique também sua caixa de entrada (e spam).`
+            : "O Supabase aplicou um limite temporário de e-mails (pode ocorrer até na primeira tentativa). Aguarde alguns minutos e tente novamente.",
           variant: "destructive",
         });
         return;
