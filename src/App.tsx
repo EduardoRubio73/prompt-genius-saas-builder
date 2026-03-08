@@ -133,6 +133,7 @@ function App() {
               <Route path="billing/plans" element={<AdminBillingPlans />} />
               <Route path="settings/stripe" element={<AdminStripeSettings />} />
               <Route path="ai-config" element={<AdminAIConfig />} />
+              <Route path="settings/whatsapp" element={<WhatsAppSettings />} />
               <Route path="logs" element={<AdminAuditLogs />} />
               <Route path="flags" element={<AdminFlags />} />
             </Route>
