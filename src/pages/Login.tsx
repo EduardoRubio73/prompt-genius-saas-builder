@@ -123,6 +123,7 @@ export default function Login() {
   const digitRefs = useRef<(HTMLInputElement | null)[]>([]);
   const [pendingUserId, setPendingUserId] = useState<string | null>(null);
   const [resendCooldown, setResendCooldown] = useState(0);
+  const [signupCooldown, setSignupCooldown] = useState(0);
 
   const { toast } = useToast();
   const navigate = useNavigate();
