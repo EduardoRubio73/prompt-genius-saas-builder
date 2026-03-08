@@ -351,7 +351,7 @@ export default function Dashboard() {
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                 {[
                   { icon: Crown, label: "Plano Atual", value: (quota?.plan_name ?? "Free").replace(/^\w/, c => c.toUpperCase()), sub: `${creditsLimit} cotas / mês`, iconClass: "bg-primary/15 text-primary", onClick: () => navigate("/profile?tab=billing") },
-                  { icon: Zap, label: "Cotas Restantes", value: creditsRemaining + extraCredits, sub: extraCredits > 0 ? `${creditsRemaining} plano + ${extraCredits} extras` : `de ${creditsLimit}`, iconClass: "bg-primary/15 text-primary", onClick: () => navigate("/profile?tab=billing") },
+                  { icon: Zap, label: "Cotas Restantes", value: totalRemaining, sub: bonusRemaining > 0 || extraCredits > 0 ? `${creditsRemaining} plano${bonusRemaining > 0 ? ` + ${bonusRemaining} bônus` : ''}${extraCredits > 0 ? ` + ${extraCredits} extras` : ''}` : `de ${creditsLimit}`, iconClass: "bg-primary/15 text-primary", onClick: () => navigate("/profile?tab=billing") },
                   { icon: Gift, label: "Bônus", value: bonusRemaining, sub: "cotas extras permanentes", iconClass: "bg-accent/15 text-accent", onClick: () => navigate("/profile?tab=billing") },
                   { icon: Calendar, label: "Renovação", value: renewalDate, sub: "próximo ciclo", iconClass: "bg-muted text-muted-foreground", onClick: () => navigate("/profile?tab=billing") },
                 ].map((card, i) => (
