@@ -21,18 +21,14 @@ import logo from "@/assets/logo.png";
 // CONFIG — busca dinâmica do admin_settings (category = "whatsapp")
 // ────────────────────────────────────────────────────────────────────────────────
 async function getEvolutionConfig() {
-  const { data, error } = await supabase
-    .from("admin_settings")
-    .select("key, value")
-    .eq("category", "whatsapp")
-    .in("key", ["evolution_api_url", "evolution_api_key", "evolution_instance"]);
+  const { data, error } = await supabase.rpc("get_whatsapp_config");
 
   if (error || !data || data.length === 0) {
     throw new Error("Configuração da Evolution API não encontrada. Peça ao admin para configurar em /admin/settings/whatsapp");
   }
 
   const map: Record<string, string> = {};
-  data.forEach((r) => { map[r.key] = r.value; });
+  data.forEach((r: { key: string; value: string }) => { map[r.key] = r.value; });
 
   if (!map.evolution_api_url || !map.evolution_api_key || !map.evolution_instance) {
     throw new Error("Configuração incompleta da Evolution API.");
