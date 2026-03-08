@@ -22,6 +22,12 @@ export async function callEdgeFunction(name: string, body?: any) {
 
   const text = await res.text();
 
+  if (res.status === 401) {
+    // Session likely expired or was invalidated — don't crash the UI
+    console.warn(`[callEdgeFunction] ${name}: session expired (401)`);
+    throw new Error("not_authenticated");
+  }
+
   if (!res.ok) {
     throw new Error(text);
   }
