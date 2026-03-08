@@ -355,7 +355,7 @@ export default function Login() {
             // Fetch celular from profile
             const { data: profile } = await supabase
               .from("profiles")
-              .select("celular")
+              .select("celular, full_name")
               .eq("id", authData.user.id)
               .single();
 
@@ -366,9 +366,10 @@ export default function Login() {
               return;
             }
 
+            const firstName = profile?.full_name?.split(" ")?.[0] ?? undefined;
             setCelular(userPhone);
             setPendingUserId(authData.user.id);
-            await createAndSendCode(authData.user.id, userPhone);
+            await createAndSendCode(authData.user.id, userPhone, firstName);
             setDigits(Array(6).fill(""));
             setResendCooldown(60);
             setVerifyModal(true);
