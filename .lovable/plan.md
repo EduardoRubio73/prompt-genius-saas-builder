@@ -1,45 +1,38 @@
 
 
-## Fix: Admin Credits Not Saving
+## Diagnosis
 
-### Root Causes
+**Current DB state for your org:**
+- `plan_credits_total`: 56, `plan_credits_used`: 22 → plan remaining: 34
+- `bonus_credits_total`: 6, `bonus_credits_used`: 0 → bonus remaining: 6
+- `extra_balance`: 0
 
-1. **Missing data**: `admin_users_overview` view doesn't include `plan_credits_total`, `bonus_credits_total`, etc. The form defaults to `0` instead of the real values.
-2. **JS falsy bug**: Line 88 uses `form.plan_credits_total || undefined` — when the value is `0`, `0 || undefined` evaluates to `undefined`, so the field is omitted from the update.
+**Two problems found:**
 
-### Solution
+### 1. Latest purchase not processed
+Your most recent purchase (`f3dfee14`, 5 credits) has `status = 'pending'` — the Stripe webhook still isn't triggering `process_credit_purchase`. The credits were never added.
 
-**1. Fetch actual org data when dialog opens**
-- In `UserDetailDialog`, add a query to fetch the organization record directly from `organizations` table using `user.org_id`
-- Initialize `plan_credits_total` and `bonus_credits_total` from the real org data
+**Fix:** Process this purchase manually (same approach as before), adding 5 to `bonus_credits_total` (6 → 11) and marking the purchase as `paid`.
 
-**2. Fix the save logic**
-- Remove `|| undefined` guards — always send `plan_credits_total` and `bonus_credits_total` to the update call
-- This ensures `0` is a valid value that gets saved
+### 2. Dashboard doesn't show bonus credits in the total
+The Dashboard "Cotas Restantes" card shows `creditsRemaining + extraCredits` (plan + extra_balance) but **excludes `bonusRemaining`**. So even after the manual fix added 5 bonus credits earlier, you never saw them reflected.
 
-### Files to Edit
+Similarly, ProfilePage line 459 shows only `credits_remaining` (plan only).
 
-| File | Change |
-|------|--------|
-| `src/pages/admin/AdminUsers.tsx` | Add org data fetch, fix form init + save logic |
+**Fix in `src/pages/Dashboard.tsx`:**
+- Line 287: Include bonus in the displayed remaining: `creditsRemaining + bonusRemaining + extraCredits`
+- Line 353: Same for the summary card value
+- Line 440: Same for mode action cards
 
-### Details
+**Fix in `src/pages/ProfilePage.tsx`:**
+- Line 459: Show `total_remaining` instead of `credits_remaining`
 
-```tsx
-// Add useEffect to load real org data
-const [orgData, setOrgData] = useState<any>(null);
-useEffect(() => {
-  if (user.org_id) {
-    supabase.from("organizations").select("plan_credits_total, bonus_credits_total, plan_credits_used, bonus_credits_used").eq("id", user.org_id).single()
-      .then(({ data }) => {
-        if (data) {
-          setForm(f => ({ ...f, plan_credits_total: data.plan_credits_total, bonus_credits_total: data.bonus_credits_total }));
-        }
-      });
-  }
-}, [user.org_id]);
+### 3. Long-term: Configure Stripe Webhook
+Without the webhook, every topup purchase will remain `pending`. You must configure:
+- **URL:** `https://pcaebfncvuvdguyjmyxm.supabase.co/functions/v1/stripe-sync`
+- **Events:** `checkout.session.completed`, `invoice.payment_succeeded`
 
-// Fix save — no more || undefined
-updates: { plan_tier: form.plan_tier, is_active: form.is_active, plan_credits_total: form.plan_credits_total, bonus_credits_total: form.bonus_credits_total }
-```
+## Implementation Order
+1. Process pending purchase `f3dfee14` via SQL insert tool
+2. Fix Dashboard and ProfilePage to display `total_remaining` (includes plan + bonus + extra)
 
