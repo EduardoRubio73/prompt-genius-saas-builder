@@ -2828,9 +2828,20 @@ export type Database = {
         }[]
       }
       get_user_org_ids: { Args: never; Returns: string[] }
+      get_whatsapp_config: {
+        Args: never
+        Returns: {
+          key: string
+          value: string
+        }[]
+      }
       has_org_feature: {
         Args: { p_feature_key: string; p_org_id: string }
         Returns: boolean
+      }
+      insert_phone_verification: {
+        Args: { p_code: string; p_phone: string; p_user_id: string }
+        Returns: undefined
       }
       is_org_admin: { Args: { p_org_id: string }; Returns: boolean }
       is_super_admin: { Args: never; Returns: boolean }
@@ -2862,6 +2873,10 @@ export type Database = {
       update_subscription_status_automatically: {
         Args: never
         Returns: undefined
+      }
+      verify_phone_code: {
+        Args: { p_code: string; p_user_id: string }
+        Returns: string
       }
     }
     Enums: {
