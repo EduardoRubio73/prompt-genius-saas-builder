@@ -1,45 +1,42 @@
 
 
-## Fix: Admin Credits Not Saving
+## Plan: Move WhatsApp Verification from Signup to Login
 
-### Root Causes
+### Current Problem
+The WhatsApp OTP verification currently happens **during signup** (after `signUp()`), which fails because:
+1. The user has no active session yet (email not confirmed)
+2. The Evolution API config may not be set up, causing "Falha ao enviar WhatsApp"
+3. It blocks account creation unnecessarily
 
-1. **Missing data**: `admin_users_overview` view doesn't include `plan_credits_total`, `bonus_credits_total`, etc. The form defaults to `0` instead of the real values.
-2. **JS falsy bug**: Line 88 uses `form.plan_credits_total || undefined` — when the value is `0`, `0 || undefined` evaluates to `undefined`, so the field is omitted from the update.
+### Correct Flow
+The user wants verification to happen at **first login**, not at signup:
 
-### Solution
+1. **Signup**: Create account with name + celular, save celular to profile. Show success message asking user to confirm email. **No WhatsApp code sent.**
+2. **Login**: After successful `signInWithPassword`, check if the user's phone is verified (via `phone_verifications` table). If not verified, send WhatsApp code and show the OTP modal. Only allow navigation to `/dashboard` after verification.
 
-**1. Fetch actual org data when dialog opens**
-- In `UserDetailDialog`, add a query to fetch the organization record directly from `organizations` table using `user.org_id`
-- Initialize `plan_credits_total` and `bonus_credits_total` from the real org data
+### Changes
 
-**2. Fix the save logic**
-- Remove `|| undefined` guards — always send `plan_credits_total` and `bonus_credits_total` to the update call
-- This ensures `0` is a valid value that gets saved
+#### 1. Update `Login.tsx` - Signup Flow
+- Remove `createAndSendCode()` call from signup block
+- Remove the verify modal trigger from signup
+- Just show a toast: "Conta criada! Confirme seu e-mail para acessar."
 
-### Files to Edit
+#### 2. Update `Login.tsx` - Login Flow
+After successful `signInWithPassword` + active account check:
+- Query `phone_verifications` to check if user has a verified record (`verified_at IS NOT NULL`)
+- If **not verified**: fetch celular from `profiles`, call `createAndSendCode()`, show the OTP modal
+- If **verified**: proceed to `/dashboard` as normal
+
+#### 3. Update Verify Success Handler
+- After successful OTP verification during login, navigate to `/dashboard` instead of just showing a toast
+
+#### 4. Create a Security Definer Function
+Create `check_phone_verified(p_user_id)` to check if a user has completed phone verification, since the user is authenticated at login time we could also query directly, but a function keeps it clean.
+
+### Files Changed
 
 | File | Change |
 |------|--------|
-| `src/pages/admin/AdminUsers.tsx` | Add org data fetch, fix form init + save logic |
-
-### Details
-
-```tsx
-// Add useEffect to load real org data
-const [orgData, setOrgData] = useState<any>(null);
-useEffect(() => {
-  if (user.org_id) {
-    supabase.from("organizations").select("plan_credits_total, bonus_credits_total, plan_credits_used, bonus_credits_used").eq("id", user.org_id).single()
-      .then(({ data }) => {
-        if (data) {
-          setForm(f => ({ ...f, plan_credits_total: data.plan_credits_total, bonus_credits_total: data.bonus_credits_total }));
-        }
-      });
-  }
-}, [user.org_id]);
-
-// Fix save — no more || undefined
-updates: { plan_tier: form.plan_tier, is_active: form.is_active, plan_credits_total: form.plan_credits_total, bonus_credits_total: form.bonus_credits_total }
-```
+| DB migration | Create `check_phone_verified` function |
+| `src/pages/Login.tsx` | Move WhatsApp verification from signup to login flow |
 
