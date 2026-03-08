@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { Upload, Save, Check, Coins, Loader2, ShieldAlert, Lock, CreditCard } from "lucide-react";
+import { Upload, Save, Check, Coins, Loader2, ShieldAlert, Lock, CreditCard, ShieldCheck } from "lucide-react";
 import { AccountSidebar, type AccountTabKey } from "@/components/layout/AccountSidebar";
 import { useQuery } from "@tanstack/react-query";
 import { AppShell } from "@/components/layout/AppShell";
@@ -33,6 +33,29 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
 type TabKey = AccountTabKey;
+
+function PhoneVerifiedBadge({ userId, currentPhone }: { userId: string; currentPhone: string }) {
+  const { data: isVerified, isLoading } = useQuery({
+    queryKey: ["phone-verified", userId, currentPhone],
+    queryFn: async () => {
+      const { data } = await supabase.rpc("check_phone_verified", { p_user_id: userId });
+      return !!data;
+    },
+    enabled: !!userId && !!currentPhone,
+  });
+
+  if (isLoading) return null;
+
+  return isVerified ? (
+    <Badge variant="outline" className="text-[10px] gap-1 px-1.5 py-0 border-emerald-500/40 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10">
+      <ShieldCheck className="h-3 w-3" /> Verificado
+    </Badge>
+  ) : (
+    <Badge variant="outline" className="text-[10px] gap-1 px-1.5 py-0 border-amber-500/40 text-amber-600 dark:text-amber-400 bg-amber-500/10">
+      Não verificado
+    </Badge>
+  );
+}
 
 // ── Profile Tab ──
 function ProfileTab({ userId, profile, onRefresh }: { userId: string; profile: any; onRefresh: () => void }) {
@@ -135,7 +158,8 @@ function ProfileTab({ userId, profile, onRefresh }: { userId: string; profile: a
         <div className="space-y-2">
           <div className="flex items-center gap-1.5">
             <Label htmlFor="celular">📱 Celular</Label>
-            <InfoTooltip content="Número de telefone para contato. Somente números." />
+            <InfoTooltip content="Número verificado via WhatsApp. Se alterar o número, será necessário verificar novamente no próximo login." />
+            {celular && <PhoneVerifiedBadge userId={userId} currentPhone={celular} />}
           </div>
           <Input
             id="celular"
