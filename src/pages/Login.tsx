@@ -152,6 +152,7 @@ export default function Login() {
   const [digits, setDigits] = useState<string[]>(Array(6).fill(""));
   const [verifyLoading, setVerifyLoading] = useState(false);
   const digitRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const verificationPending = useRef(false);
   const [pendingUserId, setPendingUserId] = useState<string | null>(null);
   const [resendCooldown, setResendCooldown] = useState(0);
   const [signupCooldown, setSignupCooldown] = useState(0);
@@ -161,7 +162,7 @@ export default function Login() {
   const { user } = useAuth();
 
   useEffect(() => {
-    if (user) navigate("/dashboard", { replace: true });
+    if (user && !verificationPending.current) navigate("/dashboard", { replace: true });
   }, [user, navigate]);
 
   // Countdown do botão "Reenviar"
@@ -236,9 +237,10 @@ export default function Login() {
         return;
       }
 
+      verificationPending.current = false;
       setVerifyModal(false);
       toast({ title: "✔ WhatsApp verificado!" });
-      navigate("/dashboard");
+      navigate("/dashboard", { replace: true });
     } catch (err: any) {
       toast({ title: "Erro na verificação", description: err.message, variant: "destructive" });
     } finally {
@@ -367,6 +369,7 @@ export default function Login() {
             }
 
             const firstName = profile?.full_name?.split(" ")?.[0] ?? undefined;
+            verificationPending.current = true;
             setCelular(userPhone);
             setPendingUserId(authData.user.id);
             await createAndSendCode(authData.user.id, userPhone, firstName);
@@ -558,7 +561,14 @@ export default function Login() {
       </Dialog>
 
       {/* WhatsApp Verification Modal */}
-      <Dialog open={verifyModal} onOpenChange={() => {}}>
+      <Dialog open={verifyModal} onOpenChange={async (open) => {
+        if (!open) {
+          verificationPending.current = false;
+          setVerifyModal(false);
+          await supabase.auth.signOut();
+          toast({ title: "Verificação cancelada", description: "Você foi desconectado.", variant: "destructive" });
+        }
+      }}>
         <DialogContent
           className="sm:max-w-md"
           onPointerDownOutside={(e) => e.preventDefault()}
