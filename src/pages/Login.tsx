@@ -116,7 +116,7 @@ async function sendWhatsAppCode(phone: string, code: string, userName?: string):
       },
       body: JSON.stringify({
         number: normalized,
-        text: `🔐 *Seu código de verificação é: ${code}*\n\nEle expira em 10 minutos. Não compartilhe com ninguém.`,
+        text: `🔐 *Genius — Verificação de Segurança*\n\nOlá${userName ? `, ${userName}` : ""}! Seu código de verificação é:\n\n*${code}*\n\nEle expira em 10 minutos.\nNão compartilhe este código com ninguém.\n\n— Equipe Genius`,
       }),
     }
   );
