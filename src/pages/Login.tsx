@@ -18,28 +18,8 @@ import {
 import logo from "@/assets/logo.png";
 
 // ────────────────────────────────────────────────────────────────────────────────
-// CONFIG — busca dinâmica do admin_settings (category = "whatsapp")
+// Helper functions
 // ────────────────────────────────────────────────────────────────────────────────
-async function getEvolutionConfig() {
-  const { data, error } = await supabase.rpc("get_whatsapp_config");
-
-  if (error || !data || data.length === 0) {
-    throw new Error("Configuração da Evolution API não encontrada. Peça ao admin para configurar em /admin/settings/whatsapp");
-  }
-
-  const map: Record<string, string> = {};
-  data.forEach((r: { key: string; value: string }) => { map[r.key] = r.value; });
-
-  if (!map.evolution_api_url || !map.evolution_api_key || !map.evolution_instance) {
-    throw new Error("Configuração incompleta da Evolution API.");
-  }
-
-  return {
-    url: map.evolution_api_url,
-    apiKey: map.evolution_api_key,
-    instance: map.evolution_instance,
-  };
-}
 
 function buildReactivationMailto(name: string, email: string, userId: string) {
   const now = new Date().toLocaleString("pt-BR");
@@ -79,59 +59,34 @@ function parseAuthRateLimitSeconds(message: string): number | null {
   return null;
 }
 
-/* Verifica se a instância Evolution está conectada */
-async function checkInstanceConnected(config: { url: string; apiKey: string; instance: string }): Promise<void> {
-  try {
-    const res = await fetch(
-      `${config.url}/instance/connectionState/${config.instance}`,
-      { method: "GET", headers: { apikey: config.apiKey } }
-    );
-    if (!res.ok) return; // não bloqueia se o endpoint não existir
-    const data = await res.json();
-    const state = data?.instance?.state ?? data?.state;
-    if (state && state !== "open") {
-      throw new Error("WhatsApp desconectado. O administrador precisa reconectar a instância.");
-    }
-  } catch (err: any) {
-    if (err?.message?.includes("desconectado")) throw err;
-    // ignora erros de rede no pre-flight — o sendText vai falhar com erro mais claro
-  }
-}
-
-/* Envia mensagem via Evolution API */
+// ────────────────────────────────────────────────────────────────────────────────
+// WhatsApp OTP — sends via server-side Edge Function (no secrets exposed)
+// ────────────────────────────────────────────────────────────────────────────────
 async function sendWhatsAppCode(phone: string, code: string, userName?: string): Promise<void> {
-  const config = await getEvolutionConfig();
+  const { data: sessionData } = await supabase.auth.getSession();
+  const token = sessionData?.session?.access_token;
+  if (!token) throw new Error("Sessão não encontrada. Faça login novamente.");
 
-  // Pre-flight: verifica se instância está conectada
-  await checkInstanceConnected(config);
-
-  const normalized = normalizePhone(phone);
-  const response = await fetch(
-    `${config.url}/message/sendText/${config.instance}`,
+  const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
+  const res = await fetch(
+    `https://${projectId}.supabase.co/functions/v1/send-whatsapp-otp`,
     {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        apikey: config.apiKey,
+        Authorization: `Bearer ${token}`,
+        apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
       },
-      body: JSON.stringify({
-        number: normalized,
-        text: `🔐 *Genius — Verificação de Segurança*\n\nOlá${userName ? `, ${userName}` : ""}! Seu código de verificação é:\n\n*${code}*\n\nEle expira em 10 minutos.\nNão compartilhe este código com ninguém.\n\n— Equipe Genius`,
-      }),
+      body: JSON.stringify({ phone, code, userName }),
     }
   );
 
-  if (!response.ok) {
-    const body = await response.json().catch(() => ({}));
-    const detail = body?.response?.message?.[0] ?? body?.message ?? body?.error;
-
-    if (response.status === 401) {
-      throw new Error("Token da Evolution API inválido. Contate o administrador.");
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    if (body?.error === "whatsapp_disconnected") {
+      throw new Error("WhatsApp desconectado. O administrador precisa reconectar a instância.");
     }
-    if (detail?.includes?.("sendMessage")) {
-      throw new Error("Instância WhatsApp desconectada. Contate o suporte.");
-    }
-    throw new Error(detail ?? "Falha ao enviar WhatsApp. Tente novamente.");
+    throw new Error(body?.error ?? "Falha ao enviar WhatsApp. Tente novamente.");
   }
 }
 
