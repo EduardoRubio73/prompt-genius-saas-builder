@@ -312,8 +312,12 @@ export default function Login() {
         if (error) throw error;
 
         if (authData.user) {
+          // Bloqueia redirecionamentos automáticos até concluir a validação do WhatsApp
+          verificationPending.current = true;
+
           const isActive = await checkAccountActive(authData.user.id);
           if (!isActive) {
+            verificationPending.current = false;
             await supabase.auth.signOut();
             return;
           }
@@ -363,13 +367,17 @@ export default function Login() {
 
             const userPhone = profile?.celular;
             if (!userPhone) {
-              // No phone registered — skip verification, go to dashboard
-              navigate("/dashboard");
+              verificationPending.current = false;
+              await supabase.auth.signOut();
+              toast({
+                title: "Verificação obrigatória",
+                description: "Não encontramos seu WhatsApp cadastrado. Faça login após atualizar seu número.",
+                variant: "destructive",
+              });
               return;
             }
 
             const firstName = profile?.full_name?.split(" ")?.[0] ?? undefined;
-            verificationPending.current = true;
             setCelular(userPhone);
             setPendingUserId(authData.user.id);
             await createAndSendCode(authData.user.id, userPhone, firstName);
@@ -379,11 +387,17 @@ export default function Login() {
             toast({ title: "Verificação necessária", description: "Insira o código enviado ao seu WhatsApp." });
             return;
           }
+
+          verificationPending.current = false;
         }
 
         navigate("/dashboard");
       }
     } catch (err: any) {
+      if (!isSignUp) {
+        await supabase.auth.signOut();
+      }
+      verificationPending.current = false;
       const message = err?.message ?? "Erro inesperado ao autenticar.";
 
       if (isSignUp && (err?.status === 429 || err?.code === "over_email_send_rate_limit" || /email rate limit exceeded/i.test(message))) {
