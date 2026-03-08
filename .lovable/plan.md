@@ -1,45 +1,63 @@
 
 
-## Fix: Admin Credits Not Saving
+## Diagnosis: "Falha ao enviar WhatsApp"
 
-### Root Causes
+### Root Cause
 
-1. **Missing data**: `admin_users_overview` view doesn't include `plan_credits_total`, `bonus_credits_total`, etc. The form defaults to `0` instead of the real values.
-2. **JS falsy bug**: Line 88 uses `form.plan_credits_total || undefined` — when the value is `0`, `0 || undefined` evaluates to `undefined`, so the field is omitted from the update.
+The Evolution API instance **"Genius"** is **disconnected or not initialized**. The API returns:
 
-### Solution
+```
+HTTP 400: {"response":{"message":["TypeError: Cannot read properties of undefined (reading 'sendMessage')"]}}
+```
 
-**1. Fetch actual org data when dialog opens**
-- In `UserDetailDialog`, add a query to fetch the organization record directly from `organizations` table using `user.org_id`
-- Initialize `plan_credits_total` and `bonus_credits_total` from the real org data
+This means the WhatsApp session expired and the QR code needs to be re-scanned on the Evolution API dashboard.
 
-**2. Fix the save logic**
-- Remove `|| undefined` guards — always send `plan_credits_total` and `bonus_credits_total` to the update call
-- This ensures `0` is a valid value that gets saved
+**This is NOT a code bug** -- it's an infrastructure issue. However, the code has two problems worth fixing:
 
-### Files to Edit
+### Problem 1: Poor error parsing
+
+In `sendWhatsAppCode` (Login.tsx line 101-103), the error response structure is `{status, error, response: {message: [...]}}`, but the code reads `err?.message` which is `undefined` at the top level, so it always falls back to the generic "Falha ao enviar WhatsApp" instead of showing the actual error reason.
+
+### Problem 2: No pre-flight validation
+
+The code calls `sendText` without first checking if the instance is connected, leading to cryptic errors.
+
+### Plan
+
+#### 1. Fix error parsing in `sendWhatsAppCode` (Login.tsx)
+
+Parse the Evolution API error response correctly to extract the real message:
+```typescript
+const body = await response.json().catch(() => ({}));
+const detail = body?.response?.message?.[0] ?? body?.message ?? body?.error;
+```
+
+Map known errors to user-friendly Portuguese messages:
+- `sendMessage` undefined -> "Instancia WhatsApp desconectada. Contate o suporte."
+- HTTP 401 -> "Token da Evolution API invalido."
+- Generic -> Show the raw detail
+
+#### 2. Add instance status check before sending (Login.tsx)
+
+Before calling `sendText`, call `GET /instance/connectionState/{instance}` to verify the instance is connected. If not, throw a clear error immediately: "WhatsApp desconectado. O administrador precisa reconectar a instancia."
+
+#### 3. Improve Admin WhatsApp test (WhatsAppSettings.tsx)
+
+When the "Testar conexao" button is clicked, also check `connectionState` for the specific instance and show a simple status: "Conectado" or "Desconectado - escaneie o QR Code".
+
+### Files Changed
 
 | File | Change |
 |------|--------|
-| `src/pages/admin/AdminUsers.tsx` | Add org data fetch, fix form init + save logic |
+| `src/pages/Login.tsx` | Fix error parsing in `sendWhatsAppCode`, add instance connection check before send |
+| `src/pages/admin/WhatsAppSettings.tsx` | Show instance connection status in test results |
 
-### Details
+### Immediate Action Required (External)
 
-```tsx
-// Add useEffect to load real org data
-const [orgData, setOrgData] = useState<any>(null);
-useEffect(() => {
-  if (user.org_id) {
-    supabase.from("organizations").select("plan_credits_total, bonus_credits_total, plan_credits_used, bonus_credits_used").eq("id", user.org_id).single()
-      .then(({ data }) => {
-        if (data) {
-          setForm(f => ({ ...f, plan_credits_total: data.plan_credits_total, bonus_credits_total: data.bonus_credits_total }));
-        }
-      });
-  }
-}, [user.org_id]);
+You must reconnect the WhatsApp instance on the Evolution API dashboard:
+1. Go to `https://zragency-evolution-api.cchxwl.easypanel.host`
+2. Find instance **"Genius"**
+3. Re-scan the QR Code to reconnect WhatsApp
 
-// Fix save — no more || undefined
-updates: { plan_tier: form.plan_tier, is_active: form.is_active, plan_credits_total: form.plan_credits_total, bonus_credits_total: form.bonus_credits_total }
-```
+Without this step, no code change will fix the sending failure.
 
