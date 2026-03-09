@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Sparkles, FileCode, Layers, Rocket, Crown, Zap, Gift, Calendar, ArrowRight, BarChart3, Clock, Star, TrendingUp, ChevronDown } from "lucide-react";
+import { Sparkles, FileCode, Layers, Rocket, Crown, Zap, Gift, Calendar, ArrowRight, BarChart3, Clock, Star, TrendingUp, ChevronDown, RefreshCw } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
 import { AppShell } from "@/components/layout/AppShell";
 import { Skeleton } from "@/components/ui/skeleton";
 import { InfoTooltip } from "@/components/ui/info-tooltip";
@@ -272,7 +273,8 @@ export default function Dashboard() {
   const { data: profile, isLoading: profileLoading } = useProfile(user?.id);
   const orgId = profile?.personal_org_id ?? undefined;
   const { data: stats, isLoading: statsLoading } = useOrgStats(orgId);
-  const { data: quota, isLoading: quotaLoading } = useQuotaBalance(orgId);
+  const { data: quota, isLoading: quotaLoading, isFetching: quotaFetching } = useQuotaBalance(orgId);
+  const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [resumoOpen, setResumoOpen] = useState(false);
   const [modosOpen, setModosOpen] = useState(true);
@@ -290,6 +292,14 @@ export default function Dashboard() {
   const totalRemaining = creditsRemaining + bonusRemaining + extraCredits;
   const noQuota = !isQuotaLoading && quota != null && totalRemaining <= 0;
   const percentUsed = quota?.percent_used ?? 0;
+
+  const planUsed = quota?.plan_used ?? 0;
+  const planTotal = quota?.plan_total ?? 0;
+  const bonusTotal = bonusRemaining + extraCredits;
+
+  const handleRefreshQuota = () => {
+    queryClient.invalidateQueries({ queryKey: ["quota-balance", orgId] });
+  };
 
   const renewalDate = quota?.current_period_end
     ? new Date(quota.current_period_end).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })
@@ -330,28 +340,38 @@ export default function Dashboard() {
         )}
       </section>
 
-      {/* ── Card 1: Resumo da Conta (azul, recolhido) ── */}
       <Collapsible open={resumoOpen} onOpenChange={setResumoOpen}>
         <div className="rounded-xl border border-blue-200 dark:border-blue-800/40 bg-blue-50/50 dark:bg-blue-950/20 p-5 shadow-md mb-4">
-          <CollapsibleTrigger className="flex items-center justify-between w-full cursor-pointer gap-3">
-            <p className="text-sm font-semibold text-blue-700 dark:text-blue-300 uppercase tracking-wider shrink-0">
-              Resumo da Conta
-            </p>
-            {!resumoOpen && !isQuotaLoading && (
-              <div className="flex items-center gap-3 min-w-0 overflow-hidden">
-                <div className="h-1.5 w-20 shrink-0 rounded-full bg-blue-200/50 dark:bg-blue-800/40 overflow-hidden">
-                  <div
-                    className={cn("h-full rounded-full transition-all", percentUsed >= 80 ? "bg-destructive" : "bg-blue-500")}
-                    style={{ width: `${Math.min(100, percentUsed)}%` }}
-                  />
+          <div className="flex items-center justify-between gap-3">
+            <CollapsibleTrigger className="flex items-center justify-between flex-1 cursor-pointer gap-3">
+              <p className="text-sm font-semibold text-blue-700 dark:text-blue-300 uppercase tracking-wider shrink-0">
+                Resumo da Conta
+              </p>
+              {!resumoOpen && !isQuotaLoading && (
+                <div className="flex items-center gap-3 min-w-0 overflow-hidden">
+                  <div className="h-1.5 w-20 shrink-0 rounded-full bg-blue-200/50 dark:bg-blue-800/40 overflow-hidden">
+                    <div
+                      className={cn("h-full rounded-full transition-all", percentUsed >= 80 ? "bg-destructive" : "bg-blue-500")}
+                      style={{ width: `${Math.min(100, percentUsed)}%` }}
+                    />
+                  </div>
+                  <span className="text-[11px] text-blue-600 dark:text-blue-400 tabular-nums font-medium whitespace-nowrap truncate">
+                    {creditsUsed}/{creditsLimit} cotas · Renova {renewalDate}
+                  </span>
                 </div>
-                <span className="text-[11px] text-blue-600 dark:text-blue-400 tabular-nums font-medium whitespace-nowrap truncate">
-                  {creditsUsed}/{creditsLimit} cotas · Renova {renewalDate}
-                </span>
-              </div>
-            )}
-            <ChevronDown className={cn("h-4 w-4 text-blue-500 transition-transform duration-200 shrink-0", resumoOpen && "rotate-180")} />
-          </CollapsibleTrigger>
+              )}
+              <ChevronDown className={cn("h-4 w-4 text-blue-500 transition-transform duration-200 shrink-0", resumoOpen && "rotate-180")} />
+            </CollapsibleTrigger>
+            <button
+              onClick={handleRefreshQuota}
+              disabled={quotaFetching}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors disabled:opacity-50"
+              title="Atualizar saldo"
+            >
+              <RefreshCw className={cn("h-3.5 w-3.5", quotaFetching && "animate-spin")} />
+              <span className="hidden sm:inline">Atualizar</span>
+            </button>
+          </div>
 
           <CollapsibleContent className="mt-4 space-y-6">
             {/* Account Summary */}
@@ -376,18 +396,49 @@ export default function Dashboard() {
               </div>
             </div>
 
-            {/* Usage Progress */}
+            {/* Usage Progress - Plan Quotas */}
             <div>
               <div className="flex items-center gap-1.5 mb-3">
                 <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
-                  Uso do período
+                  Cotas do Plano
                 </p>
-                <InfoTooltip content="Todas as ações utilizam a mesma bolsa de cotas. Você pode combinar diferentes ações até consumir seu limite mensal." />
+                <InfoTooltip content="Cotas incluídas no seu plano mensal. Renovam automaticamente no próximo ciclo." />
               </div>
               {isQuotaLoading ? (
                 <Skeleton className="h-10 w-full" />
               ) : (
-                <UsageProgressBar used={creditsUsed} limit={creditsLimit} />
+                <UsageProgressBar used={planUsed} limit={planTotal} />
+              )}
+            </div>
+
+            {/* Bonus + Extras Progress */}
+            <div>
+              <div className="flex items-center gap-1.5 mb-3">
+                <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                  Bônus + Extras
+                </p>
+                <InfoTooltip content="Créditos adicionais de indicações e compras avulsas. Não expiram e são consumidos após as cotas do plano." />
+              </div>
+              {isQuotaLoading ? (
+                <Skeleton className="h-10 w-full" />
+              ) : (
+                <div className="space-y-1.5">
+                  <div className="relative h-3 w-full rounded-full bg-muted overflow-hidden">
+                    <div
+                      className="h-full rounded-full bg-gradient-to-r from-accent to-accent/80 transition-all duration-700"
+                      style={{ width: bonusTotal > 0 ? "100%" : "0%" }}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between text-xs text-muted-foreground tabular-nums">
+                    <span>
+                      <span className="text-foreground font-semibold">{bonusRemaining}</span> bônus
+                      {extraCredits > 0 && (
+                        <> + <span className="text-foreground font-semibold">{extraCredits}</span> extras</>
+                      )}
+                    </span>
+                    <span><span className="text-foreground font-semibold">{bonusTotal}</span> disponíveis</span>
+                  </div>
+                </div>
               )}
             </div>
 
