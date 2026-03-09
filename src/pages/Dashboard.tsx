@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Sparkles, FileCode, Layers, Rocket, Crown, Zap, Gift, Calendar, ArrowRight, BarChart3, Clock, Star, TrendingUp, ChevronDown } from "lucide-react";
+import { Sparkles, FileCode, Layers, Rocket, Crown, Zap, Gift, Calendar, ArrowRight, BarChart3, Clock, Star, TrendingUp, ChevronDown, RefreshCw } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
 import { AppShell } from "@/components/layout/AppShell";
 import { Skeleton } from "@/components/ui/skeleton";
 import { InfoTooltip } from "@/components/ui/info-tooltip";
