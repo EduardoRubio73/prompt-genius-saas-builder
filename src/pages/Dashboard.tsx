@@ -396,18 +396,49 @@ export default function Dashboard() {
               </div>
             </div>
 
-            {/* Usage Progress */}
+            {/* Usage Progress - Plan Quotas */}
             <div>
               <div className="flex items-center gap-1.5 mb-3">
                 <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
-                  Uso do período
+                  Cotas do Plano
                 </p>
-                <InfoTooltip content="Todas as ações utilizam a mesma bolsa de cotas. Você pode combinar diferentes ações até consumir seu limite mensal." />
+                <InfoTooltip content="Cotas incluídas no seu plano mensal. Renovam automaticamente no próximo ciclo." />
               </div>
               {isQuotaLoading ? (
                 <Skeleton className="h-10 w-full" />
               ) : (
-                <UsageProgressBar used={creditsUsed} limit={creditsLimit} />
+                <UsageProgressBar used={planUsed} limit={planTotal} />
+              )}
+            </div>
+
+            {/* Bonus + Extras Progress */}
+            <div>
+              <div className="flex items-center gap-1.5 mb-3">
+                <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                  Bônus + Extras
+                </p>
+                <InfoTooltip content="Créditos adicionais de indicações e compras avulsas. Não expiram e são consumidos após as cotas do plano." />
+              </div>
+              {isQuotaLoading ? (
+                <Skeleton className="h-10 w-full" />
+              ) : (
+                <div className="space-y-1.5">
+                  <div className="relative h-3 w-full rounded-full bg-muted overflow-hidden">
+                    <div
+                      className="h-full rounded-full bg-gradient-to-r from-accent to-accent/80 transition-all duration-700"
+                      style={{ width: bonusTotal > 0 ? "100%" : "0%" }}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between text-xs text-muted-foreground tabular-nums">
+                    <span>
+                      <span className="text-foreground font-semibold">{bonusRemaining}</span> bônus
+                      {extraCredits > 0 && (
+                        <> + <span className="text-foreground font-semibold">{extraCredits}</span> extras</>
+                      )}
+                    </span>
+                    <span><span className="text-foreground font-semibold">{bonusTotal}</span> disponíveis</span>
+                  </div>
+                </div>
               )}
             </div>
 
