@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { Upload, Save, Check, Coins, Loader2, ShieldAlert, Lock, CreditCard, ShieldCheck } from "lucide-react";
+import { Upload, Save, Check, Coins, Loader2, ShieldAlert, Lock, CreditCard, ShieldCheck, Crown, Zap, Gift, Calendar, ChevronDown, RefreshCw } from "lucide-react";
 import { AccountSidebar, type AccountTabKey } from "@/components/layout/AccountSidebar";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { AppShell } from "@/components/layout/AppShell";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
@@ -29,8 +29,79 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+
+// ── Helper Components ──
+
+function getPlanBadgeClasses(planName: string | undefined): string {
+  const name = (planName ?? "").toLowerCase();
+  if (name.includes("enterprise")) return "border-yellow-500/40 bg-yellow-500/10 text-yellow-600 dark:text-yellow-400";
+  if (name.includes("pro")) return "border-purple-500/40 bg-purple-500/10 text-purple-600 dark:text-purple-400";
+  if (name.includes("starter") || name.includes("básico") || name.includes("basico")) return "border-blue-500/40 bg-blue-500/10 text-blue-600 dark:text-blue-400";
+  return "border-muted-foreground/30 bg-muted text-muted-foreground";
+}
+
+function BillingSummaryCard({
+  icon: Icon,
+  label,
+  value,
+  sub,
+  iconClass,
+  loading,
+}: {
+  icon: React.ElementType;
+  label: string;
+  value: string | number;
+  sub?: string;
+  iconClass?: string;
+  loading?: boolean;
+}) {
+  return (
+    <div className="rounded-xl border bg-card p-5 flex items-center gap-3 shadow-md hover:shadow-xl transition-all duration-300">
+      <div className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-xl", iconClass ?? "bg-muted text-muted-foreground")}>
+        <Icon className="h-5 w-5" />
+      </div>
+      <div className="min-w-0">
+        <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">{label}</p>
+        {loading ? (
+          <Skeleton className="h-6 w-16 mt-0.5" />
+        ) : (
+          <>
+            <p className="text-lg font-bold text-foreground tracking-tight leading-tight">{value}</p>
+            {sub && <p className="text-[10px] text-muted-foreground">{sub}</p>}
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function UsageProgressBar({ used, limit, className }: { used: number; limit: number; className?: string }) {
+  const pct = limit > 0 ? Math.min(100, Math.max(0, (used / limit) * 100)) : 0;
+
+  const barColor =
+    pct >= 90 ? "from-red-500 to-red-600" :
+    pct >= 75 ? "from-orange-400 to-orange-500" :
+    pct >= 50 ? "from-yellow-400 to-yellow-500" :
+    "from-green-400 to-green-600";
+
+  return (
+    <div className={cn("space-y-1.5", className)}>
+      <div className="relative h-3 w-full rounded-full bg-muted overflow-hidden">
+        <div
+          className={cn("h-full rounded-full bg-gradient-to-r transition-all duration-700", barColor)}
+          style={{ width: `${pct}%` }}
+        />
+      </div>
+      <div className="flex items-center justify-between text-xs text-muted-foreground tabular-nums">
+        <span><span className="text-foreground font-semibold">{used}</span> / {limit} usadas</span>
+        <span><span className="text-foreground font-semibold">{Math.max(0, limit - used)}</span> restantes</span>
+      </div>
+    </div>
+  );
+}
 
 type TabKey = AccountTabKey;
 
