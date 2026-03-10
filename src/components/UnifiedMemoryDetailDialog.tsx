@@ -218,8 +218,8 @@ export function UnifiedMemoryDetailDialog({
             </div>
           )}
 
-          {/* SaaS answers fields */}
-          {entry.type === "saas" && saasAnswers.length > 0 && (
+          {/* Build/SaaS answers fields */}
+          {(entry.type === "saas" || entry.type === "build") && saasAnswers.length > 0 && (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {saasAnswers.slice(0, 6).map(([key, val]) => (
                 <div key={key} className="rounded-lg border border-border bg-secondary/20 p-3 space-y-1">
