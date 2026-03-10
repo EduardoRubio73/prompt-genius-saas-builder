@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Sparkles, FileCode, Layers, Rocket, Crown, Zap, Gift, Calendar, ArrowRight, BarChart3, Clock, Star, TrendingUp, ChevronDown, RefreshCw } from "lucide-react";
+import { Sparkles, FileCode, Layers, Rocket, Crown, Zap, Gift, Calendar, ArrowRight, BarChart3, Clock, Star, TrendingUp, ChevronDown, RefreshCw, CreditCard } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { AppShell } from "@/components/layout/AppShell";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -360,7 +360,7 @@ export default function Dashboard() {
                     />
                   </div>
                   <span className="text-[11px] text-blue-600 dark:text-blue-400 tabular-nums font-medium whitespace-nowrap truncate">
-                    Saldo: {totalRemaining} ({creditsRemaining} plano{bonusTotal > 0 ? ` + ${bonusTotal} bônus` : ''}) · Renova {renewalDate}
+                    Saldo: {totalRemaining} ({creditsRemaining} plano{bonusRemaining > 0 ? ` + ${bonusRemaining} bônus` : ''}{extraCredits > 0 ? ` + ${extraCredits} extras` : ''}) · Renova {renewalDate}
                   </span>
                 </div>
               )}
@@ -386,12 +386,13 @@ export default function Dashboard() {
                 </p>
                 <InfoTooltip content="Visão geral do seu plano atual, saldo de cotas, bônus e data de renovação." />
               </div>
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
                 {[
                   { icon: Crown, label: "Plano Atual", value: (quota?.plan_name ?? "Free").replace(/^\w/, c => c.toUpperCase()), sub: `${creditsLimit} cotas / mês`, iconClass: "bg-primary/15 text-primary", onClick: () => navigate("/profile?tab=billing") },
-                  { icon: Zap, label: "Cotas Restantes", value: totalRemaining, sub: bonusRemaining > 0 || extraCredits > 0 ? `${creditsRemaining} plano${bonusRemaining > 0 ? ` + ${bonusRemaining} bônus` : ''}${extraCredits > 0 ? ` + ${extraCredits} extras` : ''}` : `de ${creditsLimit}`, iconClass: "bg-primary/15 text-primary", onClick: () => navigate("/profile?tab=billing") },
-                  { icon: Gift, label: "Bônus", value: bonusRemaining, sub: "cotas extras permanentes", iconClass: "bg-accent/15 text-accent", onClick: () => navigate("/profile?tab=billing") },
-                  { icon: Calendar, label: "Renovação", value: renewalDate, sub: "próximo ciclo", iconClass: "bg-muted text-muted-foreground", onClick: () => navigate("/profile?tab=billing") },
+                  { icon: Zap, label: "Cotas do Plano", value: creditsRemaining, sub: `de ${planTotal} do ciclo`, iconClass: "bg-primary/15 text-primary", onClick: () => navigate("/profile?tab=billing") },
+                  { icon: CreditCard, label: "Créditos Extras", value: extraCredits, sub: "compras avulsas", iconClass: "bg-yellow-500/15 text-yellow-600 dark:text-yellow-400", onClick: () => navigate("/profile?tab=billing") },
+                  { icon: Gift, label: "Bônus", value: bonusRemaining, sub: "indicações", iconClass: "bg-accent/15 text-accent", onClick: () => navigate("/profile?tab=billing") },
+                  { icon: TrendingUp, label: "Saldo Total", value: totalRemaining, sub: "disponível para uso", iconClass: "bg-green-500/15 text-green-600 dark:text-green-400", onClick: () => navigate("/profile?tab=billing") },
                 ].map((card, i) => (
                   <div key={card.label} className="animate-fade-in" style={{ animationDelay: `${i * 80}ms`, animationFillMode: "backwards" }}>
                     <SummaryCard {...card} loading={isQuotaLoading} />

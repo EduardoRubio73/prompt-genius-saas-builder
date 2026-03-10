@@ -1,11 +1,6 @@
 import {
   useAdminKpis, useAdminRecentAudit,
 } from "@/hooks/admin/useAdminOverview";
-import { useOrgDashboard } from "@/hooks/useOrgDashboard";
-import { useOrgUsage } from "@/hooks/useOrgUsage";
-import { useOrgSubscription } from "@/hooks/useOrgSubscription";
-import { useAuth } from "@/hooks/useAuth";
-import { useProfile } from "@/hooks/useProfile";
 import { useNavigate } from "react-router-dom";
 import { formatDistanceToNow, format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -19,7 +14,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import "./admin.css";
 
-// ── Admin-only hooks (platform-wide, keep direct queries) ──
+// ── Admin-only hooks (platform-wide) ──
 
 function usePaymentFailures() {
   return useQuery({
@@ -68,6 +63,65 @@ function useRecentAuditErrors() {
       if (error) throw error;
       const errors = data?.filter(l => l.action.includes("delete") || l.action.includes("error")) ?? [];
       return { total: data?.length ?? 0, errors: errors.length };
+    },
+  });
+}
+
+// Platform-wide credit stats
+function usePlatformCreditStats() {
+  return useQuery({
+    queryKey: ["admin-platform-credits"],
+    queryFn: async () => {
+      // Total credits remaining across all orgs
+      const { data: orgs, error: orgsError } = await supabase
+        .from("organizations")
+        .select("plan_credits_total, plan_credits_used, bonus_credits_total, bonus_credits_used");
+      if (orgsError) throw orgsError;
+
+      let totalRemaining = 0;
+      let totalPlanCredits = 0;
+      (orgs ?? []).forEach((o: any) => {
+        const planRem = Math.max(0, (o.plan_credits_total ?? 0) - (o.plan_credits_used ?? 0));
+        const bonusRem = Math.max(0, (o.bonus_credits_total ?? 0) - (o.bonus_credits_used ?? 0));
+        totalRemaining += planRem + bonusRem;
+        totalPlanCredits += o.plan_credits_total ?? 0;
+      });
+
+      return { totalRemaining, totalPlanCredits };
+    },
+  });
+}
+
+// Platform-wide credit consumption today
+function usePlatformCreditsToday() {
+  return useQuery({
+    queryKey: ["admin-platform-credits-today"],
+    queryFn: async () => {
+      const todayStart = new Date();
+      todayStart.setHours(0, 0, 0, 0);
+      const { data, error } = await supabase
+        .from("credit_transactions")
+        .select("amount")
+        .lt("amount", 0)
+        .gte("created_at", todayStart.toISOString());
+      if (error) throw error;
+      return (data ?? []).reduce((sum: number, t: any) => sum + Math.abs(t.amount), 0);
+    },
+  });
+}
+
+// Platform-wide recent credit transactions
+function usePlatformRecentTransactions(limit = 10) {
+  return useQuery({
+    queryKey: ["admin-platform-transactions", limit],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("credit_transactions")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(limit);
+      if (error) throw error;
+      return data ?? [];
     },
   });
 }
@@ -139,19 +193,16 @@ function getActivityBadge(action: string) {
 
 export default function AdminOverview() {
   const navigate = useNavigate();
-  const { user } = useAuth();
-  const { data: profile } = useProfile(user?.id);
-  const orgId = profile?.personal_org_id ?? undefined;
 
-  // Platform-wide KPIs (admin RPC — stays as-is)
+  // Platform-wide KPIs (admin RPC)
   const { data: kpis, isLoading: kpisLoading } = useAdminKpis();
 
-  // Org-level data via Edge Functions
-  const { data: orgDashboard, isLoading: orgLoading } = useOrgDashboard(orgId);
-  const { data: orgUsage } = useOrgUsage(orgId);
-  const { data: orgSubscription } = useOrgSubscription(orgId);
+  // Platform-wide data (direct queries with admin RLS)
+  const { data: platformCredits, isLoading: creditsLoading } = usePlatformCreditStats();
+  const { data: creditsToday } = usePlatformCreditsToday();
+  const { data: platformTransactions } = usePlatformRecentTransactions(10);
 
-  // Admin-specific queries (platform-wide, no edge function equivalent)
+  // Admin-specific queries
   const { data: auditInfo } = useRecentAuditErrors();
   const { data: paymentFailures } = usePaymentFailures();
   const { data: stripeSync } = useStripeSyncStatus();
@@ -159,12 +210,6 @@ export default function AdminOverview() {
 
   const mrr = kpis?.mrr_brl ?? 0;
   const mrrFormatted = `R$ ${(mrr / 100).toLocaleString("pt-BR", { minimumFractionDigits: 0 })}`;
-
-  // Credit usage today from org usage data
-  const todayStr = new Date().toISOString().slice(0, 10);
-  const creditsToday = orgUsage
-    ?.filter(t => t.amount < 0 && t.created_at.startsWith(todayStr))
-    .reduce((s, t) => s + Math.abs(t.amount), 0) ?? 0;
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
@@ -206,8 +251,8 @@ export default function AdminOverview() {
         />
       </div>
 
-      {/* ── Row 2: Billing & Subscription (via Edge Functions) ── */}
-      <div className="adm-section-header">Faturamento & Stripe</div>
+      {/* ── Row 2: Billing & Platform Stats ── */}
+      <div className="adm-section-header">Faturamento & Plataforma</div>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 14 }}>
         <StatusCard icon={Activity} label="Stripe Status">
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -223,40 +268,16 @@ export default function AdminOverview() {
           </div>
         </StatusCard>
 
-        <StatusCard icon={Shield} label="Plano Atual">
-          <div style={{ fontSize: 18, fontWeight: 700, fontFamily: "var(--adm-mono)" }}>
-            {orgLoading ? "—" : orgDashboard?.plan_name ?? "Sem plano"}
-          </div>
-          {orgSubscription && orgSubscription.status !== "none" && (
-            <div style={{ fontSize: 11, color: "var(--adm-text-soft)" }}>
-              Status: <span style={{ color: orgSubscription.status === "active" ? "var(--adm-green)" : "var(--adm-yellow)", fontWeight: 600 }}>
-                {orgSubscription.status}
-              </span>
-              {orgSubscription.current_period_end && (
-                <> · Até {format(new Date(orgSubscription.current_period_end), "dd/MM/yyyy", { locale: ptBR })}</>
-              )}
-            </div>
-          )}
-        </StatusCard>
-
-        <StatusCard icon={TrendingUp} label="Créditos Restantes">
+        <StatusCard icon={TrendingUp} label="Créditos na Plataforma">
           <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
             <span style={{ fontSize: 24, fontWeight: 700, fontFamily: "var(--adm-mono)", color: "var(--adm-accent)" }}>
-              {orgLoading ? "—" : orgDashboard?.total_remaining ?? 0}
+              {creditsLoading ? "—" : (platformCredits?.totalRemaining ?? 0).toLocaleString("pt-BR")}
             </span>
-            <span style={{ fontSize: 12, color: "var(--adm-text-soft)" }}>cotas</span>
+            <span style={{ fontSize: 12, color: "var(--adm-text-soft)" }}>restantes</span>
           </div>
-          {orgDashboard && (
-            <div style={{ fontSize: 11, color: "var(--adm-text-soft)" }}>
-              Plano: {orgDashboard.plan_remaining} · Bônus: {orgDashboard.bonus_remaining}
-            </div>
-          )}
-          {orgDashboard?.last_consumption && (
-            <div style={{ fontSize: 10, color: "var(--adm-text-soft)", display: "flex", alignItems: "center", gap: 4 }}>
-              <Clock size={10} />
-              Último uso: {formatDistanceToNow(new Date(orgDashboard.last_consumption), { addSuffix: true, locale: ptBR })}
-            </div>
-          )}
+          <div style={{ fontSize: 11, color: "var(--adm-text-soft)" }}>
+            Total alocado: {creditsLoading ? "—" : (platformCredits?.totalPlanCredits ?? 0).toLocaleString("pt-BR")} cotas
+          </div>
         </StatusCard>
 
         <StatusCard icon={AlertTriangle} label="Falhas de Pagamento">
@@ -276,6 +297,13 @@ export default function AdminOverview() {
             )}
           </div>
           <span style={{ fontSize: 11, color: "var(--adm-text-soft)" }}>faturas não pagas</span>
+        </StatusCard>
+
+        <StatusCard icon={Shield} label="Planos Ativos">
+          <div style={{ fontSize: 24, fontWeight: 700, fontFamily: "var(--adm-mono)" }}>
+            {kpisLoading ? "—" : String(kpis?.active_subs ?? 0)}
+          </div>
+          <span style={{ fontSize: 11, color: "var(--adm-text-soft)" }}>assinaturas ativas na plataforma</span>
         </StatusCard>
       </div>
 
@@ -299,13 +327,14 @@ export default function AdminOverview() {
           </button>
         </StatusCard>
 
-        <StatusCard icon={Zap} label="Créditos Consumidos Hoje">
+        <StatusCard icon={Zap} label="Consumo Hoje (Plataforma)">
           <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
             <span style={{ fontSize: 24, fontWeight: 700, fontFamily: "var(--adm-mono)" }}>
-              {creditsToday.toLocaleString("pt-BR")}
+              {(creditsToday ?? 0).toLocaleString("pt-BR")}
             </span>
-            <span style={{ fontSize: 12, color: "var(--adm-text-soft)" }}>cotas</span>
+            <span style={{ fontSize: 12, color: "var(--adm-text-soft)" }}>cotas consumidas</span>
           </div>
+          <span style={{ fontSize: 11, color: "var(--adm-text-soft)" }}>todas as organizações</span>
         </StatusCard>
 
         <StatusCard icon={CreditCard} label="Prompts Gerados">
@@ -323,18 +352,18 @@ export default function AdminOverview() {
         </StatusCard>
       </div>
 
-      {/* ── Usage Table (via Edge Function) ── */}
-      <div className="adm-section-header">Últimos Consumos de IA</div>
+      {/* ── Usage Table (Platform-wide) ── */}
+      <div className="adm-section-header">Últimos Consumos (Plataforma)</div>
       <div className="table-card">
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "16px", borderBottom: "1px solid var(--adm-border)" }}>
-          <span style={{ fontSize: 14, fontWeight: 700 }}>Histórico de Créditos</span>
+          <span style={{ fontSize: 14, fontWeight: 700 }}>Histórico de Créditos — Todas as Orgs</span>
         </div>
         <table>
           <thead><tr>
             {["Origem", "Descrição", "Qtd", "Tipo", "Saldo", "Quando"].map(h => <th key={h}>{h}</th>)}
           </tr></thead>
           <tbody>
-            {orgUsage && orgUsage.length > 0 ? orgUsage.slice(0, 10).map((tx) => (
+            {platformTransactions && platformTransactions.length > 0 ? platformTransactions.map((tx: any) => (
               <tr key={tx.id}>
                 <td>
                   <span className={`adm-badge ${tx.amount < 0 ? "delete" : "insert"}`} style={{ fontSize: 10 }}>
