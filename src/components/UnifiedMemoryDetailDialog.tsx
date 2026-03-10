@@ -39,7 +39,7 @@ interface UnifiedMemoryDetailDialogProps {
   onDelete?: (entry: UnifiedMemoryEntry) => void;
 }
 
-const TYPE_META = {
+const TYPE_META: Record<string, { label: string; icon: typeof Sparkles; color: string; badgeCls: string }> = {
   prompt: {
     label: "Modo Prompt",
     icon: Sparkles,
@@ -57,6 +57,12 @@ const TYPE_META = {
     icon: Layers,
     color: "text-secondary",
     badgeCls: "bg-secondary/10 text-secondary border-secondary/20",
+  },
+  build: {
+    label: "Modo Build",
+    icon: Briefcase,
+    color: "text-orange-500",
+    badgeCls: "bg-orange-500/10 text-orange-500 border-orange-500/20",
   },
 };
 
