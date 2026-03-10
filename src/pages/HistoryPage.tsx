@@ -102,6 +102,8 @@ export default function HistoryPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [modeFilter, setModeFilter] = useState<"all" | "prompt" | "saas" | "misto" | "build">("all");
   const [statusFilter, setStatusFilter] = useState<"all" | "completed" | "incomplete">("all");
+  const [shareOpen, setShareOpen] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<"all" | "completed" | "incomplete">("all");
 
   useEffect(() => {
     if (!orgId) return;

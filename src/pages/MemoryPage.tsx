@@ -105,6 +105,7 @@ export default function MemoryPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [refreshKey, setRefreshKey] = useState(0);
   const [selectedEntry, setSelectedEntry] = useState<UnifiedMemoryEntry | null>(null);
+  const [shareOpen, setShareOpen] = useState(false);
 
   const { entries, isLoading, counts, toggleFavorite, deleteEntry } = useUnifiedMemory({
     refreshKey,
