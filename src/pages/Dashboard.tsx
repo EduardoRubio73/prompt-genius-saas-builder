@@ -11,6 +11,7 @@ import { useQuotaBalance } from "@/hooks/useQuotaBalance";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { DashboardDock } from "@/components/dashboard/DashboardDock";
+import { ShareModal } from "@/components/dashboard/ShareModal";
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
 
 // ── Helpers ──
@@ -161,7 +162,8 @@ export default function Dashboard() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [resumoOpen, setResumoOpen] = useState(false);
-  const [modosOpen, setModosOpen] = useState(true);
+  const [modosOpen, setModosOpen] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
 
   const firstName = profile?.full_name?.split(" ")[0] ?? "";
   const isLoading = profileLoading || statsLoading;
@@ -374,7 +376,8 @@ export default function Dashboard() {
       </div>
 
       {/* Dock */}
-      <DashboardDock sessionCount={stats?.total_sessions} />
+      <DashboardDock sessionCount={stats?.total_sessions} onShareOpen={() => setShareOpen(true)} />
+      <ShareModal open={shareOpen} onOpenChange={setShareOpen} orgId={orgId} />
     </AppShell>
   );
 }

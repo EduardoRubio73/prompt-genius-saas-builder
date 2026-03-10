@@ -1,65 +1,45 @@
 
 
-# Atualização do Dashboard — Nova Versão do Dock + Share Modal
+## Fix: Admin Credits Not Saving
 
-## Mudanças Identificadas
+### Root Causes
 
-### 1. Dock reestruturado (`DashboardDock.tsx`)
+1. **Missing data**: `admin_users_overview` view doesn't include `plan_credits_total`, `bonus_credits_total`, etc. The form defaults to `0` instead of the real values.
+2. **JS falsy bug**: Line 88 uses `form.plan_credits_total || undefined` — when the value is `0`, `0 || undefined` evaluates to `undefined`, so the field is omitted from the update.
 
-O HTML de referência mudou completamente a estrutura do Dock:
-- **Antes**: 4 modos + divider + 2 nav + divider + 2 conta (10 itens)
-- **Agora**: Home, Memória, Histórico | Créditos, Convide e Ganhe (5 itens)
+### Solution
 
-Os modos foram removidos do dock (já estão nos cards). O item "Convide e Ganhe" agora abre um **Share Modal** em vez de navegar para `/indicacoes`.
+**1. Fetch actual org data when dialog opens**
+- In `UserDetailDialog`, add a query to fetch the organization record directly from `organizations` table using `user.org_id`
+- Initialize `plan_credits_total` and `bonus_credits_total` from the real org data
 
-### 2. Share Modal (novo)
+**2. Fix the save logic**
+- Remove `|| undefined` guards — always send `plan_credits_total` and `bonus_credits_total` to the update call
+- This ensures `0` is a valid value that gets saved
 
-Modal com:
-- Link de referral copiável (usa `orgId` ou referral code)
-- Botão "Copiar" com feedback visual
-- Botão "WhatsApp" (abre wa.me com texto)
-- Botão "Compartilhar" (usa `navigator.share` ou fallback para copy)
-- Backdrop blur, fecha ao clicar fora
+### Files to Edit
 
-### 3. Cards colapsados por padrão
+| File | Change |
+|------|--------|
+| `src/pages/admin/AdminUsers.tsx` | Add org data fetch, fix form init + save logic |
 
-- `resumoOpen` → `useState(false)` (já está assim)
-- `modosOpen` → `useState(false)` (mudar de `true` para `false`)
+### Details
 
-### 4. Dark mode completo
+```tsx
+// Add useEffect to load real org data
+const [orgData, setOrgData] = useState<any>(null);
+useEffect(() => {
+  if (user.org_id) {
+    supabase.from("organizations").select("plan_credits_total, bonus_credits_total, plan_credits_used, bonus_credits_used").eq("id", user.org_id).single()
+      .then(({ data }) => {
+        if (data) {
+          setForm(f => ({ ...f, plan_credits_total: data.plan_credits_total, bonus_credits_total: data.bonus_credits_total }));
+        }
+      });
+  }
+}, [user.org_id]);
 
-O HTML de referência é light-only. O código atual já tem suporte dark mode nos cards e dock via Tailwind classes. Manter e garantir que o Share Modal também tenha dark mode.
-
-### 5. Responsividade mobile-first
-
-- Dock: em telas `< 640px`, reduzir tamanho dos ícones (42px em vez de 52px), padding menor
-- Stats row: já usa `grid-cols-2 sm:grid-cols-5` — OK
-- Modos grid: já usa `grid-cols-2 lg:grid-cols-4` — OK
-- Share Modal: `max-width: 360px; width: 90%` — responsivo
-
-## Arquivos a modificar
-
-### `src/components/dashboard/DashboardDock.tsx`
-- Remover `MODE_ITEMS` do dock
-- Reestruturar para: Home (`/dashboard`), Memória, Histórico | Créditos, Share
-- Adicionar ícone Home (`Home` de lucide)
-- Item "Convide e Ganhe" com `onClick` que abre Share Modal (via callback prop `onShareOpen`)
-- Adicionar tooltip "Compartilhar" no item Share
-- Mobile: classes responsivas `h-[42px] w-[42px] sm:h-[52px] sm:w-[52px]`
-
-### `src/components/dashboard/ShareModal.tsx` (novo)
-- Dialog/modal com backdrop blur
-- Input com link de referral (`{origin}/?ref={orgId}`)
-- Botão Copiar com estado (✓ Copiado!)
-- Botão WhatsApp + Botão Compartilhar nativo
-- Dark mode: `bg-card border-border` em vez de cores fixas
-- Recebe `open`, `onOpenChange`, `orgId` como props
-
-### `src/pages/Dashboard.tsx`
-- `modosOpen` → `useState(false)` (ambos colapsados por padrão)
-- Adicionar state `shareOpen` + importar `ShareModal`
-- Passar `onShareOpen` ao `DashboardDock`
-
-### `src/index.css`
-- Sem mudanças — os dock styles existentes suportam a nova estrutura
+// Fix save — no more || undefined
+updates: { plan_tier: form.plan_tier, is_active: form.is_active, plan_credits_total: form.plan_credits_total, bonus_credits_total: form.bonus_credits_total }
+```
 
