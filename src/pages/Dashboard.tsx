@@ -360,7 +360,7 @@ export default function Dashboard() {
                     />
                   </div>
                   <span className="text-[11px] text-blue-600 dark:text-blue-400 tabular-nums font-medium whitespace-nowrap truncate">
-                    Saldo: {totalRemaining} ({creditsRemaining} plano{bonusTotal > 0 ? ` + ${bonusTotal} bônus` : ''}) · Renova {renewalDate}
+                    Saldo: {totalRemaining} ({creditsRemaining} plano{bonusRemaining > 0 ? ` + ${bonusRemaining} bônus` : ''}{extraCredits > 0 ? ` + ${extraCredits} extras` : ''}) · Renova {renewalDate}
                   </span>
                 </div>
               )}
