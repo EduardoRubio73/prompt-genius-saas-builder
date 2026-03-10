@@ -376,7 +376,8 @@ export default function Dashboard() {
       </div>
 
       {/* Dock */}
-      <DashboardDock sessionCount={stats?.total_sessions} />
+      <DashboardDock sessionCount={stats?.total_sessions} onShareOpen={() => setShareOpen(true)} />
+      <ShareModal open={shareOpen} onOpenChange={setShareOpen} orgId={orgId} />
     </AppShell>
   );
 }
