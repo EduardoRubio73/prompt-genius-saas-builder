@@ -142,8 +142,32 @@ export function useUnifiedMemory({
           session_id: e.session_id,
         }));
 
+        // ── Normalize build entries ─────────────────────────────────────
+        const normalized_build: UnifiedMemoryEntry[] = (bData ?? []).map((e) => {
+          const outputs = e.outputs as Record<string, string> | null;
+          const fullContent = outputs
+            ? Object.values(outputs).filter(Boolean).join("\n\n---\n\n")
+            : "";
+          return {
+            id: e.id,
+            type: "build" as MemoryMode,
+            title: e.project_name || "Projeto sem título",
+            preview: fullContent.slice(0, 120),
+            fullContent,
+            rating: e.rating,
+            is_favorite: e.is_favorite ?? false,
+            tags: null,
+            categoria: "Build",
+            created_at: e.created_at ?? new Date().toISOString(),
+            project_name: e.project_name,
+            answers: e.answers as Record<string, unknown> | null,
+            session_id: e.session_id,
+          };
+        });
+
         setPromptEntries(normalized_prompts);
         setSaasEntries(normalized_saas);
+        setBuildEntries(normalized_build);
       } finally {
         setIsLoading(false);
       }
