@@ -174,7 +174,7 @@ function ContactModalContent() {
   return (
     <>
       <div className="contact-logo">
-        <a href="https://zragency.com.br" target="_blank" rel="noopener noreferrer">
+        <a href="https://www.zragencyia.com.br/" target="_blank" rel="noopener noreferrer">
           <img src={logoZr} alt="ZR Agency" />
         </a>
       </div>
