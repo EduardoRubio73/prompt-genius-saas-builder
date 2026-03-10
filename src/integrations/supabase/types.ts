@@ -2939,7 +2939,12 @@ export type Database = {
         | "outro"
       member_role: "owner" | "admin" | "member" | "viewer"
       plan_tier: "free" | "starter" | "pro" | "enterprise"
-      referral_status: "pending" | "completed" | "rewarded" | "expired"
+      referral_status:
+        | "pending"
+        | "trial"
+        | "completed"
+        | "rewarded"
+        | "expired"
       session_mode: "prompt" | "saas" | "misto" | "build"
       subscription_status:
         | "trialing"
@@ -3104,7 +3109,7 @@ export const Constants = {
       ],
       member_role: ["owner", "admin", "member", "viewer"],
       plan_tier: ["free", "starter", "pro", "enterprise"],
-      referral_status: ["pending", "completed", "rewarded", "expired"],
+      referral_status: ["pending", "trial", "completed", "rewarded", "expired"],
       session_mode: ["prompt", "saas", "misto", "build"],
       subscription_status: [
         "trialing",
