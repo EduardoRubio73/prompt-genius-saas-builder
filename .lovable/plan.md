@@ -1,45 +1,64 @@
 
 
-## Fix: Admin Credits Not Saving
+# Plano: Fix Webhook + Stripe Dashboard URL + Correção Manual
 
-### Root Causes
+## Bug Critico Encontrado
 
-1. **Missing data**: `admin_users_overview` view doesn't include `plan_credits_total`, `bonus_credits_total`, etc. The form defaults to `0` instead of the real values.
-2. **JS falsy bug**: Line 88 uses `form.plan_credits_total || undefined` — when the value is `0`, `0 || undefined` evaluates to `undefined`, so the field is omitted from the update.
+Os logs do Edge Function `stripe-sync` revelam o erro real:
 
-### Solution
-
-**1. Fetch actual org data when dialog opens**
-- In `UserDetailDialog`, add a query to fetch the organization record directly from `organizations` table using `user.org_id`
-- Initialize `plan_credits_total` and `bonus_credits_total` from the real org data
-
-**2. Fix the save logic**
-- Remove `|| undefined` guards — always send `plan_credits_total` and `bonus_credits_total` to the update call
-- This ensures `0` is a valid value that gets saved
-
-### Files to Edit
-
-| File | Change |
-|------|--------|
-| `src/pages/admin/AdminUsers.tsx` | Add org data fetch, fix form init + save logic |
-
-### Details
-
-```tsx
-// Add useEffect to load real org data
-const [orgData, setOrgData] = useState<any>(null);
-useEffect(() => {
-  if (user.org_id) {
-    supabase.from("organizations").select("plan_credits_total, bonus_credits_total, plan_credits_used, bonus_credits_used").eq("id", user.org_id).single()
-      .then(({ data }) => {
-        if (data) {
-          setForm(f => ({ ...f, plan_credits_total: data.plan_credits_total, bonus_credits_total: data.bonus_credits_total }));
-        }
-      });
-  }
-}, [user.org_id]);
-
-// Fix save — no more || undefined
-updates: { plan_tier: form.plan_tier, is_active: form.is_active, plan_credits_total: form.plan_credits_total, bonus_credits_total: form.bonus_credits_total }
 ```
+SubtleCryptoProvider cannot be used in a synchronous context.
+Use `await constructEventAsync(...)` instead of `constructEvent(...)`
+```
+
+**Linha 215** usa `stripe.webhooks.constructEvent()` (sincrono), mas o ambiente Deno exige `await stripe.webhooks.constructEventAsync()`. Isso faz com que **TODOS os webhooks do Stripe sejam rejeitados com erro 400**. Nenhum pagamento foi processado automaticamente desde o deploy.
+
+## Estado Atual dos Dados
+
+| Dado | Valor |
+|---|---|
+| rsradiotaxi org (`5b1488f5`) | plan_tier=**free**, plan_credits_total=**5** (errado - deveria ser starter/33) |
+| billing_subscription | status=active, price_id=starter (trigger sync_org_plan nao atualizou a org) |
+| referral | status=rewarded, bonus paid |
+| cexrubio referral_first_bonus_paid | true |
+| org_credits rsradiotaxi | extra_balance=15 (inclui bonus) |
+| org_credits cexrubio | extra_balance=55 (inclui bonus) |
+| pi_3T9PUKBmEyQZSY7V36oBGz8z | Nao existe em nenhuma tabela - webhook rejeitado |
+
+Os bonus de indicacao ja foram creditados na intervencao anterior (extra_balance). O problema e que o plano do rsradiotaxi nunca foi atualizado (trigger falhou no insert manual).
+
+## Correcoes (3 partes)
+
+### 1. Fix Edge Function `stripe-sync/index.ts`
+
+Trocar `constructEvent` por `await constructEventAsync` na linha 215:
+
+```typescript
+// ANTES (sincrono - FALHA no Deno):
+const event = stripe.webhooks.constructEvent(body, sig, webhookSecret);
+
+// DEPOIS (assincrono - funciona no Deno):
+const event = await stripe.webhooks.constructEventAsync(body, sig, webhookSecret);
+```
+
+Este e o unico fix necessario na Edge Function. A logica de processamento esta correta.
+
+### 2. Fix dados manuais (SQL via insert tool)
+
+- Atualizar org rsradiotaxi para plan_tier=starter, plan_credits_total=33
+- Nao precisa criar nova subscription (ja existe)
+- Verificar se pi_3T9PUKBmEyQZSY7V36oBGz8z e subscription ou topup e processar manualmente se necessario
+
+### 3. Admin UI: Stripe Dashboard URL + campo editavel
+
+Adicionar ao `AdminStripeSettings.tsx`:
+- Campo editavel com URL do Stripe Dashboard (default: `https://dashboard.stripe.com/acct_1T6qgVBmEyQZSY7V/test/dashboard`)
+- Botao "Acessar" que abre em nova aba
+- Persistido em `admin_settings` com key `stripe_dashboard_url`
+
+## Arquivos a Modificar
+
+1. `supabase/functions/stripe-sync/index.ts` - Fix `constructEventAsync`
+2. `src/pages/admin/AdminStripeSettings.tsx` - Campo Stripe Dashboard URL
+3. SQL via insert tool - Corrigir org rsradiotaxi
 
