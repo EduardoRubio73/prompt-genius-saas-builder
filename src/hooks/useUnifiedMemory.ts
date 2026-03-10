@@ -207,30 +207,31 @@ export function useUnifiedMemory({
   }, [promptEntries, saasEntries, buildEntries, activeMode, searchQuery]);
 
   const toggleFavorite = async (entry: UnifiedMemoryEntry) => {
-    const table = entry.type === "prompt" ? "prompt_memory" : "saas_specs";
+    const table = entry.type === "build" ? "build_projects"
+      : entry.type === "saas" ? "saas_specs"
+      : "prompt_memory";
     const newVal = !entry.is_favorite;
     await supabase.from(table).update({ is_favorite: newVal }).eq("id", entry.id);
 
-    if (entry.type === "prompt") {
-      setPromptEntries((prev) =>
-        prev.map((e) => (e.id === entry.id ? { ...e, is_favorite: newVal } : e))
-      );
-    } else {
-      setSaasEntries((prev) =>
-        prev.map((e) => (e.id === entry.id ? { ...e, is_favorite: newVal } : e))
-      );
-    }
+    const updater = (prev: UnifiedMemoryEntry[]) =>
+      prev.map((e) => (e.id === entry.id ? { ...e, is_favorite: newVal } : e));
+
+    if (entry.type === "build") setBuildEntries(updater);
+    else if (entry.type === "saas") setSaasEntries(updater);
+    else setPromptEntries(updater);
   };
 
   const deleteEntry = async (entry: UnifiedMemoryEntry) => {
-    const table = entry.type === "prompt" ? "prompt_memory" : "saas_specs";
+    const table = entry.type === "build" ? "build_projects"
+      : entry.type === "saas" ? "saas_specs"
+      : "prompt_memory";
     await supabase.from(table).delete().eq("id", entry.id);
 
-    if (entry.type === "prompt") {
-      setPromptEntries((prev) => prev.filter((e) => e.id !== entry.id));
-    } else {
-      setSaasEntries((prev) => prev.filter((e) => e.id !== entry.id));
-    }
+    const remover = (prev: UnifiedMemoryEntry[]) => prev.filter((e) => e.id !== entry.id);
+
+    if (entry.type === "build") setBuildEntries(remover);
+    else if (entry.type === "saas") setSaasEntries(remover);
+    else setPromptEntries(remover);
   };
 
   const counts = useMemo(
