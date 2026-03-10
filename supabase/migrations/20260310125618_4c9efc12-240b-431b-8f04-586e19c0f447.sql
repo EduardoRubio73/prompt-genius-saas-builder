@@ -1,0 +1,1 @@
+UPDATE organizations SET plan_tier = 'starter', plan_credits_total = 33, account_status = 'active', updated_at = now() WHERE id = '5b1488f5-5d3c-45ab-acdf-93f151c32111';

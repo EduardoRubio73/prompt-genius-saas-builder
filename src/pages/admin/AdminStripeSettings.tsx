@@ -20,6 +20,7 @@ const settingsKeys = [
   "stripe_publishable_key",
   "stripe_webhook_secret",
   "stripe_mode",
+  "stripe_dashboard_url",
 ] as const;
 
 export default function AdminStripeSettings() {
