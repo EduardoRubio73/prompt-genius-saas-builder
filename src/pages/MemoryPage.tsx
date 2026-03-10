@@ -9,6 +9,8 @@ import { UnifiedMemoryDetailDialog } from "@/components/UnifiedMemoryDetailDialo
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { DashboardDock } from "@/components/dashboard/DashboardDock";
+import { ShareModal } from "@/components/dashboard/ShareModal";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -103,6 +105,7 @@ export default function MemoryPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [refreshKey, setRefreshKey] = useState(0);
   const [selectedEntry, setSelectedEntry] = useState<UnifiedMemoryEntry | null>(null);
+  const [shareOpen, setShareOpen] = useState(false);
 
   const { entries, isLoading, counts, toggleFavorite, deleteEntry } = useUnifiedMemory({
     refreshKey,
@@ -250,6 +253,8 @@ export default function MemoryPage() {
         onToggleFavorite={handleToggleFav}
         onDelete={(e) => { handleDelete(e); setSelectedEntry(null); }}
       />
+      <DashboardDock onShareOpen={() => setShareOpen(true)} />
+      <ShareModal open={shareOpen} onOpenChange={setShareOpen} orgId={orgId} />
     </AppShell>
   );
 }

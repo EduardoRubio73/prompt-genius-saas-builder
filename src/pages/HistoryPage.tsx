@@ -7,6 +7,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
+import { DashboardDock } from "@/components/dashboard/DashboardDock";
+import { ShareModal } from "@/components/dashboard/ShareModal";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -100,6 +102,7 @@ export default function HistoryPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [modeFilter, setModeFilter] = useState<"all" | "prompt" | "saas" | "misto" | "build">("all");
   const [statusFilter, setStatusFilter] = useState<"all" | "completed" | "incomplete">("all");
+  const [shareOpen, setShareOpen] = useState(false);
 
   useEffect(() => {
     if (!orgId) return;
@@ -205,6 +208,8 @@ export default function HistoryPage() {
           ))}
         </div>
       )}
+      <DashboardDock sessionCount={sessions.length} onShareOpen={() => setShareOpen(true)} />
+      <ShareModal open={shareOpen} onOpenChange={setShareOpen} orgId={orgId} />
     </AppShell>
   );
 }
