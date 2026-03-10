@@ -9,6 +9,8 @@ import { UnifiedMemoryDetailDialog } from "@/components/UnifiedMemoryDetailDialo
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { DashboardDock } from "@/components/dashboard/DashboardDock";
+import { ShareModal } from "@/components/dashboard/ShareModal";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
