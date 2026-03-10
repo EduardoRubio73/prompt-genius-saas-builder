@@ -153,3 +153,18 @@
 .dark .glass-card {
   @apply bg-card/40;
 }
+
+/* Dock icon color variants */
+.dock-purple { background: linear-gradient(145deg, hsl(254 70% 96%), hsl(254 70% 90%)); }
+.dock-blue   { background: linear-gradient(145deg, hsl(220 70% 96%), hsl(220 70% 90%)); }
+.dock-green  { background: linear-gradient(145deg, hsl(150 50% 95%), hsl(150 50% 89%)); }
+.dock-amber  { background: linear-gradient(145deg, hsl(45 90% 93%), hsl(45 90% 82%)); }
+.dock-slate  { background: linear-gradient(145deg, hsl(40 10% 94%), hsl(40 10% 88%)); }
+.dock-rose   { background: linear-gradient(145deg, hsl(350 70% 96%), hsl(350 70% 90%)); }
+
+.dark .dock-purple { background: linear-gradient(145deg, hsl(254 40% 18%), hsl(254 40% 14%)); }
+.dark .dock-blue   { background: linear-gradient(145deg, hsl(220 40% 18%), hsl(220 40% 14%)); }
+.dark .dock-green  { background: linear-gradient(145deg, hsl(150 30% 16%), hsl(150 30% 12%)); }
+.dark .dock-amber  { background: linear-gradient(145deg, hsl(45 50% 18%), hsl(45 50% 14%)); }
+.dark .dock-slate  { background: linear-gradient(145deg, hsl(240 10% 16%), hsl(240 10% 12%)); }
+.dark .dock-rose   { background: linear-gradient(145deg, hsl(350 30% 18%), hsl(350 30% 14%)); }
