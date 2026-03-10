@@ -86,6 +86,21 @@ export function useUnifiedMemory({
 
         const { data: sData } = await sq;
 
+        // ── Build Projects ──────────────────────────────────────────────
+        let bq = supabase
+          .from("build_projects")
+          .select(
+            "id, project_name, answers, outputs, branding, rating, created_at, is_favorite, session_id"
+          )
+          .eq("org_id", orgId)
+          .order("created_at", { ascending: false })
+          .limit(40);
+
+        if (filter === "gold") bq = bq.eq("rating", 5);
+        if (filter === "favorites") bq = bq.eq("is_favorite", true);
+
+        const { data: bData } = await bq;
+
         // ── Normalize prompt entries ───────────────────────────────────
         const normalized_prompts: UnifiedMemoryEntry[] = (pData ?? []).map((e) => ({
           id: e.id,
