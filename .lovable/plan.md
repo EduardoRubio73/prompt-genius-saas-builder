@@ -1,45 +1,32 @@
 
 
-## Fix: Admin Credits Not Saving
+# Diagnóstico: Pagamento `pi_3T9QaeBmEyQZSY7V` não creditado
 
-### Root Causes
+## Causa Raiz
 
-1. **Missing data**: `admin_users_overview` view doesn't include `plan_credits_total`, `bonus_credits_total`, etc. The form defaults to `0` instead of the real values.
-2. **JS falsy bug**: Line 88 uses `form.plan_credits_total || undefined` — when the value is `0`, `0 || undefined` evaluates to `undefined`, so the field is omitted from the update.
+Os logs da Edge Function `stripe-sync` mostram um erro claro:
 
-### Solution
-
-**1. Fetch actual org data when dialog opens**
-- In `UserDetailDialog`, add a query to fetch the organization record directly from `organizations` table using `user.org_id`
-- Initialize `plan_credits_total` and `bonus_credits_total` from the real org data
-
-**2. Fix the save logic**
-- Remove `|| undefined` guards — always send `plan_credits_total` and `bonus_credits_total` to the update call
-- This ensures `0` is a valid value that gets saved
-
-### Files to Edit
-
-| File | Change |
-|------|--------|
-| `src/pages/admin/AdminUsers.tsx` | Add org data fetch, fix form init + save logic |
-
-### Details
-
-```tsx
-// Add useEffect to load real org data
-const [orgData, setOrgData] = useState<any>(null);
-useEffect(() => {
-  if (user.org_id) {
-    supabase.from("organizations").select("plan_credits_total, bonus_credits_total, plan_credits_used, bonus_credits_used").eq("id", user.org_id).single()
-      .then(({ data }) => {
-        if (data) {
-          setForm(f => ({ ...f, plan_credits_total: data.plan_credits_total, bonus_credits_total: data.bonus_credits_total }));
-        }
-      });
-  }
-}, [user.org_id]);
-
-// Fix save — no more || undefined
-updates: { plan_tier: form.plan_tier, is_active: form.is_active, plan_credits_total: form.plan_credits_total, bonus_credits_total: form.bonus_credits_total }
 ```
+No signatures found matching the expected signature for payload.
+```
+
+O webhook do Stripe **está chegando** (diferente do problema anterior), mas a **verificação de assinatura falha**. Isso significa que o valor do secret `STRIPE_WEBHOOK_SECRET` configurado nas variáveis de ambiente da Edge Function **não corresponde** ao Webhook Signing Secret configurado no Stripe Dashboard.
+
+O segredo armazenado em `admin_settings` é `whsec_H00x4RG9GiujgRQ2zWXPwnxj3xEJhjEg`, mas o secret usado pela Edge Function vem de `Deno.env.get("STRIPE_WEBHOOK_SECRET")` -- são fontes diferentes e provavelmente estão desincronizados.
+
+## Ação Necessária (sem alteração de código)
+
+1. **Verificar no Stripe Dashboard** (Developers > Webhooks) qual é o Signing Secret do webhook que aponta para `https://pcaebfncvuvdguyjmyxm.supabase.co/functions/v1/stripe-sync`
+2. **Atualizar o secret** no Supabase Dashboard (Settings > Edge Functions > Secrets) para que `STRIPE_WEBHOOK_SECRET` contenha exatamente o valor do Stripe
+3. **Reenviar o evento** no Stripe Dashboard para o pagamento `pi_3T9QaeBmEyQZSY7V`
+
+## Dados do pagamento
+
+- O `pi_3T9QaeBmEyQZSY7V` **não existe** em nenhuma tabela do banco (nem `credit_purchases` nem `billing_subscriptions`)
+- O webhook foi recebido mas rejeitado com erro 400 antes de processar qualquer dado
+- Após corrigir o secret, o reenvio do evento pelo Stripe processará o pagamento automaticamente
+
+## Nenhuma alteração de código é necessária
+
+A lógica do `stripe-sync` está correta (já usa `constructEventAsync`). O problema é exclusivamente de configuração do secret.
 
