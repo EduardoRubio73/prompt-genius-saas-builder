@@ -204,7 +204,7 @@ export function useUnifiedMemory({
     }
 
     return combined;
-  }, [promptEntries, saasEntries, activeMode, searchQuery]);
+  }, [promptEntries, saasEntries, buildEntries, activeMode, searchQuery]);
 
   const toggleFavorite = async (entry: UnifiedMemoryEntry) => {
     const table = entry.type === "prompt" ? "prompt_memory" : "saas_specs";
