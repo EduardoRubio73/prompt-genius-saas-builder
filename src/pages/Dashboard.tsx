@@ -162,7 +162,8 @@ export default function Dashboard() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [resumoOpen, setResumoOpen] = useState(false);
-  const [modosOpen, setModosOpen] = useState(true);
+  const [modosOpen, setModosOpen] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
 
   const firstName = profile?.full_name?.split(" ")[0] ?? "";
   const isLoading = profileLoading || statsLoading;
