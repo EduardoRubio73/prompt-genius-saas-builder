@@ -4,9 +4,6 @@ import { useProfile } from "@/hooks/useProfile";
 import { supabase } from "@/integrations/supabase/client";
 import { AppShell } from "@/components/layout/AppShell";
 import { AccountSidebar } from "@/components/layout/AccountSidebar";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import {
   Dialog,
@@ -15,7 +12,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Gift, Copy, Share2, Users, Award, Clock, TrendingUp, Target } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Gift, Copy, Users, Award, Target, Clock, Trophy, Check, Share2 } from "lucide-react";
 import { format } from "date-fns";
 
 export default function ReferralPage() {
@@ -29,6 +27,7 @@ export default function ReferralPage() {
   const [bonusTotal, setBonusTotal] = useState(0);
   const [firstBonusPaid, setFirstBonusPaid] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [copied, setCopied] = useState(false);
   const [showFirstReferralDialog, setShowFirstReferralDialog] = useState(false);
   const [firstReferredName, setFirstReferredName] = useState<string | null>(null);
 
@@ -103,9 +102,12 @@ export default function ReferralPage() {
     ? `https://genius-engineer.lovable.app/?ref=${referralCode}`
     : null;
 
-  const copyLink = async (link: string) => {
-    await navigator.clipboard.writeText(link);
+  const handleCopy = async () => {
+    if (!referralLink) return;
+    await navigator.clipboard.writeText(referralLink);
+    setCopied(true);
     toast({ title: "Link copiado!", description: "Cole e compartilhe com seus contatos." });
+    setTimeout(() => setCopied(false), 2000);
   };
 
   const sharePlatform = async () => {
@@ -125,6 +127,12 @@ export default function ReferralPage() {
     expired: "Expirado",
   };
 
+  const statusClass = (status: string) => {
+    if (status === "rewarded") return "bg-green-50 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800";
+    if (status === "trial") return "bg-yellow-50 text-yellow-700 border-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-400 dark:border-yellow-800";
+    return "bg-muted text-muted-foreground border-border";
+  };
+
   if (loading) {
     return (
       <AppShell userName={profile?.full_name} userEmail={profile?.email} avatarUrl={profile?.avatar_url} onSignOut={signOut}>
@@ -135,187 +143,156 @@ export default function ReferralPage() {
     );
   }
 
-  const referralContent = planTier === "free" ? (
-    <Card className="text-center">
-      <CardContent className="py-10 space-y-4">
-        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-muted">
-          <Gift className="h-8 w-8 text-muted-foreground" />
-        </div>
-        <p className="text-muted-foreground text-sm">
-          Convites com bônus são liberados após ativação de um plano.
-        </p>
-        <Button variant="outline" onClick={sharePlatform} className="gap-2">
-          <Share2 className="h-4 w-4" /> Compartilhar plataforma
-        </Button>
-      </CardContent>
-    </Card>
-  ) : (
-    <div className="space-y-5">
-      {/* Program Info Card */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Programa de Indicações</CardTitle>
-          <CardDescription>
-            Convide outras empresas para usar a plataforma Genius.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="flex items-start gap-3 rounded-lg border border-border bg-muted/50 p-3">
-            <Gift className="h-5 w-5 text-primary mt-0.5 shrink-0" />
-            <div className="text-sm">
-              <p className="font-medium">Primeira indicação confirmada:</p>
-              <p className="text-muted-foreground">+5 créditos para você &bull; +5 créditos para quem entrou</p>
-            </div>
-          </div>
-          <div className="flex items-start gap-3 rounded-lg border border-border bg-muted/50 p-3">
-            <TrendingUp className="h-5 w-5 text-primary mt-0.5 shrink-0" />
-            <div className="text-sm">
-              <p className="font-medium">Depois disso:</p>
-              <p className="text-muted-foreground">A cada 10 indicações confirmadas, você ganha +10 créditos extras.</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+  const freePlanContent = (
+    <div className="rounded-2xl border border-border bg-card p-10 text-center space-y-4">
+      <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-muted">
+        <Gift className="h-8 w-8 text-muted-foreground" />
+      </div>
+      <p className="text-muted-foreground text-sm">
+        Convites com bônus são liberados após ativação de um plano.
+      </p>
+      <Button variant="outline" onClick={sharePlatform} className="gap-2">
+        <Share2 className="h-4 w-4" /> Compartilhar plataforma
+      </Button>
+    </div>
+  );
 
-      {/* Metrics */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <Card>
-          <CardContent className="flex items-center gap-4 py-5">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 shrink-0">
-              <Users className="h-5 w-5 text-primary" />
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground">Indicações confirmadas</p>
-              <p className="text-2xl font-bold">{confirmedCount}</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="flex items-center gap-4 py-5">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 shrink-0">
-              <Target className="h-5 w-5 text-primary" />
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground">Próximo bônus</p>
-              <p className="text-2xl font-bold">{remaining === 10 ? 10 : remaining} <span className="text-sm font-normal text-muted-foreground">restantes</span></p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="flex items-center gap-4 py-5">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 shrink-0">
-              <Award className="h-5 w-5 text-primary" />
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground">Créditos ganhos</p>
-              <p className="text-2xl font-bold">{bonusTotal}</p>
-            </div>
-          </CardContent>
-        </Card>
+  const mainContent = (
+    <div className="space-y-4">
+      {/* Stats Row */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <StatCard icon={<Users className="h-5 w-5 text-primary" />} label="Indicações confirmadas" value={confirmedCount} />
+        <StatCard icon={<Target className="h-5 w-5 text-primary" />} label="Próximo bônus" value={remaining === 10 ? 10 : remaining} sub="restantes" />
+        <StatCard icon={<Award className="h-5 w-5 text-primary" />} label="Créditos ganhos" value={bonusTotal} />
       </div>
 
-      {/* Progress Bar */}
-      <Card>
-        <CardContent className="py-5 space-y-3">
-          <div className="flex items-center justify-between text-sm">
-            <span className="font-medium">{progressInBlock} / 10 indicações</span>
-            <span className="text-muted-foreground">{progressPercent}%</span>
-          </div>
-          <Progress value={progressPercent} className="h-3" />
-          <p className="text-xs text-muted-foreground">
-            {remaining === 10
-              ? "Indique 10 usuários para ganhar +10 créditos."
-              : `Faltam ${remaining} indicações para ganhar +10 créditos.`}
-          </p>
-        </CardContent>
-      </Card>
+      {/* Progress */}
+      <div className="rounded-2xl border border-border bg-card p-5">
+        <div className="flex items-center justify-between mb-2.5">
+          <span className="text-sm font-semibold text-foreground">
+            {progressInBlock}/{10} indicações para o próximo bônus
+          </span>
+          <span className="text-xs font-semibold text-primary">{progressPercent}%</span>
+        </div>
+        <div className="h-2.5 rounded-full bg-primary/10 overflow-hidden">
+          <div
+            className="h-full rounded-full bg-gradient-to-r from-primary to-primary/70 transition-all duration-400"
+            style={{ width: `${progressPercent}%` }}
+          />
+        </div>
+        <p className="text-xs text-muted-foreground mt-2">
+          {remaining === 10
+            ? "Indique 10 usuários para ganhar +10 créditos."
+            : `Faltam ${remaining} indicações para ganhar +10 créditos.`}
+        </p>
+      </div>
 
-      {/* Bônus de Indicações */}
-      <Card>
-        <CardHeader className="pb-3">
-          <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/15">
-              <Gift className="h-4 w-4 text-primary" />
+      {/* Como funciona */}
+      <div className="rounded-2xl border border-border bg-card p-6">
+        <h3 className="text-[15px] font-bold text-foreground mb-1">Como funciona</h3>
+        <p className="text-xs text-muted-foreground mb-4">Regras do programa de indicações</p>
+        <div className="flex flex-col gap-2.5">
+          <div className={`flex items-start gap-3 p-3.5 rounded-xl border ${
+            firstBonusPaid
+              ? "bg-green-50/60 border-green-200 dark:bg-green-900/20 dark:border-green-800"
+              : "bg-primary/5 border-primary/20"
+          }`}>
+            <span className="mt-0.5 shrink-0">
+              {firstBonusPaid ? <Check className="h-5 w-5 text-green-600 dark:text-green-400" /> : <Gift className="h-5 w-5 text-primary" />}
+            </span>
+            <div className="flex-1 min-w-0">
+              <p className={`text-[13px] font-semibold mb-0.5 ${firstBonusPaid ? "text-green-700 dark:text-green-400" : "text-foreground"}`}>
+                Na sua primeira indicação, todos ganham
+              </p>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Você e o convidado recebem +5 créditos cada ao ativar um plano.
+              </p>
             </div>
-            <CardTitle className="text-lg">Bônus de Indicações</CardTitle>
+            {firstBonusPaid && (
+              <span className="shrink-0 text-[11px] font-semibold bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400 px-2.5 py-1 rounded-full">
+                Concluído
+              </span>
+            )}
           </div>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <p className="text-xs text-muted-foreground">
-            Indique um amigo e ambos ganham 5 créditos extras gratuitamente.
-          </p>
-          <p className="text-sm text-foreground font-medium">
-            Bônus disponível: <span className="text-primary font-bold">{bonusTotal}</span>
-          </p>
-          <Button variant="outline" size="sm" className="w-full gap-2" onClick={() => referralLink ? copyLink(referralLink) : sharePlatform()}>
-            <Share2 className="h-3.5 w-3.5" /> Compartilhar convite
-          </Button>
-        </CardContent>
-      </Card>
+          <div className="flex items-start gap-3 p-3.5 rounded-xl border bg-primary/5 border-primary/20">
+            <Trophy className="h-5 w-5 text-primary mt-0.5 shrink-0" />
+            <div>
+              <p className="text-[13px] font-semibold text-foreground mb-0.5">A cada 10 indicações confirmadas</p>
+              <p className="text-xs text-muted-foreground leading-relaxed">Você ganha +10 créditos extras automaticamente.</p>
+            </div>
+          </div>
+        </div>
+      </div>
 
-      {/* Referral Link Card */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-sm uppercase tracking-wider text-muted-foreground font-semibold">
-            Seu link de convite
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          {referralLink && (
-            <div className="flex items-center gap-2">
-              <code className="flex-1 rounded-lg border border-border bg-muted px-3 py-2 text-xs break-all">
-                {referralLink}
-              </code>
-              <Button size="sm" onClick={() => copyLink(referralLink)} className="gap-1.5 shrink-0">
-                <Copy className="h-3.5 w-3.5" /> Copiar link
+      {/* Convide e ganhe */}
+      <div className="rounded-2xl border border-border bg-card p-6">
+        <h3 className="text-[15px] font-bold text-foreground mb-1">Convide e ganhe</h3>
+        <p className="text-xs text-muted-foreground mb-4">Compartilhe seu link ou use seus bônus disponíveis</p>
+
+        {referralLink && (
+          <div className="flex gap-2.5 items-center mb-4">
+            <div className="flex-1 bg-muted border border-border rounded-lg px-3.5 py-2.5 text-xs text-muted-foreground font-mono truncate">
+              {referralLink}
+            </div>
+            <Button size="sm" onClick={handleCopy} className="gap-1.5 shrink-0">
+              {copied ? <><Check className="h-3.5 w-3.5" /> Copiado!</> : <><Copy className="h-3.5 w-3.5" /> Copiar link</>}
+            </Button>
+          </div>
+        )}
+
+        <p className="text-xs text-muted-foreground">
+          Quando seu convidado ativar um plano pago, vocês dois recebem{" "}
+          <span className="text-primary font-semibold">5 créditos bônus</span>.
+        </p>
+
+        {bonusTotal > 0 && (
+          <>
+            <hr className="border-border my-4" />
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex-1 min-w-0">
+                <p className="text-[13px] font-semibold text-foreground mb-0.5 flex items-center gap-1.5">
+                  <Gift className="h-4 w-4 text-primary" /> Bônus de indicação disponível
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Compartilhe um bônus — você e o amigo ganham +5 créditos grátis.
+                </p>
+              </div>
+              <span className="shrink-0 text-xs font-bold bg-green-50 text-green-700 border border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800 px-3 py-1 rounded-full">
+                {bonusTotal} disponível
+              </span>
+              <Button variant="outline" size="sm" onClick={sharePlatform} className="gap-1.5 shrink-0 border-primary/30 text-primary hover:bg-primary/5">
+                <Share2 className="h-3.5 w-3.5" /> Compartilhar
               </Button>
             </div>
-          )}
-          <p className="text-xs text-muted-foreground">
-            Quando seu convidado ativar um plano pago, vocês dois recebem <strong>5 créditos bônus</strong>.
-          </p>
-        </CardContent>
-      </Card>
+          </>
+        )}
+      </div>
 
-      {/* Referrals List */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-sm uppercase tracking-wider text-muted-foreground font-semibold flex items-center gap-2">
-            <Users className="h-4 w-4" /> Suas indicações
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {referrals.length === 0 ? (
-            <p className="text-sm text-muted-foreground py-4 text-center">
-              Nenhuma indicação ainda. Compartilhe seu link!
-            </p>
-          ) : (
-            <div className="divide-y divide-border">
-              {referrals.map((r) => (
-                <div key={r.id} className="flex items-center justify-between py-3 text-sm">
-                  <div className="flex items-center gap-2">
-                    <Clock className="h-3.5 w-3.5 text-muted-foreground" />
-                    <span className="text-muted-foreground">
-                      {format(new Date(r.created_at), "dd/MM/yyyy")}
-                    </span>
-                  </div>
-                  <span
-                    className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                      r.status === "rewarded"
-                        ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
-                        : r.status === "trial"
-                          ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400"
-                          : "bg-muted text-muted-foreground"
-                    }`}
-                  >
-                    {statusLabel[r.status] ?? r.status}
-                  </span>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      {/* Suas indicações */}
+      <div className="rounded-2xl border border-border bg-card p-6">
+        <h3 className="text-[11px] font-bold tracking-widest text-muted-foreground uppercase mb-3.5">
+          Suas indicações
+        </h3>
+        {referrals.length === 0 ? (
+          <p className="text-sm text-muted-foreground text-center py-5">
+            Nenhuma indicação ainda. Compartilhe seu link!
+          </p>
+        ) : (
+          <div className="divide-y divide-border">
+            {referrals.map((r) => (
+              <div key={r.id} className="flex items-center justify-between py-3 text-sm">
+                <span className="text-muted-foreground flex items-center gap-1.5">
+                  <Clock className="h-3.5 w-3.5" />
+                  {format(new Date(r.created_at), "dd/MM/yyyy")}
+                </span>
+                <span className={`text-[11.5px] font-semibold px-3 py-1 rounded-full border ${statusClass(r.status)}`}>
+                  {statusLabel[r.status] ?? r.status}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 
@@ -329,14 +306,9 @@ export default function ReferralPage() {
       </section>
 
       <div className="flex flex-col gap-6 sm:flex-row">
-        <AccountSidebar
-          userName={profile?.full_name}
-          userEmail={profile?.email}
-          indicacoesActive
-        />
-
+        <AccountSidebar userName={profile?.full_name} userEmail={profile?.email} indicacoesActive />
         <div className="flex-1 min-w-0">
-          {referralContent}
+          {planTier === "free" ? freePlanContent : mainContent}
         </div>
       </div>
 
@@ -359,8 +331,7 @@ export default function ReferralPage() {
                   <strong className="text-foreground">novos créditos bônus</strong>.
                 </p>
                 <p className="pt-1">
-                  Obrigado.
-                  <br />
+                  Obrigado.<br />
                   <span className="font-medium text-foreground">Equipe Genius.</span>
                 </p>
               </div>
@@ -372,5 +343,20 @@ export default function ReferralPage() {
         </DialogContent>
       </Dialog>
     </AppShell>
+  );
+}
+
+function StatCard({ icon, label, value, sub }: { icon: React.ReactNode; label: string; value: number; sub?: string }) {
+  return (
+    <div className="rounded-xl border border-border bg-card p-4 flex items-center gap-3.5">
+      <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+        {icon}
+      </div>
+      <div>
+        <p className="text-xs text-muted-foreground">{label}</p>
+        <p className="text-2xl font-bold text-foreground leading-none">{value}</p>
+        {sub && <p className="text-[11px] text-muted-foreground mt-0.5">{sub}</p>}
+      </div>
+    </div>
   );
 }
