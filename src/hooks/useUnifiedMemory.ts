@@ -48,6 +48,7 @@ export function useUnifiedMemory({
 }: UseUnifiedMemoryOptions) {
   const [promptEntries, setPromptEntries] = useState<UnifiedMemoryEntry[]>([]);
   const [saasEntries, setSaasEntries] = useState<UnifiedMemoryEntry[]>([]);
+  const [buildEntries, setBuildEntries] = useState<UnifiedMemoryEntry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
