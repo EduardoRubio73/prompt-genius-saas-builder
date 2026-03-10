@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { callEdgeFunction } from "@/lib/edgeFunctions";
 import { useToast } from "@/hooks/use-toast";
-import { Copy, Plus, X, Check } from "lucide-react";
+import { Copy, Plus, X, Check, ExternalLink } from "lucide-react";
 import "./admin.css";
 
 const WEBHOOK_URL = "https://pcaebfncvuvdguyjmyxm.supabase.co/functions/v1/stripe-sync";
