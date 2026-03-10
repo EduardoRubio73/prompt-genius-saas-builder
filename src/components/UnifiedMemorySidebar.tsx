@@ -399,6 +399,7 @@ export function UnifiedMemorySidebar({
                 <p className="text-[9px] text-muted-foreground text-center tabular-nums">
                   {counts.prompt} prompt{counts.prompt !== 1 ? "s" : ""} ·{" "}
                   {counts.saas} spec{counts.saas !== 1 ? "s" : ""} ·{" "}
+                  {counts.build} build{counts.build !== 1 ? "s" : ""} ·{" "}
                   {counts.favorites} favorito{counts.favorites !== 1 ? "s" : ""}
                 </p>
               </div>
@@ -413,6 +414,7 @@ export function UnifiedMemorySidebar({
               {[
                 { icon: Sparkles, count: counts.prompt, label: "Prompts", color: "text-primary" },
                 { icon: FileCode, count: counts.saas, label: "Specs", color: "text-accent" },
+                { icon: Rocket, count: counts.build, label: "Builds", color: "text-orange-500" },
                 { icon: Heart, count: counts.favorites, label: "Favoritos", color: "text-rose-400" },
               ].map(({ icon: Icon, count, label, color }) => (
                 <Tooltip key={label}>

@@ -48,6 +48,7 @@ export function useUnifiedMemory({
 }: UseUnifiedMemoryOptions) {
   const [promptEntries, setPromptEntries] = useState<UnifiedMemoryEntry[]>([]);
   const [saasEntries, setSaasEntries] = useState<UnifiedMemoryEntry[]>([]);
+  const [buildEntries, setBuildEntries] = useState<UnifiedMemoryEntry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -84,6 +85,21 @@ export function useUnifiedMemory({
         if (filter === "favorites") sq = sq.eq("is_favorite", true);
 
         const { data: sData } = await sq;
+
+        // ── Build Projects ──────────────────────────────────────────────
+        let bq = supabase
+          .from("build_projects")
+          .select(
+            "id, project_name, answers, outputs, branding, rating, created_at, is_favorite, session_id"
+          )
+          .eq("org_id", orgId)
+          .order("created_at", { ascending: false })
+          .limit(40);
+
+        if (filter === "gold") bq = bq.eq("rating", 5);
+        if (filter === "favorites") bq = bq.eq("is_favorite", true);
+
+        const { data: bData } = await bq;
 
         // ── Normalize prompt entries ───────────────────────────────────
         const normalized_prompts: UnifiedMemoryEntry[] = (pData ?? []).map((e) => ({
@@ -126,8 +142,32 @@ export function useUnifiedMemory({
           session_id: e.session_id,
         }));
 
+        // ── Normalize build entries ─────────────────────────────────────
+        const normalized_build: UnifiedMemoryEntry[] = (bData ?? []).map((e) => {
+          const outputs = e.outputs as Record<string, string> | null;
+          const fullContent = outputs
+            ? Object.values(outputs).filter(Boolean).join("\n\n---\n\n")
+            : "";
+          return {
+            id: e.id,
+            type: "build" as MemoryMode,
+            title: e.project_name || "Projeto sem título",
+            preview: fullContent.slice(0, 120),
+            fullContent,
+            rating: e.rating,
+            is_favorite: e.is_favorite ?? false,
+            tags: null,
+            categoria: "Build",
+            created_at: e.created_at ?? new Date().toISOString(),
+            project_name: e.project_name,
+            answers: e.answers as Record<string, unknown> | null,
+            session_id: e.session_id,
+          };
+        });
+
         setPromptEntries(normalized_prompts);
         setSaasEntries(normalized_saas);
+        setBuildEntries(normalized_build);
       } finally {
         setIsLoading(false);
       }
@@ -137,7 +177,7 @@ export function useUnifiedMemory({
   }, [refreshKey, filter, orgId]);
 
   const allEntries = useMemo(() => {
-    let combined = [...promptEntries, ...saasEntries].sort((a, b) => {
+    let combined = [...promptEntries, ...saasEntries, ...buildEntries].sort((a, b) => {
       // Sort: favorites first, then by created_at desc, then by title asc (A-Z)
       if (a.is_favorite !== b.is_favorite) return a.is_favorite ? -1 : 1;
       const dateCompare = new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
@@ -164,45 +204,46 @@ export function useUnifiedMemory({
     }
 
     return combined;
-  }, [promptEntries, saasEntries, activeMode, searchQuery]);
+  }, [promptEntries, saasEntries, buildEntries, activeMode, searchQuery]);
 
   const toggleFavorite = async (entry: UnifiedMemoryEntry) => {
-    const table = entry.type === "prompt" ? "prompt_memory" : "saas_specs";
+    const table = entry.type === "build" ? "build_projects"
+      : entry.type === "saas" ? "saas_specs"
+      : "prompt_memory";
     const newVal = !entry.is_favorite;
     await supabase.from(table).update({ is_favorite: newVal }).eq("id", entry.id);
 
-    if (entry.type === "prompt") {
-      setPromptEntries((prev) =>
-        prev.map((e) => (e.id === entry.id ? { ...e, is_favorite: newVal } : e))
-      );
-    } else {
-      setSaasEntries((prev) =>
-        prev.map((e) => (e.id === entry.id ? { ...e, is_favorite: newVal } : e))
-      );
-    }
+    const updater = (prev: UnifiedMemoryEntry[]) =>
+      prev.map((e) => (e.id === entry.id ? { ...e, is_favorite: newVal } : e));
+
+    if (entry.type === "build") setBuildEntries(updater);
+    else if (entry.type === "saas") setSaasEntries(updater);
+    else setPromptEntries(updater);
   };
 
   const deleteEntry = async (entry: UnifiedMemoryEntry) => {
-    const table = entry.type === "prompt" ? "prompt_memory" : "saas_specs";
+    const table = entry.type === "build" ? "build_projects"
+      : entry.type === "saas" ? "saas_specs"
+      : "prompt_memory";
     await supabase.from(table).delete().eq("id", entry.id);
 
-    if (entry.type === "prompt") {
-      setPromptEntries((prev) => prev.filter((e) => e.id !== entry.id));
-    } else {
-      setSaasEntries((prev) => prev.filter((e) => e.id !== entry.id));
-    }
+    const remover = (prev: UnifiedMemoryEntry[]) => prev.filter((e) => e.id !== entry.id);
+
+    if (entry.type === "build") setBuildEntries(remover);
+    else if (entry.type === "saas") setSaasEntries(remover);
+    else setPromptEntries(remover);
   };
 
   const counts = useMemo(
     () => ({
-      all: promptEntries.length + saasEntries.length,
+      all: promptEntries.length + saasEntries.length + buildEntries.length,
       prompt: promptEntries.filter((e) => e.type === "prompt").length,
       saas: saasEntries.length,
       mixed: promptEntries.filter((e) => e.type === "mixed").length,
-      build: 0,
-      favorites: [...promptEntries, ...saasEntries].filter((e) => e.is_favorite).length,
+      build: buildEntries.length,
+      favorites: [...promptEntries, ...saasEntries, ...buildEntries].filter((e) => e.is_favorite).length,
     }),
-    [promptEntries, saasEntries]
+    [promptEntries, saasEntries, buildEntries]
   );
 
   return { entries: allEntries, isLoading, toggleFavorite, deleteEntry, counts };

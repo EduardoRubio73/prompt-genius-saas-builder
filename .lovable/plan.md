@@ -1,42 +1,45 @@
 
 
-# BUILD não aparece na Biblioteca (Memory)
+## Fix: Admin Credits Not Saving
 
-## Problema
+### Root Causes
 
-O hook `useUnifiedMemory` busca apenas de `prompt_memory` e `saas_specs`. Projetos BUILD (tabela `build_projects`) são completamente ignorados. O contador `build` está hardcoded como `0`.
+1. **Missing data**: `admin_users_overview` view doesn't include `plan_credits_total`, `bonus_credits_total`, etc. The form defaults to `0` instead of the real values.
+2. **JS falsy bug**: Line 88 uses `form.plan_credits_total || undefined` — when the value is `0`, `0 || undefined` evaluates to `undefined`, so the field is omitted from the update.
 
-A sessão BUILD do rsradiotaxi **aparece corretamente no Histórico** (tabela `sessions`), mas a tabela `build_projects` está vazia — o que indica que o usuário gerou mas não salvou o projeto, OU que o save falhou silenciosamente.
+### Solution
 
-## Correção
+**1. Fetch actual org data when dialog opens**
+- In `UserDetailDialog`, add a query to fetch the organization record directly from `organizations` table using `user.org_id`
+- Initialize `plan_credits_total` and `bonus_credits_total` from the real org data
 
-### 1. Adicionar `build_projects` ao `useUnifiedMemory`
+**2. Fix the save logic**
+- Remove `|| undefined` guards — always send `plan_credits_total` and `bonus_credits_total` to the update call
+- This ensures `0` is a valid value that gets saved
 
-**Arquivo**: `src/hooks/useUnifiedMemory.ts`
+### Files to Edit
 
-- Adicionar um terceiro `useState` para `buildEntries`
-- No `fetchAll`, fazer query em `build_projects` com os mesmos filtros de `orgId`, `filter` (gold/favorites), e `limit(40)`
-- Normalizar os resultados como `UnifiedMemoryEntry` com `type: "build"`, usando `project_name` como título e concatenação dos outputs como `fullContent`
-- Incluir `buildEntries` no `allEntries` combinado
-- Corrigir o `counts.build` para contar de `buildEntries.length`
-- Adicionar `toggleFavorite` e `deleteEntry` com suporte à tabela `build_projects`
+| File | Change |
+|------|--------|
+| `src/pages/admin/AdminUsers.tsx` | Add org data fetch, fix form init + save logic |
 
-### 2. Adicionar suporte visual no `UnifiedMemorySidebar`
+### Details
 
-**Arquivo**: `src/components/UnifiedMemorySidebar.tsx`
+```tsx
+// Add useEffect to load real org data
+const [orgData, setOrgData] = useState<any>(null);
+useEffect(() => {
+  if (user.org_id) {
+    supabase.from("organizations").select("plan_credits_total, bonus_credits_total, plan_credits_used, bonus_credits_used").eq("id", user.org_id).single()
+      .then(({ data }) => {
+        if (data) {
+          setForm(f => ({ ...f, plan_credits_total: data.plan_credits_total, bonus_credits_total: data.bonus_credits_total }));
+        }
+      });
+  }
+}, [user.org_id]);
 
-- Adicionar entry type "build" nos mapas `TYPE_COLORS` e `TYPE_ICONS`
-
-### 3. Adicionar suporte no `UnifiedMemoryDetailDialog`
-
-**Arquivo**: `src/components/UnifiedMemoryDetailDialog.tsx`
-
-- Adicionar "build" ao `TYPE_META` com ícone e estilo
-- Mostrar `answers` como campos estruturados quando `entry.type === "build"`
-
-## Arquivos a modificar
-
-1. `src/hooks/useUnifiedMemory.ts` — adicionar query `build_projects` + normalização
-2. `src/components/UnifiedMemorySidebar.tsx` — maps de cor/ícone para build
-3. `src/components/UnifiedMemoryDetailDialog.tsx` — metadata e visualização build
+// Fix save — no more || undefined
+updates: { plan_tier: form.plan_tier, is_active: form.is_active, plan_credits_total: form.plan_credits_total, bonus_credits_total: form.bonus_credits_total }
+```
 

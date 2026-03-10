@@ -39,7 +39,7 @@ interface UnifiedMemoryDetailDialogProps {
   onDelete?: (entry: UnifiedMemoryEntry) => void;
 }
 
-const TYPE_META = {
+const TYPE_META: Record<string, { label: string; icon: typeof Sparkles; color: string; badgeCls: string }> = {
   prompt: {
     label: "Modo Prompt",
     icon: Sparkles,
@@ -57,6 +57,12 @@ const TYPE_META = {
     icon: Layers,
     color: "text-secondary",
     badgeCls: "bg-secondary/10 text-secondary border-secondary/20",
+  },
+  build: {
+    label: "Modo Build",
+    icon: Briefcase,
+    color: "text-orange-500",
+    badgeCls: "bg-orange-500/10 text-orange-500 border-orange-500/20",
   },
 };
 
@@ -121,9 +127,9 @@ export function UnifiedMemoryDetailDialog({
       })
     : null;
 
-  // For SaaS specs, show answers as structured fields
+  // For SaaS specs and Build projects, show answers as structured fields
   const saasAnswers =
-    entry.type === "saas" && entry.answers
+    (entry.type === "saas" || entry.type === "build") && entry.answers
       ? Object.entries(entry.answers as Record<string, string>).filter(([, v]) => v)
       : [];
 
@@ -212,8 +218,8 @@ export function UnifiedMemoryDetailDialog({
             </div>
           )}
 
-          {/* SaaS answers fields */}
-          {entry.type === "saas" && saasAnswers.length > 0 && (
+          {/* Build/SaaS answers fields */}
+          {(entry.type === "saas" || entry.type === "build") && saasAnswers.length > 0 && (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {saasAnswers.slice(0, 6).map(([key, val]) => (
                 <div key={key} className="rounded-lg border border-border bg-secondary/20 p-3 space-y-1">
