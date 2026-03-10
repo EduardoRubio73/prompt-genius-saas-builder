@@ -660,3 +660,34 @@ html, body {
   border: none; cursor: pointer; transition: all .2s; font-family: inherit;
 }
 .contact-share-btn:hover { box-shadow: 0 0 24px rgba(0,229,176,.4); transform: translateY(-2px); }
+
+/* MOBILE FIXES — nav + contact modal */
+@media(max-width:480px) {
+  /* Nav: hide name, shrink button */
+  .landing-page .nav-name { display: none; }
+  .landing-page .nav-btn { padding: 7px 14px; font-size: 12px; }
+
+  /* Modal: reduce padding & max-height */
+  .landing-modal { padding: 20px; max-height: 85vh; }
+  .landing-modal h2 { font-size: 18px; margin-bottom: 14px; }
+  .landing-modal h3 { font-size: 14px; margin: 14px 0 6px; }
+
+  /* Contact logo */
+  .contact-logo img { height: 36px; }
+
+  /* Categories: smaller */
+  .contact-categories { gap: 6px; margin: 10px 0 6px; }
+  .contact-cat-btn { padding: 5px 12px; font-size: 11px; }
+
+  /* Textarea: shorter */
+  .contact-textarea { min-height: 70px; padding: 10px; font-size: 12.5px; margin-top: 10px; }
+
+  /* Buttons: stack vertically */
+  .contact-actions { flex-direction: column; gap: 8px; margin-top: 10px; }
+  .contact-btn { min-width: unset; width: 100%; padding: 10px 16px; font-size: 13px; }
+
+  /* Share section: compact */
+  .contact-share { margin-top: 14px; padding: 12px; }
+  .contact-share p { font-size: 11.5px !important; margin-bottom: 8px !important; }
+  .contact-share-btn { padding: 8px 18px; font-size: 12px; }
+}
