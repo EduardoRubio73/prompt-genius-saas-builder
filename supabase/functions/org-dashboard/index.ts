@@ -63,7 +63,7 @@ Deno.serve(async (req) => {
       .maybeSingle();
     const extraCredits = orgCredits?.extra_balance ?? 0;
 
-    const planName = sub?.billing_prices?.billing_products?.display_name ?? sub?.billing_prices?.billing_products?.name ?? org.plan_tier ?? null;
+    const planName = sub?.billing_prices?.billing_products?.display_name || sub?.billing_prices?.billing_products?.name || org.plan_tier || null;
     const planPrice = sub?.billing_prices?.unit_amount ?? 0;
     const creditsLimit = org.plan_credits_total ?? 0;
     const creditsUsed = org.plan_credits_used ?? 0;
