@@ -66,6 +66,8 @@ const TYPE_META: Record<string, { label: string; icon: typeof Sparkles; color: s
   },
 };
 
+const CREDIT_COSTS: Record<string, number> = { prompt: 1, saas: 2, mixed: 2, build: 5 };
+
 const FIELD_META = [
   { key: "persona", label: "Persona", icon: User },
   { key: "tarefa", label: "Tarefa", icon: Briefcase },
