@@ -135,7 +135,7 @@ export function UnifiedMemoryDetailDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto gap-0 p-0">
+      <DialogContent className="max-w-2xl max-h-[90vh] gap-0 p-0 flex flex-col overflow-hidden">
         {/* ── Header ── */}
         <DialogHeader className="p-6 pb-4 border-b border-border sticky top-0 bg-card z-10">
           <div className="flex items-start justify-between gap-3">
