@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { ChevronDown, ChevronUp, Sparkles, FileCode, Layers, CheckCircle, Clock, Eye, ArrowLeft, Hammer, Zap } from "lucide-react";
+import { ChevronDown, ChevronUp, Sparkles, FileCode, Layers, CheckCircle, Clock, Eye, ArrowLeft, Hammer, Zap, Trash2 } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
