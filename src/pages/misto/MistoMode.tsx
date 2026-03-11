@@ -209,7 +209,7 @@ export default function MistoMode() {
             <MistoResults fields={fields} promptGerado={promptGerado} specMarkdown={specMarkdown}
               userInput={userInput} timeElapsed={timeElapsed} promptRating={promptRating}
               specRating={specRating} onPromptRating={setPromptRating} onSpecRating={setSpecRating}
-              onNewSession={handleNewSession} onSave={handleSave} isSaved={isSaved} />
+              onNewSession={handleNewSession} onSave={() => {}} isSaved={true} />
           )}
         </div>
 

@@ -234,9 +234,7 @@ Prioridades: ${answers.prioridades.join(", ") || "Não definidas"}
                 </div>
                 <div className="misto-rh-actions">
                   <button className="misto-btn-sm" onClick={handleNewSession}>Nova Spec</button>
-                  <button className="misto-btn-sm misto-btn-sm-g" onClick={handleSave} disabled={isSaved}>
-                    {isSaved ? "Salva ✓" : "Salvar"}
-                  </button>
+                  <span className="misto-btn-sm misto-btn-sm-g" style={{ opacity: 0.7, cursor: "default" }}>Salva ✓</span>
                 </div>
               </div>
 

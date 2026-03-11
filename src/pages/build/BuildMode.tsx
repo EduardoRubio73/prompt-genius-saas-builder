@@ -944,9 +944,7 @@ export default function BuildMode() {
                 <div className="misto-rh-actions">
                   <button className="misto-btn-sm" onClick={handleNewSession}>Novo Projeto</button>
                   <button className="misto-btn-sm" onClick={handleDownloadZip}>⬇ ZIP</button>
-                  <button className="misto-btn-sm misto-btn-sm-g" onClick={handleSave} disabled={isSaved}>
-                    {isSaved ? "Salvo ✓" : "Salvar"}
-                  </button>
+                  <span className="misto-btn-sm misto-btn-sm-g" style={{ opacity: 0.7, cursor: "default" }}>Salvo ✓</span>
                 </div>
               </div>
 

@@ -232,9 +232,7 @@ export default function PromptMode() {
                 </div>
                 <div className="misto-rh-actions">
                   <button className="misto-btn-sm" onClick={handleNewSession}>Nova Sessão</button>
-                  <button className="misto-btn-sm misto-btn-sm-g" onClick={handleSave} disabled={isSaved}>
-                    {isSaved ? "Salvo ✓" : "Salvar"}
-                  </button>
+                  <span className="misto-btn-sm misto-btn-sm-g" style={{ opacity: 0.7, cursor: "default" }}>Salvo ✓</span>
                 </div>
               </div>
 
