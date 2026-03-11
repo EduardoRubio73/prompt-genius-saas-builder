@@ -61,6 +61,8 @@ export default function PromptMode() {
     }
   }, [orgId]);
 
+  useEffect(() => { fetchBalance(); }, [fetchBalance]);
+
   const [sessionId, setSessionId] = useState<string | null>(null);
 
   const handleGenerate = useCallback(async () => {

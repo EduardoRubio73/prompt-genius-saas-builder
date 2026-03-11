@@ -64,6 +64,8 @@ export default function MistoMode() {
     }
   }, [orgId]);
 
+  useEffect(() => { fetchBalance(); }, [fetchBalance]);
+
   const [sessionId, setSessionId] = useState<string | null>(null);
 
   // Main generate flow

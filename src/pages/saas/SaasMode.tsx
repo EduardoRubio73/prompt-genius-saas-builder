@@ -78,6 +78,8 @@ export default function SaasMode() {
     }
   }, [orgId]);
 
+  useEffect(() => { fetchBalance(); }, [fetchBalance]);
+
   const updateAnswers = (partial: Partial<SaasAnswers>) => setAnswers(prev => ({ ...prev, ...partial }));
 
   const canNext = (s: number): boolean => {
