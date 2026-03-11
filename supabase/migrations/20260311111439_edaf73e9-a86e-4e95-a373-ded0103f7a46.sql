@@ -1,0 +1,1 @@
+CREATE POLICY "sessions_delete_own" ON public.sessions FOR DELETE TO public USING (user_id = auth.uid());
