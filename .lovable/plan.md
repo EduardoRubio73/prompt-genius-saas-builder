@@ -1,39 +1,45 @@
 
 
-# Adaptar Modo Prompt: largura do card + seletor de plataformas agrupado
+## Fix: Admin Credits Not Saving
 
-## Mudanças
+### Root Causes
 
-### 1. Card "Texto Livre" em largura total (`src/components/prompt/PromptInput.tsx`)
-- Remover o `prompt-two-panel` grid wrapper — ambos os modos (free e manual) já são mutuamente exclusivos, não precisam de grid
-- O card "Descreva o que precisa" passa a ocupar 100% da largura, igual ao "Campos Manuais"
+1. **Missing data**: `admin_users_overview` view doesn't include `plan_credits_total`, `bonus_credits_total`, etc. The form defaults to `0` instead of the real values.
+2. **JS falsy bug**: Line 88 uses `form.plan_credits_total || undefined` — when the value is `0`, `0 || undefined` evaluates to `undefined`, so the field is omitted from the update.
 
-### 2. Seletor de plataformas agrupado com collapsible
-Substituir os pills planos por grupos colapsáveis baseados no código de referência do usuário:
+### Solution
 
-```text
-🏗️ Builders  → Lovable, Bolt.new, Replit, v0.dev
-💻 IDEs       → Cursor, Windsurf, GitHub Copilot  
-🤖 LLMs       → ChatGPT, Claude, Gemini, Grok, DeepSeek, Mistral, Perplexity
+**1. Fetch actual org data when dialog opens**
+- In `UserDetailDialog`, add a query to fetch the organization record directly from `organizations` table using `user.org_id`
+- Initialize `plan_credits_total` and `bonus_credits_total` from the real org data
+
+**2. Fix the save logic**
+- Remove `|| undefined` guards — always send `plan_credits_total` and `bonus_credits_total` to the update call
+- This ensures `0` is a valid value that gets saved
+
+### Files to Edit
+
+| File | Change |
+|------|--------|
+| `src/pages/admin/AdminUsers.tsx` | Add org data fetch, fix form init + save logic |
+
+### Details
+
+```tsx
+// Add useEffect to load real org data
+const [orgData, setOrgData] = useState<any>(null);
+useEffect(() => {
+  if (user.org_id) {
+    supabase.from("organizations").select("plan_credits_total, bonus_credits_total, plan_credits_used, bonus_credits_used").eq("id", user.org_id).single()
+      .then(({ data }) => {
+        if (data) {
+          setForm(f => ({ ...f, plan_credits_total: data.plan_credits_total, bonus_credits_total: data.bonus_credits_total }));
+        }
+      });
+  }
+}, [user.org_id]);
+
+// Fix save — no more || undefined
+updates: { plan_tier: form.plan_tier, is_active: form.is_active, plan_credits_total: form.plan_credits_total, bonus_credits_total: form.bonus_credits_total }
 ```
-
-- Cada grupo é um `Collapsible` com header clicável e conteúdo com pills
-- Mapeamento para o enum `destination_platform` do banco:
-  - Plataformas existentes no enum: `lovable`, `chatgpt`, `claude`, `gemini`, `cursor`, `v0`
-  - Novas (bolt, replit, windsurf, copilot, grok, deepseek, mistral, perplexity): mapeiam para `"outro"`
-  - O valor selecionado real (string) será passado para exibição, mas o `destino` para o Supabase usa o enum válido
-
-### 3. CSS para os grupos (`src/pages/misto/misto.css`)
-- Adicionar estilos para `.platform-group`, `.platform-group-header`, `.platform-group-pills`
-- Estilo consistente com o design existente (cores, border-radius, fontes do tema)
-
-### Arquivos modificados
-
-| Arquivo | Mudança |
-|---------|---------|
-| `src/components/prompt/PromptInput.tsx` | Largura 100% para free text, seletor agrupado |
-| `src/pages/misto/misto.css` | Estilos dos grupos de plataforma |
-
-### Nota sobre enum do banco
-As plataformas novas (Bolt, Replit, Windsurf, Copilot, Grok, DeepSeek, Mistral, Perplexity) não existem no enum `destination_platform`. Elas serão mapeadas para `"outro"` no Supabase, mas o nome real será mantido no campo `destino` dos fields manuais para contexto na geração do prompt.
 
