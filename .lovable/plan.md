@@ -1,45 +1,38 @@
 
 
-## Fix: Admin Credits Not Saving
+# Unificar modal de detalhes do Histórico com UnifiedMemoryDetailDialog
 
-### Root Causes
+## Problema
+O botão "Ver" no Histórico abre o `SessionDetailDialog` — um modal simples sem botão de copiar, sem campos estruturados (persona, tarefa, etc.), e com scroll no header. O usuário quer reusar o `UnifiedMemoryDetailDialog` (o modal verde com campos, copiar, favoritar) para TODAS as sessões.
 
-1. **Missing data**: `admin_users_overview` view doesn't include `plan_credits_total`, `bonus_credits_total`, etc. The form defaults to `0` instead of the real values.
-2. **JS falsy bug**: Line 88 uses `form.plan_credits_total || undefined` — when the value is `0`, `0 || undefined` evaluates to `undefined`, so the field is omitted from the update.
+## Plano
 
-### Solution
+### 1. `src/pages/HistoryPage.tsx`
+- Remover import do `SessionDetailDialog`
+- Importar `UnifiedMemoryDetailDialog` e tipo `UnifiedMemoryEntry`
+- Alterar `handleView`: ao clicar "Ver", buscar os dados completos da sessão no Supabase (`prompt_memory`, `saas_specs`, ou `build_projects` conforme o `mode`) e montar um objeto `UnifiedMemoryEntry` completo
+- Criar state `selectedEntry: UnifiedMemoryEntry | null` no lugar de `selectedSession`
+- Passar `selectedEntry` ao `UnifiedMemoryDetailDialog` com callbacks de copiar/favoritar/excluir
+- Adicionar state `entryLoading` para mostrar feedback enquanto busca
 
-**1. Fetch actual org data when dialog opens**
-- In `UserDetailDialog`, add a query to fetch the organization record directly from `organizations` table using `user.org_id`
-- Initialize `plan_credits_total` and `bonus_credits_total` from the real org data
+### 2. Lógica de fetch no `handleView`
+- Se `session.mode === "prompt"` ou `"misto"`: buscar em `prompt_memory` by `session_id`, mapear para `UnifiedMemoryEntry` (com persona, tarefa, objetivo, etc.)
+- Se `session.mode === "saas"`: buscar em `saas_specs` by `session_id`, mapear com `answers`, `spec_md`
+- Se `session.mode === "build"`: buscar em `build_projects` by `session_id`, mapear com `answers`, `project_name`
+- Se nenhum registro encontrado, criar entry mínimo com `raw_input` como `fullContent`
 
-**2. Fix the save logic**
-- Remove `|| undefined` guards — always send `plan_credits_total` and `bonus_credits_total` to the update call
-- This ensures `0` is a valid value that gets saved
+### 3. Eliminar `SessionDetailDialog`
+- Pode ser deletado (`src/components/history/SessionDetailDialog.tsx`) pois não será mais usado
 
-### Files to Edit
+### 4. Fix scroll no header do `UnifiedMemoryDetailDialog`
+- O header já tem `sticky top-0 bg-card z-10` — o `overflow-y-auto` está no `DialogContent` (linha 138), o que é correto
+- Mover `overflow-y-auto` do `DialogContent` para o body `div` (linha 187) para que o header e footer fiquem fixos e apenas o body faça scroll
+- Usar `flex flex-col` no `DialogContent` e `flex-1 overflow-y-auto` no body
 
-| File | Change |
-|------|--------|
-| `src/pages/admin/AdminUsers.tsx` | Add org data fetch, fix form init + save logic |
-
-### Details
-
-```tsx
-// Add useEffect to load real org data
-const [orgData, setOrgData] = useState<any>(null);
-useEffect(() => {
-  if (user.org_id) {
-    supabase.from("organizations").select("plan_credits_total, bonus_credits_total, plan_credits_used, bonus_credits_used").eq("id", user.org_id).single()
-      .then(({ data }) => {
-        if (data) {
-          setForm(f => ({ ...f, plan_credits_total: data.plan_credits_total, bonus_credits_total: data.bonus_credits_total }));
-        }
-      });
-  }
-}, [user.org_id]);
-
-// Fix save — no more || undefined
-updates: { plan_tier: form.plan_tier, is_active: form.is_active, plan_credits_total: form.plan_credits_total, bonus_credits_total: form.bonus_credits_total }
-```
+### Arquivos modificados
+| Arquivo | Ação |
+|---------|------|
+| `src/pages/HistoryPage.tsx` | Substituir `SessionDetailDialog` por `UnifiedMemoryDetailDialog`, fetch completo |
+| `src/components/UnifiedMemoryDetailDialog.tsx` | Fix scroll: header/footer fixos, body scrollável |
+| `src/components/history/SessionDetailDialog.tsx` | Deletar (não mais usado) |
 
