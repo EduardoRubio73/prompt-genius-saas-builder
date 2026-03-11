@@ -186,8 +186,9 @@ export default function Dashboard() {
     queryClient.invalidateQueries({ queryKey: ["quota-balance", orgId] });
   };
 
-  const renewalDate = quota?.current_period_end
-    ? new Date(quota.current_period_end).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })
+  const renewalRaw = quota?.reset_at || quota?.current_period_end;
+  const renewalDate = renewalRaw
+    ? new Date(renewalRaw).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })
     : "—";
 
   const planBadgeClasses = getPlanBadgeClasses(quota?.plan_name);
