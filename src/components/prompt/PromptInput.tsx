@@ -1,14 +1,48 @@
+import { useState } from "react";
 import type { Enums } from "@/integrations/supabase/types";
 import type { MistoFields } from "@/pages/misto/MistoMode";
 import { InfoTooltip } from "@/components/ui/info-tooltip";
+import { ChevronDown } from "lucide-react";
 
-const platforms: { label: string; value: Enums<"destination_platform"> }[] = [
-  { label: "Lovable", value: "lovable" },
-  { label: "ChatGPT", value: "chatgpt" },
-  { label: "Claude", value: "claude" },
-  { label: "Gemini", value: "gemini" },
-  { label: "Cursor", value: "cursor" },
-  { label: "v0.dev", value: "v0" },
+type DbPlatform = Enums<"destination_platform">;
+
+interface PlatformOption {
+  id: string;
+  name: string;
+  emoji: string;
+  dbValue: DbPlatform;
+}
+
+const platformGroups: { label: string; items: PlatformOption[] }[] = [
+  {
+    label: "🏗️ Builders",
+    items: [
+      { id: "lovable", name: "Lovable", emoji: "❤️", dbValue: "lovable" },
+      { id: "bolt", name: "Bolt.new", emoji: "⚡", dbValue: "outro" },
+      { id: "replit", name: "Replit", emoji: "🔁", dbValue: "outro" },
+      { id: "v0", name: "v0.dev", emoji: "▲", dbValue: "v0" },
+    ],
+  },
+  {
+    label: "💻 IDEs",
+    items: [
+      { id: "cursor", name: "Cursor", emoji: "🖱️", dbValue: "cursor" },
+      { id: "windsurf", name: "Windsurf", emoji: "🏄", dbValue: "outro" },
+      { id: "copilot", name: "GitHub Copilot", emoji: "🐙", dbValue: "outro" },
+    ],
+  },
+  {
+    label: "🤖 LLMs",
+    items: [
+      { id: "chatgpt", name: "ChatGPT", emoji: "🟢", dbValue: "chatgpt" },
+      { id: "claude", name: "Claude", emoji: "🟠", dbValue: "claude" },
+      { id: "gemini", name: "Gemini", emoji: "✨", dbValue: "gemini" },
+      { id: "grok", name: "Grok", emoji: "𝕏", dbValue: "outro" },
+      { id: "deepseek", name: "DeepSeek", emoji: "🔵", dbValue: "outro" },
+      { id: "mistral", name: "Mistral", emoji: "🌪️", dbValue: "outro" },
+      { id: "perplexity", name: "Perplexity", emoji: "🔍", dbValue: "outro" },
+    ],
+  },
 ];
 
 const fieldDefs = [
@@ -46,6 +80,18 @@ export function PromptInput({
     ? freeLen >= 30 && freeLen <= 600 && !isGenerating
     : manualFilled >= 3 && !isGenerating;
 
+  // Track which platform id is selected (for display) + open groups
+  const [selectedPlatformId, setSelectedPlatformId] = useState("lovable");
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({ "🏗️ Builders": true });
+
+  const toggleGroup = (group: string) =>
+    setOpenGroups(prev => ({ ...prev, [group]: !prev[group] }));
+
+  const selectPlatform = (p: PlatformOption) => {
+    setSelectedPlatformId(p.id);
+    onDestinoChange(p.dbValue);
+  };
+
   return (
     <div className="misto-step-enter">
       {/* Mode toggle */}
@@ -58,68 +104,86 @@ export function PromptInput({
         </button>
       </div>
 
-      <div className="prompt-two-panel" style={inputMode === "manual" ? { gridTemplateColumns: "1fr" } : undefined}>
-        {/* Left panel: free text */}
-        {inputMode === "free" && (
-          <div className="prompt-panel">
-            <div className="misto-input-label" style={{ display: "flex", alignItems: "center", gap: 6 }}>
-              💡 Descreva o que precisa
-              <InfoTooltip content="Descreva em linguagem natural. A IA extrai automaticamente especialidade, persona, tarefa e outros campos. Mínimo 30 caracteres." />
-            </div>
-            <textarea
-              className="misto-textarea"
-              placeholder="Descreva o que você precisa em texto livre. A IA vai extrair os campos automaticamente e gerar o prompt otimizado..."
-              value={freeText}
-              onChange={(e) => onFreeTextChange(e.target.value.slice(0, 600))}
-              disabled={isGenerating}
-              style={{ minHeight: 220 }}
-            />
-            <div className={`misto-char-count ${freeLen < 30 ? "warning" : ""}`}>
-              {freeLen} / 600 {freeLen < 30 && "(mín. 30)"}
-            </div>
+      {/* Left panel: free text — full width */}
+      {inputMode === "free" && (
+        <div className="prompt-panel">
+          <div className="misto-input-label" style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            💡 Descreva o que precisa
+            <InfoTooltip content="Descreva em linguagem natural. A IA extrai automaticamente especialidade, persona, tarefa e outros campos. Mínimo 30 caracteres." />
           </div>
-        )}
+          <textarea
+            className="misto-textarea"
+            placeholder="Descreva o que você precisa em texto livre. A IA vai extrair os campos automaticamente e gerar o prompt otimizado..."
+            value={freeText}
+            onChange={(e) => onFreeTextChange(e.target.value.slice(0, 600))}
+            disabled={isGenerating}
+            style={{ minHeight: 220 }}
+          />
+          <div className={`misto-char-count ${freeLen < 30 ? "warning" : ""}`}>
+            {freeLen} / 600 {freeLen < 30 && "(mín. 30)"}
+          </div>
+        </div>
+      )}
 
-        {/* Manual fields */}
-        {inputMode === "manual" && (
-          <div className="prompt-panel">
-            <div className="misto-input-label">📝 Preencha os campos diretamente</div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-              {fieldDefs.map((f) => (
-                <div key={f.key} className="prompt-field-group">
-                  <div className="prompt-field-label" style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                    {f.icon} {f.label}
-                    <InfoTooltip content={f.tip} />
-                  </div>
-                  <input
-                    className="prompt-field-input"
-                    placeholder={f.placeholder}
-                    value={manualFields[f.key]}
-                    onChange={(e) => onManualFieldsChange({ ...manualFields, [f.key]: e.target.value })}
-                    disabled={isGenerating}
-                  />
+      {/* Manual fields — full width */}
+      {inputMode === "manual" && (
+        <div className="prompt-panel">
+          <div className="misto-input-label">📝 Preencha os campos diretamente</div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+            {fieldDefs.map((f) => (
+              <div key={f.key} className="prompt-field-group">
+                <div className="prompt-field-label" style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  {f.icon} {f.label}
+                  <InfoTooltip content={f.tip} />
                 </div>
-              ))}
-            </div>
-            <div style={{ fontSize: 12, color: "hsl(var(--mode-text-muted))", marginTop: 8 }}>
-              Preencha pelo menos 3 campos para gerar ({manualFilled}/6 preenchidos)
-            </div>
+                <input
+                  className="prompt-field-input"
+                  placeholder={f.placeholder}
+                  value={manualFields[f.key]}
+                  onChange={(e) => onManualFieldsChange({ ...manualFields, [f.key]: e.target.value })}
+                  disabled={isGenerating}
+                />
+              </div>
+            ))}
           </div>
-        )}
-      </div>
+          <div style={{ fontSize: 12, color: "hsl(var(--mode-text-muted))", marginTop: 8 }}>
+            Preencha pelo menos 3 campos para gerar ({manualFilled}/6 preenchidos)
+          </div>
+        </div>
+      )}
 
-      {/* Platform selector */}
+      {/* Platform selector — grouped collapsible */}
       <div style={{ marginTop: 20 }}>
         <div className="misto-destino-label" style={{ display: "flex", alignItems: "center", gap: 6 }}>
           🚀 Plataforma de destino
           <InfoTooltip content="Escolha onde o prompt será usado. Cada plataforma tem otimizações específicas de formato e linguagem." />
         </div>
-        <div className="misto-destino-pills">
-          {platforms.map((p) => (
-            <button key={p.value} className={`misto-dp ${destino === p.value ? "sel" : ""}`}
-              onClick={() => onDestinoChange(p.value)} type="button">
-              {p.label}
-            </button>
+        <div className="platform-groups">
+          {platformGroups.map((group) => (
+            <div key={group.label} className={`platform-group ${openGroups[group.label] ? "open" : ""}`}>
+              <button
+                className="platform-group-header"
+                onClick={() => toggleGroup(group.label)}
+                type="button"
+              >
+                <span>{group.label}</span>
+                <ChevronDown className={`platform-group-chevron ${openGroups[group.label] ? "rotated" : ""}`} />
+              </button>
+              {openGroups[group.label] && (
+                <div className="platform-group-pills">
+                  {group.items.map((p) => (
+                    <button
+                      key={p.id}
+                      className={`misto-dp ${selectedPlatformId === p.id ? "sel" : ""}`}
+                      onClick={() => selectPlatform(p)}
+                      type="button"
+                    >
+                      {p.emoji} {p.name}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           ))}
         </div>
       </div>
