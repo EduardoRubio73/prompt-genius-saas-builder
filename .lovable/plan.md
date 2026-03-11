@@ -1,45 +1,68 @@
 
 
-## Fix: Admin Credits Not Saving
+# Refatoração: Modais, Histórico, Cotas Dinâmicas
 
-### Root Causes
+## 1. Botão "Ver" abre modal de detalhes (não navega)
 
-1. **Missing data**: `admin_users_overview` view doesn't include `plan_credits_total`, `bonus_credits_total`, etc. The form defaults to `0` instead of the real values.
-2. **JS falsy bug**: Line 88 uses `form.plan_credits_total || undefined` — when the value is `0`, `0 || undefined` evaluates to `undefined`, so the field is omitted from the update.
+**Arquivo: `src/pages/HistoryPage.tsx`**
 
-### Solution
+- Adicionar state `selectedSession` e `detailOpen` no `HistoryPage`
+- Buscar dados extras da sessão ao clicar "Ver": consultar `prompt_memory` ou `saas_specs` vinculados ao `session_id`
+- Criar componente `SessionDetailDialog` usando `Dialog`/`DialogContent` do Shadcn (já disponível) que exibe:
+  - Modo, status, tokens, duração, data
+  - `raw_input` completo
+  - Conteúdo gerado (prompt/spec) se encontrado nas tabelas vinculadas
+- O botão "Ver" no `SessionCard` passa a chamar `onClick` (prop) em vez de `navigate`
 
-**1. Fetch actual org data when dialog opens**
-- In `UserDetailDialog`, add a query to fetch the organization record directly from `organizations` table using `user.org_id`
-- Initialize `plan_credits_total` and `bonus_credits_total` from the real org data
+## 2. Fix status: "Concluída" vs "Incompleta"
 
-**2. Fix the save logic**
-- Remove `|| undefined` guards — always send `plan_credits_total` and `bonus_credits_total` to the update call
-- This ensures `0` is a valid value that gets saved
+**Arquivo: `src/pages/HistoryPage.tsx`**
 
-### Files to Edit
+O código já exibe corretamente baseado em `session.completed` (linha 60). O problema é que as sessions são inseridas com `completed: false` e só atualizadas para `true` ao final do fluxo. Se o fluxo completa mas o update falha ou a query retorna dados desatualizados, aparece "Incompleta".
 
-| File | Change |
-|------|--------|
-| `src/pages/admin/AdminUsers.tsx` | Add org data fetch, fix form init + save logic |
+Ação: Além de `sessions`, fazer LEFT JOIN com `prompt_memory`/`saas_specs` pelo `session_id` — se existir registro vinculado, considerar a sessão como concluída mesmo que `completed = false`. Isso corrige o bug visual.
 
-### Details
+Alternativamente, renomear "Concluída" → "Finalizada" e "Incompleta" → "Em andamento" para melhor UX.
 
-```tsx
-// Add useEffect to load real org data
-const [orgData, setOrgData] = useState<any>(null);
-useEffect(() => {
-  if (user.org_id) {
-    supabase.from("organizations").select("plan_credits_total, bonus_credits_total, plan_credits_used, bonus_credits_used").eq("id", user.org_id).single()
-      .then(({ data }) => {
-        if (data) {
-          setForm(f => ({ ...f, plan_credits_total: data.plan_credits_total, bonus_credits_total: data.bonus_credits_total }));
-        }
-      });
-  }
-}, [user.org_id]);
+## 3. Cotas dinâmicas por modalidade
 
-// Fix save — no more || undefined
-updates: { plan_tier: form.plan_tier, is_active: form.is_active, plan_credits_total: form.plan_credits_total, bonus_credits_total: form.bonus_credits_total }
-```
+**Arquivo: `src/pages/HistoryPage.tsx`** e **`src/components/dashboard/QuotaCard.tsx`**
+
+- No `HistoryPage`, importar `useQuotaBalance` e exibir um mini-resumo de cotas filtrado pelo modo selecionado
+- Ao selecionar um filtro de modo (ex: "Prompt"), mostrar badge: "Você pode gerar até X Prompts"
+- Cálculo: `Math.floor(totalRemaining / cost)` onde cost vem do `ACTION_COSTS` map
+
+Adicionar ao `HistoryPage` um bloco condicional entre filtros e lista que mostra o contador dinâmico.
+
+## 4. Modais — botão X e z-index
+
+**`src/components/misto/CreditModal.tsx`**: Adicionar botão X (atualmente não tem) e usar z-index `z-[400]` no overlay.
+
+**`src/components/dashboard/ShareModal.tsx`**: Já tem botão X e z-[300]. OK.
+
+**`src/components/UnifiedMemoryDetailDialog.tsx`**: Já usa Shadcn Dialog que inclui botão X. OK.
+
+## Arquivos a modificar
+
+| Arquivo | Mudança |
+|---------|---------|
+| `src/pages/HistoryPage.tsx` | Modal de detalhes, cotas dinâmicas, fix status |
+| `src/components/misto/CreditModal.tsx` | Botão X, z-index fix |
+
+## Detalhes técnicos
+
+### SessionDetailDialog (inline no HistoryPage)
+- Usa `Dialog` do Shadcn
+- Ao abrir, faz query: `supabase.from("prompt_memory").select("*").eq("session_id", id).maybeSingle()` + `supabase.from("saas_specs").select("*").eq("session_id", id).maybeSingle()`
+- Exibe loading skeleton enquanto busca
+- Mostra conteúdo estruturado: modo, status, raw_input, prompt_gerado/spec_md
+
+### Cotas dinâmicas
+- Costs map: `{ prompt: 1, saas: 2, misto: 2, build: 5 }`
+- Quando `modeFilter !== "all"`, mostrar: "Com seu saldo atual, você pode gerar até {n} {mode}"
+- Usa dados do `useQuotaBalance`
+
+### CreditModal
+- Wrapper: `z-[400]` para ficar acima de tudo
+- Adicionar botão X no canto superior direito com `<X className="h-4 w-4" />`
 
