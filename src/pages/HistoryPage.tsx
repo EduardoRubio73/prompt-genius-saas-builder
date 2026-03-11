@@ -9,7 +9,8 @@ import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 import { DashboardDock } from "@/components/dashboard/DashboardDock";
 import { ShareModal } from "@/components/dashboard/ShareModal";
-import { SessionDetailDialog } from "@/components/history/SessionDetailDialog";
+import { UnifiedMemoryDetailDialog } from "@/components/UnifiedMemoryDetailDialog";
+import type { UnifiedMemoryEntry } from "@/hooks/useUnifiedMemory";
 import { useQuotaBalance } from "@/hooks/useQuotaBalance";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -127,7 +128,8 @@ export default function HistoryPage() {
   const [statusFilter, setStatusFilter] = useState<"all" | "completed" | "incomplete">("all");
   const [shareOpen, setShareOpen] = useState(false);
   const [detailOpen, setDetailOpen] = useState(false);
-  const [selectedSession, setSelectedSession] = useState<Session | null>(null);
+  const [selectedEntry, setSelectedEntry] = useState<UnifiedMemoryEntry | null>(null);
+  const [entryLoading, setEntryLoading] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Session | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -144,7 +146,6 @@ export default function HistoryPage() {
 
       const rawSessions = (data as Session[]) ?? [];
 
-      // Check which sessions have linked outputs to fix status
       const sessionIds = rawSessions.map((s) => s.id);
       
       const [{ data: prompts }, { data: specs }, { data: builds }] = await Promise.all([
@@ -181,7 +182,6 @@ export default function HistoryPage() {
   const completedCount = sessions.filter((s) => s.completed || s.has_output).length;
   const totalTokens = sessions.reduce((sum, s) => sum + s.tokens_total, 0);
 
-  // Dynamic quota calculation
   const quotaInfo = useMemo(() => {
     if (modeFilter === "all" || !quota) return null;
     const cost = MODE_COSTS[modeFilter] ?? 1;
@@ -190,9 +190,138 @@ export default function HistoryPage() {
     return { maxActions, label: MODE_META[modeFilter]?.label ?? modeFilter, remaining };
   }, [modeFilter, quota]);
 
-  const handleView = (session: Session) => {
-    setSelectedSession(session);
+  const handleView = async (session: Session) => {
+    setEntryLoading(true);
     setDetailOpen(true);
+    setSelectedEntry(null);
+
+    try {
+      if (session.mode === "prompt" || session.mode === "misto") {
+        const { data } = await supabase
+          .from("prompt_memory")
+          .select("id, categoria, especialidade, rating, prompt_gerado, created_at, tags, persona, tarefa, objetivo, contexto, formato, restricoes, referencias, destino, session_id, is_favorite")
+          .eq("session_id", session.id)
+          .maybeSingle();
+
+        if (data) {
+          setSelectedEntry({
+            id: data.id,
+            type: data.categoria === "misto" ? "mixed" : "prompt",
+            title: data.especialidade || data.categoria || "Prompt sem título",
+            preview: data.prompt_gerado?.slice(0, 120) || "",
+            fullContent: data.prompt_gerado || "",
+            rating: data.rating,
+            is_favorite: data.is_favorite ?? false,
+            tags: data.tags,
+            categoria: data.categoria,
+            created_at: data.created_at ?? session.created_at,
+            especialidade: data.especialidade,
+            persona: data.persona,
+            tarefa: data.tarefa,
+            objetivo: data.objetivo,
+            contexto: data.contexto,
+            formato: data.formato,
+            restricoes: data.restricoes,
+            referencias: data.referencias,
+            destino: data.destino,
+            session_id: data.session_id,
+          });
+          return;
+        }
+      }
+
+      if (session.mode === "saas") {
+        const { data } = await supabase
+          .from("saas_specs")
+          .select("id, project_name, spec_md, rating, created_at, is_favorite, answers, session_id")
+          .eq("session_id", session.id)
+          .maybeSingle();
+
+        if (data) {
+          setSelectedEntry({
+            id: data.id,
+            type: "saas",
+            title: data.project_name || "Spec sem título",
+            preview: data.spec_md?.slice(0, 120) || "",
+            fullContent: data.spec_md || "",
+            rating: data.rating,
+            is_favorite: data.is_favorite ?? false,
+            tags: null,
+            categoria: "SaaS Spec",
+            created_at: data.created_at ?? session.created_at,
+            project_name: data.project_name,
+            answers: data.answers as Record<string, unknown> | null,
+            session_id: data.session_id,
+          });
+          return;
+        }
+      }
+
+      if (session.mode === "build") {
+        const { data } = await supabase
+          .from("build_projects")
+          .select("id, project_name, answers, outputs, rating, created_at, is_favorite, session_id")
+          .eq("session_id", session.id)
+          .maybeSingle();
+
+        if (data) {
+          const outputs = data.outputs as Record<string, string> | null;
+          const fullContent = outputs ? Object.values(outputs).filter(Boolean).join("\n\n---\n\n") : "";
+          setSelectedEntry({
+            id: data.id,
+            type: "build",
+            title: data.project_name || "Projeto sem título",
+            preview: fullContent.slice(0, 120),
+            fullContent,
+            rating: data.rating,
+            is_favorite: data.is_favorite ?? false,
+            tags: null,
+            categoria: "Build",
+            created_at: data.created_at ?? session.created_at,
+            project_name: data.project_name,
+            answers: data.answers as Record<string, unknown> | null,
+            session_id: data.session_id,
+          });
+          return;
+        }
+      }
+
+      // Fallback: no linked output found
+      setSelectedEntry({
+        id: session.id,
+        type: session.mode === "misto" ? "mixed" : (session.mode as any),
+        title: MODE_META[session.mode]?.label ?? "Sessão",
+        preview: session.raw_input?.slice(0, 120) || "",
+        fullContent: session.raw_input || "Nenhum resultado encontrado para esta sessão.",
+        rating: null,
+        is_favorite: false,
+        tags: null,
+        categoria: null,
+        created_at: session.created_at,
+        session_id: session.id,
+      });
+    } finally {
+      setEntryLoading(false);
+    }
+  };
+
+  const handleToggleFavorite = async (entry: UnifiedMemoryEntry) => {
+    const table = entry.type === "build" ? "build_projects"
+      : entry.type === "saas" ? "saas_specs"
+      : "prompt_memory";
+    const newVal = !entry.is_favorite;
+    await supabase.from(table).update({ is_favorite: newVal }).eq("id", entry.id);
+    setSelectedEntry((prev) => prev ? { ...prev, is_favorite: newVal } : prev);
+  };
+
+  const handleDeleteEntry = async (entry: UnifiedMemoryEntry) => {
+    const table = entry.type === "build" ? "build_projects"
+      : entry.type === "saas" ? "saas_specs"
+      : "prompt_memory";
+    await supabase.from(table).delete().eq("id", entry.id);
+    setDetailOpen(false);
+    setSelectedEntry(null);
+    toast.success("Entrada removida.");
   };
 
   const handleDelete = async () => {
@@ -306,7 +435,14 @@ export default function HistoryPage() {
 
       <DashboardDock sessionCount={sessions.length} onShareOpen={() => setShareOpen(true)} />
       <ShareModal open={shareOpen} onOpenChange={setShareOpen} orgId={orgId} />
-      <SessionDetailDialog open={detailOpen} onOpenChange={setDetailOpen} session={selectedSession} />
+
+      <UnifiedMemoryDetailDialog
+        entry={selectedEntry}
+        open={detailOpen}
+        onOpenChange={setDetailOpen}
+        onToggleFavorite={handleToggleFavorite}
+        onDelete={handleDeleteEntry}
+      />
 
       <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
         <AlertDialogContent>
