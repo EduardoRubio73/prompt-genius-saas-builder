@@ -197,11 +197,16 @@ export default function HistoryPage() {
 
     try {
       if (session.mode === "prompt" || session.mode === "misto") {
-        const { data } = await supabase
-          .from("prompt_memory")
-          .select("id, categoria, especialidade, rating, prompt_gerado, created_at, tags, persona, tarefa, objetivo, contexto, formato, restricoes, referencias, destino, session_id, is_favorite")
-          .eq("session_id", session.id)
-          .maybeSingle();
+        const [{ data }, specResult] = await Promise.all([
+          supabase
+            .from("prompt_memory")
+            .select("id, categoria, especialidade, rating, prompt_gerado, created_at, tags, persona, tarefa, objetivo, contexto, formato, restricoes, referencias, destino, session_id, is_favorite")
+            .eq("session_id", session.id)
+            .maybeSingle(),
+          session.mode === "misto"
+            ? supabase.from("saas_specs").select("spec_md").eq("session_id", session.id).maybeSingle()
+            : Promise.resolve({ data: null } as { data: null }),
+        ]);
 
         if (data) {
           setSelectedEntry({
@@ -225,6 +230,7 @@ export default function HistoryPage() {
             referencias: data.referencias,
             destino: data.destino,
             session_id: data.session_id,
+            spec_md: (specResult?.data as any)?.spec_md || null,
           });
           return;
         }
@@ -281,6 +287,7 @@ export default function HistoryPage() {
             project_name: data.project_name,
             answers: data.answers as Record<string, unknown> | null,
             session_id: data.session_id,
+            outputs,
           });
           return;
         }

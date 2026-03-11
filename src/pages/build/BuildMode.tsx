@@ -842,32 +842,30 @@ export default function BuildMode() {
 
       await supabase.from("sessions").update({ completed: true, raw_input: answers.problema }).eq("id", currentSessionId);
       fetchBalance();
+
+      // Auto-save
+      try {
+        await supabase.from("build_projects").insert({
+          session_id: currentSessionId,
+          org_id: orgId,
+          user_id: user.id,
+          project_name: answers.appName || answers.productName,
+          answers: answers as any,
+          outputs: result as any,
+        });
+        setIsSaved(true);
+        setMemoryRefreshKey(k => k + 1);
+        toast.success("✅ Salvo automaticamente");
+      } catch (e) {
+        console.warn("Auto-save falhou:", e);
+      }
+
       toast.success("🚀 Projeto BUILD gerado com sucesso!");
     } catch (err: any) {
       toast.error(err.message || "Erro ao gerar projeto.");
       setStep(10);
     }
   }, [orgId, user, answers, fetchBalance]);
-
-  const handleSave = useCallback(async () => {
-    if (!orgId || !user) return;
-    try {
-      const { error } = await supabase.from("build_projects").insert({
-        session_id: sessionId,
-        org_id: orgId,
-        user_id: user.id,
-        project_name: answers.appName || answers.productName,
-        answers: answers as any,
-        outputs: outputs as any,
-      });
-      if (error) throw error;
-      setIsSaved(true);
-      setMemoryRefreshKey(k => k + 1);
-      toast.success("Projeto salvo com sucesso!");
-    } catch (err: any) {
-      toast.error("Erro ao salvar: " + (err.message || ""));
-    }
-  }, [orgId, user, answers, outputs, sessionId]);
 
   const handleDownloadZip = useCallback(async () => {
     const zip = new JSZip();
@@ -946,9 +944,7 @@ export default function BuildMode() {
                 <div className="misto-rh-actions">
                   <button className="misto-btn-sm" onClick={handleNewSession}>Novo Projeto</button>
                   <button className="misto-btn-sm" onClick={handleDownloadZip}>⬇ ZIP</button>
-                  <button className="misto-btn-sm misto-btn-sm-g" onClick={handleSave} disabled={isSaved}>
-                    {isSaved ? "Salvo ✓" : "Salvar"}
-                  </button>
+                  <span className="misto-btn-sm misto-btn-sm-g" style={{ opacity: 0.7, cursor: "default" }}>Salvo ✓</span>
                 </div>
               </div>
 

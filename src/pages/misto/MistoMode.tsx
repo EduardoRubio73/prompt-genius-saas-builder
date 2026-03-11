@@ -136,42 +136,40 @@ export default function MistoMode() {
       await supabase.from("sessions").update({ completed: true, raw_input: userInput }).eq("id", currentSessionId);
 
       fetchBalance();
+
+      // Auto-save
+      const now = new Date().toISOString();
+      try {
+        const { data: promptRecord, error: promptErr } = await supabase
+          .from("prompt_memory").insert({
+            session_id: currentSessionId, org_id: orgId, user_id: user.id,
+            especialidade: refinedFields.especialidade, persona: refinedFields.persona,
+            tarefa: refinedFields.tarefa, objetivo: refinedFields.objetivo, contexto: refinedFields.contexto,
+            destino, prompt_gerado: refineData.prompt_gerado || "", rating: null, categoria: "misto",
+            created_at: now,
+          }).select().single();
+        if (promptErr) throw promptErr;
+
+        await supabase.from("saas_specs").insert({
+          session_id: currentSessionId, org_id: orgId, user_id: user.id,
+          prompt_memory_id: promptRecord.id, spec_md: specData.spec_md || "",
+          rating: null, answers: { original_input: userInput, destino },
+          created_at: now,
+        });
+
+        setIsSaved(true);
+        setMemoryRefreshKey(k => k + 1);
+        toast.success("✅ Salvo automaticamente");
+      } catch (e) {
+        console.warn("Auto-save falhou:", e);
+      }
+
       toast.success("💰 Modo Misto concluído! Você economizou ~R$ 25,00 vs fazer manualmente.");
     } catch (err: any) {
       toast.error(err.message || "Erro ao processar. Tente novamente.");
       setStep("input");
     }
   }, [orgId, user, userInput, destino, fetchBalance]);
-
-  const handleSave = useCallback(async () => {
-    if (!orgId || !user || !fields) return;
-    const now = new Date().toISOString();
-    try {
-      const { data: promptRecord, error: promptErr } = await supabase
-        .from("prompt_memory").insert({
-          session_id: sessionId, org_id: orgId, user_id: user.id,
-          especialidade: fields.especialidade, persona: fields.persona,
-          tarefa: fields.tarefa, objetivo: fields.objetivo, contexto: fields.contexto,
-          destino, prompt_gerado: promptGerado, rating: promptRating || null, categoria: "misto",
-          created_at: now,
-        }).select().single();
-      if (promptErr) throw promptErr;
-
-      const { error: specErr } = await supabase.from("saas_specs").insert({
-        session_id: sessionId, org_id: orgId, user_id: user.id,
-        prompt_memory_id: promptRecord.id, spec_md: specMarkdown,
-        rating: specRating || null, answers: { original_input: userInput, destino },
-        created_at: now,
-      });
-      if (specErr) throw specErr;
-
-      setIsSaved(true);
-      setMemoryRefreshKey(k => k + 1);
-      toast.success("Sessão salva com sucesso!");
-    } catch (err: any) {
-      toast.error("Erro ao salvar: " + (err.message || ""));
-    }
-  }, [orgId, user, fields, promptGerado, specMarkdown, promptRating, specRating, userInput, destino, sessionId]);
 
   const handleNewSession = () => {
     setStep("input"); setUserInput(""); setFields(null);
@@ -211,7 +209,7 @@ export default function MistoMode() {
             <MistoResults fields={fields} promptGerado={promptGerado} specMarkdown={specMarkdown}
               userInput={userInput} timeElapsed={timeElapsed} promptRating={promptRating}
               specRating={specRating} onPromptRating={setPromptRating} onSpecRating={setSpecRating}
-              onNewSession={handleNewSession} onSave={handleSave} isSaved={isSaved} />
+              onNewSession={handleNewSession} onSave={() => {}} isSaved={true} />
           )}
         </div>
 
