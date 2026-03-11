@@ -125,10 +125,10 @@ function ModeActionCard({
       )}
     >
       <div className={cn(
-        "flex h-[54px] w-[54px] items-center justify-center rounded-2xl mb-1",
+        "flex h-14 w-14 sm:h-16 sm:w-16 items-center justify-center rounded-2xl mb-2",
         disabled ? "bg-muted text-muted-foreground" : cn(colors.iconWrap, colors.text)
       )}>
-        <Icon className="h-7 w-7" />
+        <Icon className="h-7 w-7 sm:h-8 sm:w-8" />
       </div>
 
       <h3 className="font-heading text-sm sm:text-base font-bold tracking-tight">{title}</h3>
