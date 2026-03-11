@@ -26,8 +26,12 @@ import {
   Ban,
   BookOpen,
   Briefcase,
+  Download,
+  FileArchive,
+  ClipboardList,
 } from "lucide-react";
 import { toast } from "sonner";
+import JSZip from "jszip";
 import type { UnifiedMemoryEntry } from "@/hooks/useUnifiedMemory";
 import type { PromptInputs } from "@/lib/prompt-builder";
 
@@ -82,6 +86,19 @@ const BUILD_DOC_LABELS: Record<string, string> = {
   deploy_guide_md: "🚀 Deploy",
 };
 
+const BUILD_DOC_FILES: Record<string, string> = {
+  erd_md: "01-ERD.md",
+  prd_md: "02-PRD.md",
+  rbac_md: "03-RBAC.md",
+  roadmap_md: "04-Roadmap.md",
+  sql_schema: "05-SQL.md",
+  ux_flows_md: "06-FluxosUX.md",
+  admin_doc_md: "07-Admin.md",
+  build_prompt: "08-Prompts.md",
+  test_plan_md: "09-Testes.md",
+  deploy_guide_md: "10-Deploy.md",
+};
+
 const FIELD_META = [
   { key: "persona", label: "Persona", icon: User },
   { key: "tarefa", label: "Tarefa", icon: Briefcase },
@@ -91,6 +108,17 @@ const FIELD_META = [
   { key: "restricoes", label: "Restrições", icon: Ban },
   { key: "referencias", label: "Referências", icon: BookOpen },
 ] as const;
+
+function triggerDownload(blob: Blob, filename: string) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
 
 export function UnifiedMemoryDetailDialog({
   entry,
@@ -127,16 +155,6 @@ export function UnifiedMemoryDetailDialog({
     tabs.push({ key: "spec", label: "🏗️ Spec Técnica" });
   }
 
-  const getActiveContent = (): string => {
-    if (entry.type === "build" && entry.outputs && activeTab !== "main") {
-      return entry.outputs[activeTab] || "";
-    }
-    if (entry.type === "mixed" && activeTab === "spec") {
-      return entry.spec_md || "";
-    }
-    return entry.fullContent;
-  };
-
   const currentActiveTab = tabs.length > 0
     ? (tabs.find((t) => t.key === activeTab) ? activeTab : tabs[0].key)
     : "main";
@@ -155,6 +173,52 @@ export function UnifiedMemoryDetailDialog({
   const handleCopy = async () => {
     await navigator.clipboard.writeText(activeContent);
     toast.success("Conteúdo copiado!");
+  };
+
+  const handleCopyAll = async () => {
+    if (!entry.outputs) return;
+    const allContent = Object.entries(entry.outputs)
+      .filter(([, v]) => v)
+      .map(([k, v]) => `# ${BUILD_DOC_LABELS[k] || k}\n\n${v}`)
+      .join("\n\n---\n\n");
+    await navigator.clipboard.writeText(allContent);
+    toast.success("Toda a documentação copiada!");
+  };
+
+  const handleDownloadZip = async () => {
+    if (!entry.outputs) return;
+    const zip = new JSZip();
+    const docsFolder = zip.folder("docs");
+
+    Object.entries(entry.outputs)
+      .filter(([, v]) => v)
+      .forEach(([key, content]) => {
+        const filename = BUILD_DOC_FILES[key] || `${key}.md`;
+        docsFolder?.file(filename, content);
+      });
+
+    zip.file(
+      "README.md",
+      `# ${entry.title || "Projeto"}\n\nDocumentação gerada automaticamente.\n\n## Arquivos\n\n${
+        Object.entries(entry.outputs)
+          .filter(([, v]) => v)
+          .map(([k]) => `- docs/${BUILD_DOC_FILES[k] || `${k}.md`}`)
+          .join("\n")
+      }\n`
+    );
+
+    const blob = await zip.generateAsync({ type: "blob" });
+    triggerDownload(blob, `${(entry.title || "projeto").replace(/\s+/g, "-").toLowerCase()}-docs.zip`);
+    toast.success("ZIP baixado com sucesso!");
+  };
+
+  const handleDownloadMd = () => {
+    const filename = entry.type === "saas"
+      ? `${(entry.title || "spec").replace(/\s+/g, "-").toLowerCase()}.md`
+      : `${(entry.title || "documento").replace(/\s+/g, "-").toLowerCase()}.md`;
+    const blob = new Blob([activeContent], { type: "text/markdown" });
+    triggerDownload(blob, filename);
+    toast.success("Arquivo .md baixado!");
   };
 
   const handleUseAsBase = () => {
@@ -364,6 +428,24 @@ export function UnifiedMemoryDetailDialog({
               <Trash2 className="w-3.5 h-3.5" /> Excluir
             </Button>
           </div>
+
+          {/* Mode-specific actions */}
+          {entry.type === "build" && entry.outputs && (
+            <>
+              <Button variant="outline" size="sm" className="gap-2" onClick={handleCopyAll}>
+                <ClipboardList className="w-3.5 h-3.5" /> Copiar Tudo
+              </Button>
+              <Button variant="outline" size="sm" className="gap-2" onClick={handleDownloadZip}>
+                <FileArchive className="w-3.5 h-3.5" /> Baixar .zip
+              </Button>
+            </>
+          )}
+
+          {(entry.type === "saas" || entry.type === "mixed") && (
+            <Button variant="outline" size="sm" className="gap-2" onClick={handleDownloadMd}>
+              <Download className="w-3.5 h-3.5" /> Baixar .md
+            </Button>
+          )}
 
           <Button variant="outline" size="sm" className="gap-2" onClick={handleCopy}>
             <Copy className="w-3.5 h-3.5" /> Copiar
