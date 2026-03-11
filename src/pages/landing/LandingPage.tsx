@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { IoShareSocial } from "react-icons/io5"; // Ícone de 3 pontos (padrão Android/Web)
+import { Share2 } from "lucide-react";
 import { toast } from "sonner";
 import "./landing.css";
 
@@ -56,7 +56,7 @@ function ContactModalContent() {
     }
     const subject = encodeURIComponent(`[${category}] Contato via Prompt Genius`);
     const body = encodeURIComponent(message || "Olá, gostaria de saber mais sobre a plataforma.");
-    window.location.href = `mailto:zragencyia@://gmail.com{subject}&body=${body}`;
+    window.location.href = `mailto:zragencyia@gmail.com?subject=${subject}&body=${body}`;
   };
 
   const handleShare = async () => {
@@ -106,7 +106,7 @@ function ContactModalContent() {
       <div className="contact-share">
         <p>🚀 Gostou de nossa plataforma? Compartilhe!</p>
         <button className="contact-share-btn" onClick={handleShare}>
-          <IoShareSocial size={18} /> Compartilhar
+          <Share2 size={18} /> Compartilhar
         </button>
       </div>
     </div>

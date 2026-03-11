@@ -1,17 +1,45 @@
 
 
-# Refatorar LandingPage.tsx
+## Fix: Admin Credits Not Saving
 
-## Problema
-O build falha porque `react-icons/io5` não está instalado. O projeto já usa `lucide-react` para todos os ícones.
+### Root Causes
 
-## Solução
-Substituir `import { IoShareSocial } from "react-icons/io5"` por `import { Share2 } from "lucide-react"` e trocar `<IoShareSocial size={18} />` por `<Share2 size={18} />`.
+1. **Missing data**: `admin_users_overview` view doesn't include `plan_credits_total`, `bonus_credits_total`, etc. The form defaults to `0` instead of the real values.
+2. **JS falsy bug**: Line 88 uses `form.plan_credits_total || undefined` — when the value is `0`, `0 || undefined` evaluates to `undefined`, so the field is omitted from the update.
 
-Também corrigir o mailto malformado na linha 59: `mailto:zragencyia@://gmail.com{subject}` → `mailto:zragencyia@gmail.com?subject=${subject}`.
+### Solution
 
-### Arquivo: `src/pages/landing/LandingPage.tsx`
-- Linha 2: trocar import `react-icons/io5` → `lucide-react` (`Share2`)
-- Linha 59: corrigir URL do mailto
-- Linha 109: trocar `<IoShareSocial>` → `<Share2>`
+**1. Fetch actual org data when dialog opens**
+- In `UserDetailDialog`, add a query to fetch the organization record directly from `organizations` table using `user.org_id`
+- Initialize `plan_credits_total` and `bonus_credits_total` from the real org data
+
+**2. Fix the save logic**
+- Remove `|| undefined` guards — always send `plan_credits_total` and `bonus_credits_total` to the update call
+- This ensures `0` is a valid value that gets saved
+
+### Files to Edit
+
+| File | Change |
+|------|--------|
+| `src/pages/admin/AdminUsers.tsx` | Add org data fetch, fix form init + save logic |
+
+### Details
+
+```tsx
+// Add useEffect to load real org data
+const [orgData, setOrgData] = useState<any>(null);
+useEffect(() => {
+  if (user.org_id) {
+    supabase.from("organizations").select("plan_credits_total, bonus_credits_total, plan_credits_used, bonus_credits_used").eq("id", user.org_id).single()
+      .then(({ data }) => {
+        if (data) {
+          setForm(f => ({ ...f, plan_credits_total: data.plan_credits_total, bonus_credits_total: data.bonus_credits_total }));
+        }
+      });
+  }
+}, [user.org_id]);
+
+// Fix save — no more || undefined
+updates: { plan_tier: form.plan_tier, is_active: form.is_active, plan_credits_total: form.plan_credits_total, bonus_credits_total: form.bonus_credits_total }
+```
 
