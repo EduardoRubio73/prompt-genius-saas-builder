@@ -117,32 +117,32 @@ function ModeActionCard({
       onClick={() => !disabled && navigate(href)}
       disabled={disabled}
       className={cn(
-        "group relative flex flex-col items-center gap-1.5 rounded-2xl border-[1.5px] p-5 text-center transition-all duration-200",
-        "hover:-translate-y-[3px] hover:shadow-lg",
+        "group relative flex flex-col items-center gap-2 rounded-2xl border-[1.5px] p-5 sm:p-6 text-center transition-all duration-200",
+        "hover:-translate-y-[3px] hover:shadow-lg h-full",
         disabled
           ? "opacity-40 cursor-not-allowed grayscale border-border/40 bg-muted/30"
           : colors.card
       )}
     >
       <div className={cn(
-        "flex h-[54px] w-[54px] items-center justify-center rounded-2xl mb-1",
+        "flex h-14 w-14 sm:h-16 sm:w-16 items-center justify-center rounded-2xl mb-2",
         disabled ? "bg-muted text-muted-foreground" : cn(colors.iconWrap, colors.text)
       )}>
-        <Icon className="h-7 w-7" />
+        <Icon className="h-7 w-7 sm:h-8 sm:w-8" />
       </div>
 
-      <h3 className="font-heading text-[13px] font-bold tracking-tight">{title}</h3>
-      <p className="text-[10.5px] text-muted-foreground leading-relaxed">{description}</p>
+      <h3 className="font-heading text-sm sm:text-base font-bold tracking-tight">{title}</h3>
+      <p className="text-xs sm:text-[11px] text-muted-foreground leading-relaxed">{description}</p>
 
       <span className={cn(
-        "rounded-full px-2 py-0.5 text-[9px] font-semibold tabular-nums mt-0.5",
+        "rounded-full px-2.5 py-1 text-[10px] sm:text-[11px] font-semibold tabular-nums mt-1",
         disabled ? "bg-muted text-muted-foreground" : colors.badge
       )}>
         {cost} {cost === 1 ? "cota" : "cotas"} · até {maxActions}
       </span>
 
       <span className={cn(
-        "mt-auto inline-flex items-center gap-1 text-[11px] font-semibold transition-colors pt-1",
+        "mt-auto inline-flex items-center gap-1 text-xs sm:text-[13px] font-semibold transition-colors pt-2",
         disabled ? "text-muted-foreground" : colors.text
       )}>
         {disabled ? "Indisponível" : "Iniciar →"}
@@ -162,7 +162,7 @@ export default function Dashboard() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [resumoOpen, setResumoOpen] = useState(false);
-  const [modosOpen, setModosOpen] = useState(false);
+  const [modosOpen, setModosOpen] = useState(true);
   const [shareOpen, setShareOpen] = useState(false);
 
   const firstName = profile?.full_name?.split(" ")[0] ?? "";
@@ -360,7 +360,7 @@ export default function Dashboard() {
             </CollapsibleTrigger>
 
             <CollapsibleContent className="mt-4">
-              <div className="grid grid-cols-2 gap-2.5 lg:grid-cols-4">
+              <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 auto-rows-fr">
                 {MODES.map((mode, i) => (
                   <div key={mode.title} className="animate-fade-in" style={{ animationDelay: `${i * 80}ms`, animationFillMode: "backwards" }}>
                     <ModeActionCard
