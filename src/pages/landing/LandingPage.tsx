@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import logo from "@/assets/logo-landing.png";
 import logoZr from "@/assets/logo-zragency.png";
 import "./landing.css";
-import { Share2 } from 'lucide-react';
+import { Share2 } from "lucide-react";
 import { IoShareSocial } from "react-icons/io5"; // Estilo Ionicons
 
 interface PricingProduct {
