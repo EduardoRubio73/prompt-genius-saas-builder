@@ -128,6 +128,8 @@ export default function HistoryPage() {
   const [shareOpen, setShareOpen] = useState(false);
   const [detailOpen, setDetailOpen] = useState(false);
   const [selectedSession, setSelectedSession] = useState<Session | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Session | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     if (!orgId) return;
