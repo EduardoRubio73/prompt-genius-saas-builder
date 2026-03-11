@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -68,6 +69,19 @@ const TYPE_META: Record<string, { label: string; icon: typeof Sparkles; color: s
 
 const CREDIT_COSTS: Record<string, number> = { prompt: 1, saas: 2, mixed: 2, build: 5 };
 
+const BUILD_DOC_LABELS: Record<string, string> = {
+  prd_md: "📋 PRD",
+  erd_md: "🗂️ ERD",
+  rbac_md: "🔐 RBAC",
+  ux_flows_md: "🔄 Fluxos UX",
+  test_plan_md: "🧪 Testes",
+  roadmap_md: "🗺️ Roadmap",
+  admin_doc_md: "⚙️ Admin",
+  sql_schema: "💾 SQL",
+  build_prompt: "🤖 Prompt",
+  deploy_guide_md: "🚀 Deploy",
+};
+
 const FIELD_META = [
   { key: "persona", label: "Persona", icon: User },
   { key: "tarefa", label: "Tarefa", icon: Briefcase },
@@ -86,13 +100,60 @@ export function UnifiedMemoryDetailDialog({
   onToggleFavorite,
   onDelete,
 }: UnifiedMemoryDetailDialogProps) {
+  const [activeTab, setActiveTab] = useState<string>("main");
+
   if (!entry) return null;
 
   const meta = TYPE_META[entry.type];
   const ModeIcon = meta.icon;
 
+  // Build tabs
+  const buildOutputs = entry.type === "build" && entry.outputs
+    ? Object.entries(entry.outputs).filter(([, v]) => v)
+    : [];
+  const buildDocKeys = buildOutputs.map(([k]) => k);
+
+  // Mixed tabs
+  const hasMixedSpec = entry.type === "mixed" && entry.spec_md;
+
+  // Determine which tabs to show
+  const tabs: { key: string; label: string }[] = [];
+  if (entry.type === "build" && buildDocKeys.length > 0) {
+    buildDocKeys.forEach((k) => {
+      tabs.push({ key: k, label: BUILD_DOC_LABELS[k] || k });
+    });
+  } else if (entry.type === "mixed" && hasMixedSpec) {
+    tabs.push({ key: "prompt", label: "✨ Prompt Gerado" });
+    tabs.push({ key: "spec", label: "🏗️ Spec Técnica" });
+  }
+
+  const getActiveContent = (): string => {
+    if (entry.type === "build" && entry.outputs && activeTab !== "main") {
+      return entry.outputs[activeTab] || "";
+    }
+    if (entry.type === "mixed" && activeTab === "spec") {
+      return entry.spec_md || "";
+    }
+    return entry.fullContent;
+  };
+
+  const currentActiveTab = tabs.length > 0
+    ? (tabs.find((t) => t.key === activeTab) ? activeTab : tabs[0].key)
+    : "main";
+
+  const activeContent = (() => {
+    const tab = currentActiveTab;
+    if (entry.type === "build" && entry.outputs && tab !== "main") {
+      return entry.outputs[tab] || "";
+    }
+    if (entry.type === "mixed" && tab === "spec") {
+      return entry.spec_md || "";
+    }
+    return entry.fullContent;
+  })();
+
   const handleCopy = async () => {
-    await navigator.clipboard.writeText(entry.fullContent);
+    await navigator.clipboard.writeText(activeContent);
     toast.success("Conteúdo copiado!");
   };
 
@@ -129,11 +190,18 @@ export function UnifiedMemoryDetailDialog({
       })
     : null;
 
-  // For SaaS specs and Build projects, show answers as structured fields
   const saasAnswers =
     (entry.type === "saas" || entry.type === "build") && entry.answers
       ? Object.entries(entry.answers as Record<string, string>).filter(([, v]) => v)
       : [];
+
+  const contentLabel = entry.type === "build"
+    ? (BUILD_DOC_LABELS[currentActiveTab] || "Documento")
+    : entry.type === "mixed" && currentActiveTab === "spec"
+      ? "Spec Técnica"
+      : entry.type === "saas"
+        ? "Especificação Gerada"
+        : "Prompt Gerado";
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -142,7 +210,6 @@ export function UnifiedMemoryDetailDialog({
         <DialogHeader className="p-6 pb-4 border-b border-border sticky top-0 bg-card z-10">
           <div className="flex items-start justify-between gap-3">
             <div className="flex items-center gap-2 flex-wrap flex-1">
-              {/* Mode badge */}
               <span
                 className={`inline-flex items-center gap-1.5 text-[10px] font-bold px-2.5 py-1 rounded-full border uppercase tracking-wider ${meta.badgeCls}`}
               >
@@ -163,7 +230,6 @@ export function UnifiedMemoryDetailDialog({
               )}
             </div>
 
-            {/* Rating stars */}
             {entry.rating && (
               <div className="flex gap-px shrink-0">
                 {Array.from({ length: entry.rating }).map((_, i) => (
@@ -204,8 +270,8 @@ export function UnifiedMemoryDetailDialog({
             </div>
           )}
 
-          {/* Prompt metadata fields (Modo Prompt) */}
-          {entry.type === "prompt" && (
+          {/* Prompt metadata fields */}
+          {(entry.type === "prompt" || entry.type === "mixed") && (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {FIELD_META.map(({ key, label, icon: Icon }) => {
                 const val = entry[key as keyof UnifiedMemoryEntry] as string | null | undefined;
@@ -237,14 +303,38 @@ export function UnifiedMemoryDetailDialog({
             </div>
           )}
 
+          {/* Tabs for Build / Mixed */}
+          {tabs.length > 0 && (
+            <div className="flex flex-wrap gap-1.5">
+              {tabs.map((tab) => (
+                <button
+                  key={tab.key}
+                  onClick={() => setActiveTab(tab.key)}
+                  className={`text-[10px] px-2.5 py-1 rounded-full border font-medium transition-colors ${
+                    currentActiveTab === tab.key
+                      ? "bg-primary/15 text-primary border-primary/30"
+                      : "bg-muted/50 text-muted-foreground border-border/60 hover:bg-muted"
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+          )}
+
           {/* Main content block */}
           <div className="space-y-2">
-            <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
-              {entry.type === "saas" ? "Especificação Gerada" : "Prompt Gerado"}
-            </p>
+            <div className="flex items-center justify-between">
+              <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                {contentLabel}
+              </p>
+              <Button variant="ghost" size="sm" className="h-6 gap-1 text-[10px]" onClick={handleCopy}>
+                <Copy className="w-3 h-3" /> Copiar
+              </Button>
+            </div>
             <div className="rounded-xl bg-secondary/30 border border-border p-4 max-h-64 overflow-y-auto">
               <pre className="text-xs text-foreground/90 whitespace-pre-wrap font-mono leading-relaxed">
-                {entry.fullContent}
+                {activeContent}
               </pre>
             </div>
           </div>
@@ -252,7 +342,6 @@ export function UnifiedMemoryDetailDialog({
 
         {/* ── Footer Actions ── */}
         <div className="p-4 border-t border-border bg-card/80 flex items-center gap-2 flex-wrap">
-          {/* Secondary actions */}
           <div className="flex gap-2 mr-auto">
             <Button
               variant="ghost"
@@ -276,7 +365,6 @@ export function UnifiedMemoryDetailDialog({
             </Button>
           </div>
 
-          {/* Primary actions */}
           <Button variant="outline" size="sm" className="gap-2" onClick={handleCopy}>
             <Copy className="w-3.5 h-3.5" /> Copiar
           </Button>
