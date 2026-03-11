@@ -184,7 +184,7 @@ export function UnifiedMemoryDetailDialog({
         </DialogHeader>
 
         {/* ── Body ── */}
-        <div className="p-6 space-y-5">
+        <div className="p-6 space-y-5 flex-1 overflow-y-auto">
           {/* Tags */}
           {entry.tags && entry.tags.length > 0 && (
             <div className="flex flex-wrap gap-1.5">
