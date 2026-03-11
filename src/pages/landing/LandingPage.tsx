@@ -178,7 +178,7 @@ function ContactModalContent() {
           <img src={logoZr} alt="ZR Agency" />
         </a>
       </div>
-      <h2>📬 Contato com a equipe zragency</h2>
+      <h2>📬 Contato - Suporte</h2>
       <p style={{ color: "var(--mu)", fontSize: "14px", marginBottom: "8px" }}>
         Escolha o tipo de mensagem e o canal. Responderemos o mais breve possível.
       </p>
@@ -214,7 +214,7 @@ function ContactModalContent() {
       <div className="contact-share">
         <p>🚀 Gostou de nossa plataforma? Compartilhe!</p>
         <button className="contact-share-btn" onClick={handleShare}>
-          📤 Compartilhar
+          ⁂ Compartilhar
         </button>
       </div>
     </>);
