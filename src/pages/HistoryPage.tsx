@@ -53,7 +53,7 @@ function getDuration(created: string, updated: string): string {
   return `${(mins / 60).toFixed(1)}h`;
 }
 
-function SessionCard({ session, onView }: { session: Session; onView: () => void }) {
+function SessionCard({ session, onView, onDelete }: { session: Session; onView: () => void; onDelete: () => void }) {
   const [expanded, setExpanded] = useState(false);
   const meta = MODE_META[session.mode] ?? MODE_META.prompt;
   const Icon = meta.icon;
