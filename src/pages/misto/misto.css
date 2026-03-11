@@ -1099,3 +1099,55 @@
 .saas-add-btn:hover {
   background: hsl(var(--primary) / 0.15);
 }
+
+/* ── Platform Groups (Collapsible) ── */
+.platform-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 10px;
+}
+.platform-group {
+  border: 1.5px solid hsl(var(--mode-border-subtle));
+  border-radius: 14px;
+  overflow: hidden;
+  transition: border-color 0.2s;
+}
+.platform-group.open {
+  border-color: hsl(var(--primary) / 0.25);
+}
+.platform-group-header {
+  width: 100%;
+  padding: 10px 16px;
+  background: hsl(var(--mode-surface));
+  border: none;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: hsl(var(--foreground));
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  transition: background 0.15s;
+}
+.platform-group-header:hover {
+  background: hsl(var(--primary) / 0.05);
+}
+.platform-group-chevron {
+  width: 14px;
+  height: 14px;
+  color: hsl(var(--mode-text-muted));
+  transition: transform 0.2s ease;
+}
+.platform-group-chevron.rotated {
+  transform: rotate(180deg);
+}
+.platform-group-pills {
+  padding: 10px 14px 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  background: hsl(var(--background));
+  border-top: 1px solid hsl(var(--mode-border-subtle));
+}
