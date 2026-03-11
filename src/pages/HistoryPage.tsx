@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { ChevronDown, ChevronUp, Sparkles, FileCode, Layers, CheckCircle, Clock, Eye, ArrowLeft, Hammer, Zap } from "lucide-react";
+import { ChevronDown, ChevronUp, Sparkles, FileCode, Layers, CheckCircle, Clock, Eye, ArrowLeft, Hammer, Zap, Trash2 } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
@@ -13,6 +13,17 @@ import { SessionDetailDialog } from "@/components/history/SessionDetailDialog";
 import { useQuotaBalance } from "@/hooks/useQuotaBalance";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { toast } from "sonner";
 
 interface Session {
   id: string;
@@ -42,7 +53,7 @@ function getDuration(created: string, updated: string): string {
   return `${(mins / 60).toFixed(1)}h`;
 }
 
-function SessionCard({ session, onView }: { session: Session; onView: () => void }) {
+function SessionCard({ session, onView, onDelete }: { session: Session; onView: () => void; onDelete: () => void }) {
   const [expanded, setExpanded] = useState(false);
   const meta = MODE_META[session.mode] ?? MODE_META.prompt;
   const Icon = meta.icon;
@@ -80,6 +91,13 @@ function SessionCard({ session, onView }: { session: Session; onView: () => void
           >
             <Eye className="h-3 w-3" /> Ver
           </button>
+          <button
+            onClick={onDelete}
+            className="flex items-center gap-1 rounded-lg border border-destructive/30 px-2 py-1 text-xs font-medium text-destructive hover:bg-destructive/10 transition-colors"
+            aria-label="Excluir sessão"
+          >
+            <Trash2 className="h-3 w-3" />
+          </button>
           {longInput && (
             <button onClick={() => setExpanded(!expanded)} className="text-muted-foreground hover:text-foreground transition-colors">
               {expanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
@@ -110,6 +128,8 @@ export default function HistoryPage() {
   const [shareOpen, setShareOpen] = useState(false);
   const [detailOpen, setDetailOpen] = useState(false);
   const [selectedSession, setSelectedSession] = useState<Session | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Session | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     if (!orgId) return;
@@ -173,6 +193,20 @@ export default function HistoryPage() {
   const handleView = (session: Session) => {
     setSelectedSession(session);
     setDetailOpen(true);
+  };
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    setIsDeleting(true);
+    const { error } = await supabase.from("sessions").delete().eq("id", deleteTarget.id);
+    if (error) {
+      toast.error("Erro ao excluir sessão. Tente novamente.");
+    } else {
+      setSessions((prev) => prev.filter((s) => s.id !== deleteTarget.id));
+      toast.success("Sessão excluída com sucesso.");
+    }
+    setIsDeleting(false);
+    setDeleteTarget(null);
   };
 
   return (
@@ -265,7 +299,7 @@ export default function HistoryPage() {
       ) : (
         <div className="space-y-3">
           {filtered.map((session) => (
-            <SessionCard key={session.id} session={session} onView={() => handleView(session)} />
+            <SessionCard key={session.id} session={session} onView={() => handleView(session)} onDelete={() => setDeleteTarget(session)} />
           ))}
         </div>
       )}
@@ -273,6 +307,27 @@ export default function HistoryPage() {
       <DashboardDock sessionCount={sessions.length} onShareOpen={() => setShareOpen(true)} />
       <ShareModal open={shareOpen} onOpenChange={setShareOpen} orgId={orgId} />
       <SessionDetailDialog open={detailOpen} onOpenChange={setDetailOpen} session={selectedSession} />
+
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir sessão</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir esta sessão? Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting ? "Excluindo..." : "Excluir"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </AppShell>
   );
 }
