@@ -1,64 +1,45 @@
 
 
-# Fix: Prompt Mode not saving and session stuck as "Em andamento"
+## Fix: Admin Credits Not Saving
 
-## Root Causes
+### Root Causes
 
-Two bugs in `src/pages/prompt/PromptMode.tsx`:
+1. **Missing data**: `admin_users_overview` view doesn't include `plan_credits_total`, `bonus_credits_total`, etc. The form defaults to `0` instead of the real values.
+2. **JS falsy bug**: Line 88 uses `form.plan_credits_total || undefined` — when the value is `0`, `0 || undefined` evaluates to `undefined`, so the field is omitted from the update.
 
-1. **Session never marked completed** — after generation finishes, there's no `UPDATE sessions SET completed = true`. The MistoMode does this but PromptMode doesn't.
+### Solution
 
-2. **Auto-save uses stale state** — the code reads `fields` and `promptGerado` from React state (closure), but those values were just set via `setFields()` / `setPromptGerado()` and haven't re-rendered yet. So `fields` is `null` (for free mode) and `promptGerado` is `""`. This means:
-   - In free mode: `finalFields` is `null` → entire save block is skipped
-   - Even if it ran: `prompt_gerado` would be empty string
+**1. Fetch actual org data when dialog opens**
+- In `UserDetailDialog`, add a query to fetch the organization record directly from `organizations` table using `user.org_id`
+- Initialize `plan_credits_total` and `bonus_credits_total` from the real org data
 
-## Fix
+**2. Fix the save logic**
+- Remove `|| undefined` guards — always send `plan_credits_total` and `bonus_credits_total` to the update call
+- This ensures `0` is a valid value that gets saved
 
-In `handleGenerate`, after the refine calls:
-
-1. Use **local variables** (`refined`, `r.prompt_gerado`) for the auto-save instead of reading from state
-2. Add `await supabase.from("sessions").update({ completed: true }).eq("id", currentSessionId)` before auto-save
-3. Pass the correct `prompt_gerado` value from the local `r.prompt_gerado` variable
-
-### Concrete change (lines ~137-157)
-
-Replace the auto-save block to:
-- Use the local `refined` variable (already available in both branches) instead of `fields`
-- Use the local prompt text from `r.prompt_gerado` instead of stale `promptGerado`
-- Mark session as completed
-
-```typescript
-setTimeElapsed((Date.now() - startTime.current) / 1000);
-setStep("results");
-fetchBalance();
-
-// Mark session completed
-await supabase.from("sessions").update({ completed: true }).eq("id", currentSessionId);
-
-// Auto-save using local variables (state hasn't updated yet)
-const finalPrompt = /* r.prompt_gerado from whichever branch ran */;
-const finalFields = refined; // local var from the branch above
-try {
-  await supabase.from("prompt_memory").insert({
-    session_id: currentSessionId, org_id: orgId, user_id: user.id,
-    especialidade: finalFields.especialidade, persona: finalFields.persona,
-    tarefa: finalFields.tarefa, objetivo: finalFields.objetivo,
-    contexto: finalFields.contexto,
-    destino, prompt_gerado: finalPrompt, rating: null, categoria: "prompt",
-  });
-  setIsSaved(true);
-  setMemoryRefreshKey(k => k + 1);
-  toast.success("✅ Salvo automaticamente");
-} catch (e) {
-  console.warn("Auto-save falhou:", e);
-}
-```
-
-To make the local variables accessible across branches, hoist `let localRefined` and `let localPrompt` before the `if/else`, then assign in each branch.
-
-### File modified
+### Files to Edit
 
 | File | Change |
 |------|--------|
-| `src/pages/prompt/PromptMode.tsx` | Fix stale state in auto-save, mark session completed |
+| `src/pages/admin/AdminUsers.tsx` | Add org data fetch, fix form init + save logic |
+
+### Details
+
+```tsx
+// Add useEffect to load real org data
+const [orgData, setOrgData] = useState<any>(null);
+useEffect(() => {
+  if (user.org_id) {
+    supabase.from("organizations").select("plan_credits_total, bonus_credits_total, plan_credits_used, bonus_credits_used").eq("id", user.org_id).single()
+      .then(({ data }) => {
+        if (data) {
+          setForm(f => ({ ...f, plan_credits_total: data.plan_credits_total, bonus_credits_total: data.bonus_credits_total }));
+        }
+      });
+  }
+}, [user.org_id]);
+
+// Fix save — no more || undefined
+updates: { plan_tier: form.plan_tier, is_active: form.is_active, plan_credits_total: form.plan_credits_total, bonus_credits_total: form.bonus_credits_total }
+```
 

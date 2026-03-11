@@ -87,6 +87,9 @@ export default function PromptMode() {
       const currentSessionId = sessionRecord.id;
       setSessionId(currentSessionId);
 
+      let localRefined: MistoFields;
+      let localPrompt: string;
+
       if (inputMode === "free") {
         // Distribute free text into fields
         setGenStatus("distributing");
@@ -105,7 +108,7 @@ export default function PromptMode() {
         const r = await callEdgeFunction("refine-prompt", {
           action: "refine", fields: extracted, destino, sessionId: currentSessionId,
         });
-        const refined: MistoFields = {
+        localRefined = {
           especialidade: r.especialidade || extracted.especialidade,
           persona: r.persona || extracted.persona,
           tarefa: r.tarefa || extracted.tarefa,
@@ -113,8 +116,9 @@ export default function PromptMode() {
           contexto: r.contexto || extracted.contexto,
           destino: r.destino || extracted.destino,
         };
-        setFields(refined);
-        setPromptGerado(r.prompt_gerado || "");
+        localPrompt = r.prompt_gerado || "";
+        setFields(localRefined);
+        setPromptGerado(localPrompt);
       } else {
         // Manual fields → skip distribute, go straight to refine
         setGenStatus("refining");
@@ -122,7 +126,7 @@ export default function PromptMode() {
         const r = await callEdgeFunction("refine-prompt", {
           action: "refine", fields: manualFields, destino, sessionId: currentSessionId,
         });
-        const refined: MistoFields = {
+        localRefined = {
           especialidade: r.especialidade || manualFields.especialidade,
           persona: r.persona || manualFields.persona,
           tarefa: r.tarefa || manualFields.tarefa,
@@ -130,30 +134,32 @@ export default function PromptMode() {
           contexto: r.contexto || manualFields.contexto,
           destino: r.destino || manualFields.destino,
         };
-        setFields(refined);
-        setPromptGerado(r.prompt_gerado || "");
+        localPrompt = r.prompt_gerado || "";
+        setFields(localRefined);
+        setPromptGerado(localPrompt);
       }
 
       setTimeElapsed((Date.now() - startTime.current) / 1000);
       setStep("results");
       fetchBalance();
 
-      // Auto-save
-      const finalFields = fields ?? (inputMode === "free" ? null : manualFields);
-      if (finalFields) {
-        try {
-          await supabase.from("prompt_memory").insert({
-            session_id: currentSessionId, org_id: orgId, user_id: user.id,
-            especialidade: finalFields.especialidade, persona: finalFields.persona,
-            tarefa: finalFields.tarefa, objetivo: finalFields.objetivo, contexto: finalFields.contexto,
-            destino, prompt_gerado: promptGerado || (inputMode === "free" ? "" : ""), rating: null, categoria: "prompt",
-          });
-          setIsSaved(true);
-          setMemoryRefreshKey(k => k + 1);
-          toast.success("✅ Salvo automaticamente");
-        } catch (e) {
-          console.warn("Auto-save falhou:", e);
-        }
+      // Mark session completed
+      await supabase.from("sessions").update({ completed: true }).eq("id", currentSessionId);
+
+      // Auto-save using local variables (state hasn't updated yet)
+      try {
+        await supabase.from("prompt_memory").insert({
+          session_id: currentSessionId, org_id: orgId, user_id: user.id,
+          especialidade: localRefined.especialidade, persona: localRefined.persona,
+          tarefa: localRefined.tarefa, objetivo: localRefined.objetivo,
+          contexto: localRefined.contexto,
+          destino, prompt_gerado: localPrompt, rating: null, categoria: "prompt",
+        });
+        setIsSaved(true);
+        setMemoryRefreshKey(k => k + 1);
+        toast.success("✅ Salvo automaticamente");
+      } catch (e) {
+        console.warn("Auto-save falhou:", e);
       }
 
       toast.success("💰 Prompt gerado! Você economizou ~R$ 8,00 vs escrever manualmente.");
