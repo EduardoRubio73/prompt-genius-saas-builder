@@ -307,6 +307,27 @@ export default function HistoryPage() {
       <DashboardDock sessionCount={sessions.length} onShareOpen={() => setShareOpen(true)} />
       <ShareModal open={shareOpen} onOpenChange={setShareOpen} orgId={orgId} />
       <SessionDetailDialog open={detailOpen} onOpenChange={setDetailOpen} session={selectedSession} />
+
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir sessão</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir esta sessão? Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting ? "Excluindo..." : "Excluir"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </AppShell>
   );
 }
