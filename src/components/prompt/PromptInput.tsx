@@ -13,26 +13,31 @@ interface PlatformOption {
   dbValue: DbPlatform;
 }
 
-const platformGroups: { label: string; items: PlatformOption[] }[] = [
+const platformGroups: { label: string; groupKey: string; items: PlatformOption[] }[] = [
   {
     label: "🏗️ Builders",
+    groupKey: "builders",
     items: [
       { id: "lovable", name: "Lovable", emoji: "❤️", dbValue: "lovable" },
       { id: "bolt", name: "Bolt.new", emoji: "⚡", dbValue: "outro" },
       { id: "replit", name: "Replit", emoji: "🔁", dbValue: "outro" },
       { id: "v0", name: "v0.dev", emoji: "▲", dbValue: "v0" },
+      { id: "builders-outros", name: "Outros", emoji: "➕", dbValue: "outro" },
     ],
   },
   {
     label: "💻 IDEs",
+    groupKey: "ides",
     items: [
       { id: "cursor", name: "Cursor", emoji: "🖱️", dbValue: "cursor" },
       { id: "windsurf", name: "Windsurf", emoji: "🏄", dbValue: "outro" },
       { id: "copilot", name: "GitHub Copilot", emoji: "🐙", dbValue: "outro" },
+      { id: "ides-outros", name: "Outros", emoji: "➕", dbValue: "outro" },
     ],
   },
   {
     label: "🤖 LLMs",
+    groupKey: "llms",
     items: [
       { id: "chatgpt", name: "ChatGPT", emoji: "🟢", dbValue: "chatgpt" },
       { id: "claude", name: "Claude", emoji: "🟠", dbValue: "claude" },
@@ -41,6 +46,7 @@ const platformGroups: { label: string; items: PlatformOption[] }[] = [
       { id: "deepseek", name: "DeepSeek", emoji: "🔵", dbValue: "outro" },
       { id: "mistral", name: "Mistral", emoji: "🌪️", dbValue: "outro" },
       { id: "perplexity", name: "Perplexity", emoji: "🔍", dbValue: "outro" },
+      { id: "llms-outros", name: "Outros", emoji: "➕", dbValue: "outro" },
     ],
   },
 ];
@@ -80,9 +86,13 @@ export function PromptInput({
     ? freeLen >= 30 && freeLen <= 600 && !isGenerating
     : manualFilled >= 3 && !isGenerating;
 
-  // Track which platform id is selected (for display) + open groups
   const [selectedPlatformId, setSelectedPlatformId] = useState("lovable");
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({ "🏗️ Builders": true });
+  const [customPlatforms, setCustomPlatforms] = useState<Record<string, string>>({
+    builders: "",
+    ides: "",
+    llms: "",
+  });
 
   const toggleGroup = (group: string) =>
     setOpenGroups(prev => ({ ...prev, [group]: !prev[group] }));
@@ -170,17 +180,34 @@ export function PromptInput({
                 <ChevronDown className={`platform-group-chevron ${openGroups[group.label] ? "rotated" : ""}`} />
               </button>
               {openGroups[group.label] && (
-                <div className="platform-group-pills">
-                  {group.items.map((p) => (
-                    <button
-                      key={p.id}
-                      className={`misto-dp ${selectedPlatformId === p.id ? "sel" : ""}`}
-                      onClick={() => selectPlatform(p)}
-                      type="button"
-                    >
-                      {p.emoji} {p.name}
-                    </button>
-                  ))}
+                <div>
+                  <div className="platform-group-pills">
+                    {group.items.map((p) => (
+                      <button
+                        key={p.id}
+                        className={`misto-dp ${selectedPlatformId === p.id ? "sel" : ""}`}
+                        onClick={() => selectPlatform(p)}
+                        type="button"
+                      >
+                        {p.emoji} {p.name}
+                      </button>
+                    ))}
+                  </div>
+                  {selectedPlatformId === `${group.groupKey}-outros` && (
+                    <input
+                      className="prompt-field-input"
+                      placeholder="Digite a plataforma ou deixe em branco para prompt genérico..."
+                      value={customPlatforms[group.groupKey] || ""}
+                      onChange={(e) => setCustomPlatforms(prev => ({ ...prev, [group.groupKey]: e.target.value }))}
+                      style={{
+                        width: "100%",
+                        marginTop: 8,
+                        borderRadius: 20,
+                        fontSize: 13,
+                        transition: "all 0.2s",
+                      }}
+                    />
+                  )}
                 </div>
               )}
             </div>
