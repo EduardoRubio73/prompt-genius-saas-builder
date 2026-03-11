@@ -795,6 +795,8 @@ export default function BuildMode() {
     } catch { return null; }
   }, [orgId]);
 
+  useEffect(() => { fetchBalance(); }, [fetchBalance]);
+
   const updateAnswers = (partial: Partial<BuildAnswers>) => setAnswers(prev => ({ ...prev, ...partial }));
 
   const canNext = (s: number): boolean => {
