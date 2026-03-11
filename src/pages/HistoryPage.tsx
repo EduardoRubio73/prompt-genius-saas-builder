@@ -83,7 +83,7 @@ function SessionCard({ session, onView, onDelete }: { session: Session; onView: 
           )}
         </div>
         <div className="flex items-center gap-3 shrink-0 text-xs text-muted-foreground">
-          <span className="tabular-nums">{session.tokens_total.toLocaleString("pt-BR")} tok</span>
+          <span className="tabular-nums">{MODE_COSTS[session.mode] ?? 1} crédito{(MODE_COSTS[session.mode] ?? 1) !== 1 ? "s" : ""}</span>
           <span>{formatDistanceToNow(new Date(session.created_at), { addSuffix: true, locale: ptBR })}</span>
           <span className="text-[10px] opacity-60">{getDuration(session.created_at, session.updated_at)}</span>
           <button
