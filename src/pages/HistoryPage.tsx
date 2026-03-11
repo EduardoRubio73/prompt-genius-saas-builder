@@ -13,6 +13,17 @@ import { SessionDetailDialog } from "@/components/history/SessionDetailDialog";
 import { useQuotaBalance } from "@/hooks/useQuotaBalance";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { toast } from "sonner";
 
 interface Session {
   id: string;
