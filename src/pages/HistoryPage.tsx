@@ -91,6 +91,13 @@ function SessionCard({ session, onView, onDelete }: { session: Session; onView: 
           >
             <Eye className="h-3 w-3" /> Ver
           </button>
+          <button
+            onClick={onDelete}
+            className="flex items-center gap-1 rounded-lg border border-destructive/30 px-2 py-1 text-xs font-medium text-destructive hover:bg-destructive/10 transition-colors"
+            aria-label="Excluir sessão"
+          >
+            <Trash2 className="h-3 w-3" />
+          </button>
           {longInput && (
             <button onClick={() => setExpanded(!expanded)} className="text-muted-foreground hover:text-foreground transition-colors">
               {expanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
