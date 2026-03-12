@@ -363,7 +363,7 @@ export default function Dashboard() {
         <Collapsible open={modosOpen} onOpenChange={setModosOpen}>
           <div className="rounded-[20px] border bg-card p-5 shadow-sm mb-4">
             <CollapsibleTrigger className="flex items-center justify-between w-full cursor-pointer">
-              <p className="text-[11px] font-bold text-pink-600 dark:text-pink-400 uppercase tracking-[0.1em]">
+              <p className="text-xs font-semibold text-pink-600 dark:text-pink-400 uppercase tracking-widest">
                 Modos Disponíveis
               </p>
               <ChevronDown className={cn("h-3.5 w-3.5 text-muted-foreground transition-transform duration-200", modosOpen && "rotate-180")} />
