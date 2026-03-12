@@ -243,6 +243,18 @@ async function upsertSubscriptionFromStripe(
     throw new Error(`Upsert subscription failed: ${upsertError.message}`);
   } else {
     console.log("Subscription upserted:", stripeSubscription.id, "for org:", orgId);
+
+    // Sync plan_credits_reset_at with Stripe's current_period_end
+    if (stripeSubscription.status === "active" || stripeSubscription.status === "trialing") {
+      await admin
+        .from("organizations")
+        .update({
+          plan_credits_reset_at: subData.current_period_end,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", orgId);
+      console.log("plan_credits_reset_at synced to:", subData.current_period_end, "for org:", orgId);
+    }
   }
 }
 
