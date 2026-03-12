@@ -1,45 +1,67 @@
 
 
-## Fix: Admin Credits Not Saving
+# Minha Conta: Cards colapsáveis, datas do plano e portal Stripe
 
-### Root Causes
+## Resumo das mudanças
 
-1. **Missing data**: `admin_users_overview` view doesn't include `plan_credits_total`, `bonus_credits_total`, etc. The form defaults to `0` instead of the real values.
-2. **JS falsy bug**: Line 88 uses `form.plan_credits_total || undefined` — when the value is `0`, `0 || undefined` evaluates to `undefined`, so the field is omitted from the update.
+### 1. Tornar todas as seções da BillingTab colapsáveis
+Atualmente só o "Resumo da Conta" é colapsável. Vamos envolver as seções "Comprar Créditos Extras", "Planos disponíveis" e a nova seção "Gerenciar Assinatura" em `Collapsible` com o mesmo padrão visual (ChevronDown, header clicável).
 
-### Solution
+### 2. Adicionar datas do plano no card "Resumo da Conta"
+Usar o hook `useOrgSubscription` para buscar `current_period_start`, `current_period_end`, `trial_start`, `trial_end`, `cancel_at`. Exibir no grid de cards:
+- **Contratação**: `current_period_start` formatado
+- **Renovação**: `current_period_end` ou fallback `reset_at`
+- **Trial até**: se `trial_end` existir
 
-**1. Fetch actual org data when dialog opens**
-- In `UserDetailDialog`, add a query to fetch the organization record directly from `organizations` table using `user.org_id`
-- Initialize `plan_credits_total` and `bonus_credits_total` from the real org data
+### 3. Nova Edge Function `create-billing-portal` (Stripe Customer Portal)
+Criar uma edge function que usa `stripe.billingPortal.sessions.create()` para gerar uma URL do portal de autoatendimento do Stripe. O portal permite ao usuário:
+- Ver/gerenciar assinatura
+- Cancelar assinatura
+- Atualizar método de pagamento
 
-**2. Fix the save logic**
-- Remove `|| undefined` guards — always send `plan_credits_total` and `bonus_credits_total` to the update call
-- This ensures `0` is a valid value that gets saved
+A URL retornada será aberta em um **iframe/dialog interno** para não sair do sistema.
 
-### Files to Edit
+### 4. Seção "Gerenciar Assinatura" na BillingTab
+Nova seção colapsável com botão "Gerenciar Assinatura" que:
+1. Chama `create-billing-portal` para obter a URL
+2. Abre um `Dialog` com um `<iframe>` apontando para a URL do portal Stripe
+3. O usuário pode cancelar, trocar plano, atualizar cartão — tudo sem sair do app
 
-| File | Change |
-|------|--------|
-| `src/pages/admin/AdminUsers.tsx` | Add org data fetch, fix form init + save logic |
+**Nota**: O Stripe Customer Portal precisa estar configurado no dashboard do Stripe (Settings > Customer Portal). Se o iframe for bloqueado por CSP do Stripe, faremos fallback para `window.open` em nova aba.
 
-### Details
+## Arquivos modificados/criados
 
-```tsx
-// Add useEffect to load real org data
-const [orgData, setOrgData] = useState<any>(null);
-useEffect(() => {
-  if (user.org_id) {
-    supabase.from("organizations").select("plan_credits_total, bonus_credits_total, plan_credits_used, bonus_credits_used").eq("id", user.org_id).single()
-      .then(({ data }) => {
-        if (data) {
-          setForm(f => ({ ...f, plan_credits_total: data.plan_credits_total, bonus_credits_total: data.bonus_credits_total }));
-        }
-      });
-  }
-}, [user.org_id]);
+| Arquivo | Mudança |
+|---------|---------|
+| `supabase/functions/create-billing-portal/index.ts` | Nova edge function para criar sessão do portal Stripe |
+| `supabase/config.toml` | Adicionar `[functions.create-billing-portal]` |
+| `src/pages/ProfilePage.tsx` | Adicionar `useOrgSubscription`, cards de datas, todas seções colapsáveis, seção "Gerenciar Assinatura" com dialog/iframe |
 
-// Fix save — no more || undefined
-updates: { plan_tier: form.plan_tier, is_active: form.is_active, plan_credits_total: form.plan_credits_total, bonus_credits_total: form.bonus_credits_total }
+## Detalhes técnicos
+
+### Edge Function `create-billing-portal`
+```typescript
+// Recebe org_id, busca stripe_customer_id da org
+// Cria billingPortal.sessions.create({ customer, return_url })
+// Retorna { url }
+```
+
+### BillingTab — Estrutura colapsável
+```text
+┌─ Resumo da Conta (colapsável, aberto) ─────────┐
+│  Grid: Plano | Cotas | Extras | Bônus | Saldo  │
+│  Grid: Contratação | Renovação | Trial          │
+│  Progress bars                                   │
+└──────────────────────────────────────────────────┘
+┌─ Gerenciar Assinatura (colapsável) ─────────────┐
+│  Status atual + botão "Abrir Portal Stripe"     │
+│  Dialog com iframe do Stripe Customer Portal    │
+└──────────────────────────────────────────────────┘
+┌─ Comprar Créditos Extras (colapsável) ──────────┐
+│  Pack cards                                      │
+└──────────────────────────────────────────────────┘
+┌─ Planos Disponíveis (colapsável) ───────────────┐
+│  Plan cards grid                                 │
+└──────────────────────────────────────────────────┘
 ```
 
