@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { Upload, Save, Check, Coins, Loader2, ShieldAlert, Lock, CreditCard, ShieldCheck, Crown, Zap, Gift, Calendar, ChevronDown, RefreshCw, TrendingUp } from "lucide-react";
+import { Upload, Save, Check, Coins, Loader2, ShieldAlert, Lock, CreditCard, ShieldCheck, Crown, Zap, Gift, Calendar, ChevronDown, RefreshCw, TrendingUp, ExternalLink, Settings } from "lucide-react";
 import { AccountSidebar, type AccountTabKey } from "@/components/layout/AccountSidebar";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { AppShell } from "@/components/layout/AppShell";
