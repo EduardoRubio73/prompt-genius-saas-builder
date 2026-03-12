@@ -158,6 +158,7 @@ Prioridades: ${answers.prioridades.join(", ") || "Não definidas"}
 
       setTimeElapsed((Date.now() - startTime.current) / 1000);
       setStep("results");
+      hideLoading();
       fetchBalance();
 
       // Auto-save
