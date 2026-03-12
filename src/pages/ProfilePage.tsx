@@ -467,6 +467,7 @@ function BillingTab({ orgId, planName }: { orgId: string | undefined; planName: 
   const [creditosOpen, setCreditosOpen] = useState(false);
   const [planosOpen, setPlanosOpen] = useState(false);
   const [assinaturaOpen, setAssinaturaOpen] = useState(false);
+  const [autoExpandDone, setAutoExpandDone] = useState(false);
   const [portalLoading, setPortalLoading] = useState(false);
 
   // Filter out topup products
