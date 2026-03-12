@@ -851,6 +851,7 @@ export default function BuildMode() {
       setOutputs(result as Record<string, string>);
       setTimeElapsed((Date.now() - startTime.current) / 1000);
       setStep("results");
+      hideLoading();
 
       await supabase.from("sessions").update({ completed: true, raw_input: answers.problema }).eq("id", currentSessionId);
       fetchBalance();
