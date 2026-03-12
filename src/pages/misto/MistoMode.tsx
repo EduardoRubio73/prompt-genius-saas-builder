@@ -69,7 +69,8 @@ export default function MistoMode() {
 
   const [sessionId, setSessionId] = useState<string | null>(null);
 
-  // Main generate flow
+  const { showLoading, hideLoading } = useLoading();
+
   const handleGenerate = useCallback(async () => {
     if (!orgId || !user) {
       toast.error("Usuário não autenticado");
@@ -83,6 +84,7 @@ export default function MistoMode() {
     if (balance.total_remaining <= 0) { setCreditModal("no_credits"); return; }
 
     startTime.current = Date.now();
+    showLoading("Gerando Modo Misto...");
 
     try {
       setStep("distributing");
