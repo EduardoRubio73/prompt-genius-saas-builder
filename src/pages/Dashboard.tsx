@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Sparkles, FileCode, Layers, Rocket, Crown, Zap, Gift, Star, TrendingUp, ChevronDown, RefreshCw, CreditCard } from "lucide-react";
-import { SubscriptionAlert } from "@/components/SubscriptionAlert";
 import { useOrgSubscription } from "@/hooks/useOrgSubscription";
+import { isSubscriptionExpired } from "@/components/SubscriptionAlert";
 import { useQueryClient } from "@tanstack/react-query";
 import { AppShell } from "@/components/layout/AppShell";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -183,6 +183,7 @@ export default function Dashboard() {
   const subscriptionActive = subscription?.status === "active" || subscription?.status === "trialing";
   const canUse = totalRemaining > 0 || subscriptionActive;
   const noQuota = !isQuotaLoading && quota != null && !canUse;
+  const subExpired = isSubscriptionExpired(subscription);
 
   const percentUsed = quota?.percent_used ?? 0;
 
@@ -209,11 +210,6 @@ export default function Dashboard() {
       onSignOut={signOut}
     >
       <div className="pb-28">
-        {/* ── Subscription Alert ── */}
-        <div className="mb-4">
-          <SubscriptionAlert orgId={orgId} showToast compact />
-        </div>
-
         {/* ── Greeting ── */}
         <section className="mb-8 animate-fade-in" style={{ animationFillMode: "backwards" }}>
           {isLoading ? (
@@ -254,7 +250,8 @@ export default function Dashboard() {
                 </p>
                 {!resumoOpen && !isQuotaLoading && (
                   <div className="flex items-center gap-3 min-w-0 overflow-hidden">
-                    <span className="text-[11px] text-muted-foreground tabular-nums font-medium whitespace-nowrap truncate">
+                    {subExpired && <span className="text-amber-500 mr-1">⚠️</span>}
+                    <span className="text-[11px] text-blue-600 dark:text-blue-400 tabular-nums font-medium whitespace-nowrap truncate">
                       Saldo: {totalRemaining} ({creditsRemaining} plano + {bonusRemaining} bônus + {extraCredits} extras) · Renova {renewalDate}
                     </span>
                   </div>

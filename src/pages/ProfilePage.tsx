@@ -467,6 +467,7 @@ function BillingTab({ orgId, planName }: { orgId: string | undefined; planName: 
   const [creditosOpen, setCreditosOpen] = useState(false);
   const [planosOpen, setPlanosOpen] = useState(false);
   const [assinaturaOpen, setAssinaturaOpen] = useState(false);
+  const [autoExpandDone, setAutoExpandDone] = useState(false);
   const [portalLoading, setPortalLoading] = useState(false);
 
   // Filter out topup products
@@ -570,6 +571,15 @@ function BillingTab({ orgId, planName }: { orgId: string | undefined; planName: 
 
   const subExpired = isSubscriptionExpired(subscription);
   const renewalSoon = isRenewalSoon(subscription);
+
+  // Auto-expand subscription card and collapse summary when expired
+  useEffect(() => {
+    if (!autoExpandDone && subscription && subExpired) {
+      setResumoOpen(false);
+      setAssinaturaOpen(true);
+      setAutoExpandDone(true);
+    }
+  }, [subscription, subExpired, autoExpandDone]);
   const daysLeft = getDaysUntilRenewal(subscription);
   const derivedStatus = deriveSubscriptionStatus(subscription, quota);
   const statusInfo = getSubscriptionStatusInfo(derivedStatus);
@@ -604,8 +614,7 @@ function BillingTab({ orgId, planName }: { orgId: string | undefined; planName: 
 
   return (
     <div className="space-y-5">
-      {/* ── Subscription Alert ── */}
-      <SubscriptionAlert orgId={orgId} />
+      {/* Subscription Alert removed — rendered globally in AppShell */}
       <Collapsible open={resumoOpen} onOpenChange={setResumoOpen}>
         <div className="rounded-xl border border-blue-200 dark:border-blue-800/40 bg-blue-50/50 dark:bg-blue-950/20 p-5 shadow-md">
           <div className="flex items-center justify-between gap-3">
@@ -777,13 +786,27 @@ function BillingTab({ orgId, planName }: { orgId: string | undefined; planName: 
 
       {/* ── Gerenciar Assinatura ── */}
       <Collapsible open={assinaturaOpen} onOpenChange={setAssinaturaOpen}>
-        <div className="rounded-xl border bg-card p-5 shadow-sm">
+        <div className={cn(
+          "rounded-xl border p-5 shadow-sm transition-colors duration-300",
+          subExpired
+            ? "border-yellow-400/50 bg-yellow-50 dark:bg-yellow-950/30"
+            : "bg-card"
+        )}>
           <CollapsibleTrigger className="w-full">
-            {collapsibleHeader(
-              "Gerenciar Assinatura",
-              assinaturaOpen,
-              subscription?.status === "active" ? `Plano ${subscription.plan_name ?? "ativo"} · Renova ${renewalDate}` : "Gerencie sua assinatura via Stripe"
-            )}
+            <div className="flex items-center justify-between flex-1 cursor-pointer gap-3">
+              <div className="flex items-center gap-2">
+                {subExpired && <AlertTriangle className="h-4 w-4 text-yellow-600 dark:text-yellow-400 shrink-0" />}
+                <div>
+                  <p className="text-sm font-semibold text-foreground">Gerenciar Assinatura</p>
+                  {!assinaturaOpen && (
+                    <p className="text-xs text-muted-foreground">
+                      {subExpired ? "⚠️ Assinatura vencida — renove agora" : subscription?.status === "active" ? `Plano ${subscription.plan_name ?? "ativo"} · Renova ${renewalDate}` : "Gerencie sua assinatura via Stripe"}
+                    </p>
+                  )}
+                </div>
+              </div>
+              <ChevronDown className={cn("h-4 w-4 text-muted-foreground transition-transform duration-200 shrink-0", assinaturaOpen && "rotate-180")} />
+            </div>
           </CollapsibleTrigger>
           <CollapsibleContent className="mt-4 space-y-4">
             <div className="flex items-center gap-4 flex-wrap">
@@ -806,13 +829,18 @@ function BillingTab({ orgId, planName }: { orgId: string | undefined; planName: 
             <Button
               onClick={openBillingPortal}
               disabled={portalLoading}
-              variant="outline"
-              className="gap-2"
+              className={cn(
+                "gap-2",
+                subExpired
+                  ? "bg-yellow-500 hover:bg-yellow-600 text-white border-0"
+                  : ""
+              )}
+              variant={subExpired ? "default" : "outline"}
             >
               {portalLoading ? (
                 <><Loader2 className="h-4 w-4 animate-spin" /> Abrindo portal...</>
               ) : (
-                <><Settings className="h-4 w-4" /> Gerenciar Assinatura no Stripe <ExternalLink className="h-3.5 w-3.5 ml-1" /></>
+                <><Settings className="h-4 w-4" /> {subExpired ? "Renovar Assinatura" : "Gerenciar Assinatura no Stripe"} <ExternalLink className="h-3.5 w-3.5 ml-1" /></>
               )}
             </Button>
             <p className="text-xs text-muted-foreground">

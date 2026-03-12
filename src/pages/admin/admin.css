@@ -2,7 +2,7 @@
    Admin V3 Design System — Purple / Lilac
    ═══════════════════════════════════════════ */
 
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
 
 :root {
   --adm-bg: #0B0B12;
@@ -21,7 +21,7 @@
   --adm-blue: #60a5fa;
   --adm-purple: #8B5CF6;
   --adm-yellow: #fbbf24;
-  --adm-font: 'Plus Jakarta Sans', sans-serif;
+  --adm-font: 'Inter', system-ui, -apple-system, sans-serif;
   --adm-mono: 'JetBrains Mono', monospace;
   --adm-sidebar-w: 230px;
   --adm-topbar-h: 60px;
