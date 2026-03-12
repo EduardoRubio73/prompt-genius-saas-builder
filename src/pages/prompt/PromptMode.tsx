@@ -15,6 +15,7 @@ import { MistoRefining } from "@/components/misto/MistoRefining";
 import { MistoResults } from "@/components/misto/MistoResults";
 import { CreditModal } from "@/components/misto/CreditModal";
 import { UnifiedMemorySidebar } from "@/components/UnifiedMemorySidebar";
+import { CopyButton } from "@/components/CopyButton";
 import type { MistoFields } from "@/pages/misto/MistoMode";
 
 import "../misto/misto.css";

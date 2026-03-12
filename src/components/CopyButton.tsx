@@ -22,7 +22,7 @@ export function CopyButton({ text, label = "Copiar", className = "misto-copy-btn
       <TooltipTrigger asChild>
         <button className={className} onClick={handleCopy} type="button">
           {copied ? (
-            <span className="inline-flex items-center gap-1 text-green-500">
+            <span className="inline-flex items-center gap-1 text-primary">
               <CheckCheck className="h-4 w-4" />
               Copiado
             </span>
