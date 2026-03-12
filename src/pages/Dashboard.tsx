@@ -183,6 +183,7 @@ export default function Dashboard() {
   const subscriptionActive = subscription?.status === "active" || subscription?.status === "trialing";
   const canUse = totalRemaining > 0 || subscriptionActive;
   const noQuota = !isQuotaLoading && quota != null && !canUse;
+  const subExpired = isSubscriptionExpired(subscription);
 
   const percentUsed = quota?.percent_used ?? 0;
 

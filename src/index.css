@@ -154,13 +154,35 @@
     @apply border-border;
   }
 
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
   body {
     @apply bg-background text-foreground;
     font-family: var(--font-body);
+    font-size: var(--text-base);
+    line-height: var(--leading-normal);
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    font-variant-numeric: tabular-nums;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
   }
 
   h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-heading);
+  }
+
+  h1 {
+    letter-spacing: var(--tracking-tighter);
+  }
+  h2 {
+    letter-spacing: var(--tracking-tight);
+  }
+  h3 {
+    letter-spacing: var(--tracking-snug);
   }
 }
 

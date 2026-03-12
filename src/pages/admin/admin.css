@@ -21,7 +21,7 @@
   --adm-blue: #60a5fa;
   --adm-purple: #8B5CF6;
   --adm-yellow: #fbbf24;
-  --adm-font: 'Plus Jakarta Sans', sans-serif;
+  --adm-font: 'Inter', system-ui, -apple-system, sans-serif;
   --adm-mono: 'JetBrains Mono', monospace;
   --adm-sidebar-w: 230px;
   --adm-topbar-h: 60px;
