@@ -145,6 +145,7 @@ export default function PromptMode() {
 
       setTimeElapsed((Date.now() - startTime.current) / 1000);
       setStep("results");
+      hideLoading();
       fetchBalance();
 
       // Mark session completed
