@@ -571,6 +571,15 @@ function BillingTab({ orgId, planName }: { orgId: string | undefined; planName: 
 
   const subExpired = isSubscriptionExpired(subscription);
   const renewalSoon = isRenewalSoon(subscription);
+
+  // Auto-expand subscription card and collapse summary when expired
+  useEffect(() => {
+    if (!autoExpandDone && subscription && subExpired) {
+      setResumoOpen(false);
+      setAssinaturaOpen(true);
+      setAutoExpandDone(true);
+    }
+  }, [subscription, subExpired, autoExpandDone]);
   const daysLeft = getDaysUntilRenewal(subscription);
   const derivedStatus = deriveSubscriptionStatus(subscription, quota);
   const statusInfo = getSubscriptionStatusInfo(derivedStatus);
