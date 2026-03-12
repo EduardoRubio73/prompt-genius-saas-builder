@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from "react";
+import { useLoading } from "@/contexts/LoadingContext";
 import { useNavigate } from "react-router-dom";
 import { Sun, Moon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -97,6 +98,8 @@ export default function SaasMode() {
 
   const [sessionId, setSessionId] = useState<string | null>(null);
 
+  const { showLoading, hideLoading } = useLoading();
+
   const handleGenerate = useCallback(async () => {
     if (!orgId || !user) { toast.error("Usuário não autenticado"); return; }
 
@@ -107,6 +110,7 @@ export default function SaasMode() {
     if (balance.total_remaining <= 0) { setCreditModal("no_credits"); return; }
 
     startTime.current = Date.now();
+    showLoading("Gerando Spec SaaS...");
 
     try {
       setStep("generating");
@@ -154,6 +158,7 @@ Prioridades: ${answers.prioridades.join(", ") || "Não definidas"}
 
       setTimeElapsed((Date.now() - startTime.current) / 1000);
       setStep("results");
+      hideLoading();
       fetchBalance();
 
       // Auto-save
@@ -173,6 +178,7 @@ Prioridades: ${answers.prioridades.join(", ") || "Não definidas"}
 
       toast.success("💰 Spec gerada! Você economizou ~R$ 15,00 vs criar manualmente.");
     } catch (err: any) {
+      hideLoading();
       toast.error(err.message || "Erro ao gerar spec.");
       setStep(7);
     }

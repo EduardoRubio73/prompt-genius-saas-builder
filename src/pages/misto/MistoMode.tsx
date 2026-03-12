@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from "react";
+import { useLoading } from "@/contexts/LoadingContext";
 import { useNavigate } from "react-router-dom";
 import { Sun, Moon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -68,7 +69,8 @@ export default function MistoMode() {
 
   const [sessionId, setSessionId] = useState<string | null>(null);
 
-  // Main generate flow
+  const { showLoading, hideLoading } = useLoading();
+
   const handleGenerate = useCallback(async () => {
     if (!orgId || !user) {
       toast.error("Usuário não autenticado");
@@ -82,6 +84,7 @@ export default function MistoMode() {
     if (balance.total_remaining <= 0) { setCreditModal("no_credits"); return; }
 
     startTime.current = Date.now();
+    showLoading("Gerando Modo Misto...");
 
     try {
       setStep("distributing");
@@ -133,6 +136,7 @@ export default function MistoMode() {
 
       setTimeElapsed((Date.now() - startTime.current) / 1000);
       setStep("results");
+      hideLoading();
 
       // Mark session as completed
       await supabase.from("sessions").update({ completed: true, raw_input: userInput }).eq("id", currentSessionId);
@@ -168,6 +172,7 @@ export default function MistoMode() {
 
       toast.success("💰 Modo Misto concluído! Você economizou ~R$ 25,00 vs fazer manualmente.");
     } catch (err: any) {
+      hideLoading();
       toast.error(err.message || "Erro ao processar. Tente novamente.");
       setStep("input");
     }

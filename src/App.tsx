@@ -7,6 +7,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { LoadingProvider } from "@/contexts/LoadingContext";
 
 import { AuthGuard } from "@/components/auth/AuthGuard";
 import { SuperAdminGuard } from "@/components/guards/SuperAdminGuard";
@@ -56,6 +57,7 @@ function App() {
 
   return (
     <QueryClientProvider client={queryClient}>
+      <LoadingProvider>
       <TooltipProvider delayDuration={300} skipDelayDuration={100}>
         <Toaster />
         <Sonner />
@@ -143,6 +145,7 @@ function App() {
           </Routes>
         </BrowserRouter>
       </TooltipProvider>
+      </LoadingProvider>
     </QueryClientProvider>
   );
 }

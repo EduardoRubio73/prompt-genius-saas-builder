@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from "react";
+import { useLoading } from "@/contexts/LoadingContext";
 import { useNavigate } from "react-router-dom";
 import { Sun, Moon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,6 +15,7 @@ import { MistoRefining } from "@/components/misto/MistoRefining";
 import { MistoResults } from "@/components/misto/MistoResults";
 import { CreditModal } from "@/components/misto/CreditModal";
 import { UnifiedMemorySidebar } from "@/components/UnifiedMemorySidebar";
+import { CopyButton } from "@/components/CopyButton";
 import type { MistoFields } from "@/pages/misto/MistoMode";
 
 import "../misto/misto.css";
@@ -65,6 +67,8 @@ export default function PromptMode() {
 
   const [sessionId, setSessionId] = useState<string | null>(null);
 
+  const { showLoading, hideLoading } = useLoading();
+
   const handleGenerate = useCallback(async () => {
     if (!orgId || !user) { toast.error("Usuário não autenticado"); return; }
 
@@ -75,6 +79,7 @@ export default function PromptMode() {
     if (balance.total_remaining <= 0) { setCreditModal("no_credits"); return; }
 
     startTime.current = Date.now();
+    showLoading("Gerando Prompt...");
 
     try {
       setStep("generating");
@@ -141,6 +146,7 @@ export default function PromptMode() {
 
       setTimeElapsed((Date.now() - startTime.current) / 1000);
       setStep("results");
+      hideLoading();
       fetchBalance();
 
       // Mark session completed
@@ -164,6 +170,7 @@ export default function PromptMode() {
 
       toast.success("💰 Prompt gerado! Você economizou ~R$ 8,00 vs escrever manualmente.");
     } catch (err: any) {
+      hideLoading();
       toast.error(err.message || "Erro ao processar.");
       setStep("input");
     }
@@ -256,9 +263,7 @@ export default function PromptMode() {
                 <div className="misto-prompt-final-box">
                   <div className="misto-pfb-header">
                     <div className="misto-pfb-label">Prompt Final</div>
-                    <button className="misto-copy-btn" onClick={() => { navigator.clipboard.writeText(promptGerado); toast.success("Copiado!"); }}>
-                      Copiar
-                    </button>
+                    <CopyButton text={promptGerado} />
                   </div>
                   <div className="misto-prompt-text">{promptGerado}</div>
                 </div>

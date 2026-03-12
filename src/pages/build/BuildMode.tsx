@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from "react";
+import { useLoading } from "@/contexts/LoadingContext";
 import { useNavigate } from "react-router-dom";
 import { Sun, Moon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,6 +14,7 @@ import { MistoSpecLoading } from "@/components/misto/MistoSpecLoading";
 import { CreditModal } from "@/components/misto/CreditModal";
 import { UnifiedMemorySidebar } from "@/components/UnifiedMemorySidebar";
 import { InfoTooltip } from "@/components/ui/info-tooltip";
+import { CopyButton } from "@/components/CopyButton";
 
 import "../misto/misto.css";
 
@@ -817,6 +819,8 @@ export default function BuildMode() {
     }
   };
 
+  const { showLoading, hideLoading } = useLoading();
+
   const handleGenerate = useCallback(async () => {
     if (!orgId || !user) { toast.error("Usuário não autenticado"); return; }
 
@@ -827,6 +831,7 @@ export default function BuildMode() {
     if (balance.total_remaining <= 0) { setCreditModal("no_credits"); return; }
 
     startTime.current = Date.now();
+    showLoading("Gerando Projeto BUILD...");
 
     try {
       setStep("generating");
@@ -847,6 +852,7 @@ export default function BuildMode() {
       setOutputs(result as Record<string, string>);
       setTimeElapsed((Date.now() - startTime.current) / 1000);
       setStep("results");
+      hideLoading();
 
       await supabase.from("sessions").update({ completed: true, raw_input: answers.problema }).eq("id", currentSessionId);
       fetchBalance();
@@ -870,6 +876,7 @@ export default function BuildMode() {
 
       toast.success("🚀 Projeto BUILD gerado com sucesso!");
     } catch (err: any) {
+      hideLoading();
       toast.error(err.message || "Erro ao gerar projeto.");
       setStep(10);
     }
@@ -972,7 +979,7 @@ export default function BuildMode() {
               <div className="misto-result-panel">
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
                   <span className="misto-pfb-label" style={{ color: "hsl(var(--primary))" }}>{DOC_LABELS[activeDoc]}</span>
-                  <button className="misto-copy-btn misto-copy-btn-v" onClick={() => copyText(outputs[activeDoc] || "")}>Copiar</button>
+                  <CopyButton text={outputs[activeDoc] || ""} className="misto-copy-btn misto-copy-btn-v" />
                 </div>
                 <pre style={{
                   whiteSpace: "pre-wrap", wordBreak: "break-word",
