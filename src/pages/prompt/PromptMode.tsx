@@ -259,16 +259,9 @@ export default function PromptMode() {
                     </div>
                   ))}
                 </div>
-                <div className="misto-prompt-final-box">
-                  <div className="misto-pfb-header">
-                    <div className="misto-pfb-label">Prompt Final</div>
-                    <button className="misto-copy-btn" onClick={() => { navigator.clipboard.writeText(promptGerado); toast.success("Copiado!"); }}>
-                      Copiar
-                    </button>
-                  </div>
-                  <div className="misto-prompt-text">{promptGerado}</div>
+                <CopyButton text={promptGerado} />
                 </div>
-                <div style={{ marginTop: 16 }}>
+                  <div className="misto-prompt-text">{promptGerado}</div>
                   <div className="misto-rating-row">
                     <span className="misto-rating-label">Avaliar:</span>
                     <div className="misto-stars">

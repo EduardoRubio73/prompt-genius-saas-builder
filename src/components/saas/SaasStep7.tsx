@@ -68,11 +68,7 @@ export function SaasStep7({ answers, onChange, onGenerate, onPrev, canNext }: Pr
         <div className="saas-nav-row">
           <button className="saas-nav-btn" onClick={onPrev}>← Anterior</button>
           <button className="saas-nav-btn saas-nav-btn-primary" onClick={onGenerate} disabled={!canNext}>
-            {!canNext && canNext !== undefined ? (
-              <><span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent mr-2" /> Gerando...</>
-            ) : (
-              "🏗️ Gerar Spec — 1 cota"
-            )}
+            🏗️ Gerar Spec — 1 cota
           </button>
         </div>
       </div>

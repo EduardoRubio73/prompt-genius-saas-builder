@@ -216,11 +216,7 @@ export function PromptInput({
       </div>
 
       <button className="misto-gen-btn" onClick={onGenerate} disabled={!canGenerate} type="button">
-        {isGenerating ? (
-          <><span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent mr-2" /> Gerando...</>
-        ) : (
-          "✨ Gerar Prompt — 1 cota"
-        )}
+        ✨ Gerar Prompt — 1 cota
       </button>
     </div>
   );
