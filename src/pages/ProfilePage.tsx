@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { Upload, Save, Check, Coins, Loader2, ShieldAlert, Lock, CreditCard, ShieldCheck, Crown, Zap, Gift, Calendar, ChevronDown, RefreshCw, TrendingUp, ExternalLink, Settings } from "lucide-react";
+import { Upload, Save, Check, Coins, Loader2, ShieldAlert, Lock, CreditCard, ShieldCheck, Crown, Zap, Gift, Calendar, ChevronDown, RefreshCw, TrendingUp, ExternalLink, Settings, AlertTriangle } from "lucide-react";
 import { AccountSidebar, type AccountTabKey } from "@/components/layout/AccountSidebar";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { AppShell } from "@/components/layout/AppShell";
@@ -10,6 +10,7 @@ import { useQuotaBalance } from "@/hooks/useQuotaBalance";
 import { supabase } from "@/integrations/supabase/client";
 import { callEdgeFunction } from "@/lib/edgeFunctions";
 import { useOrgSubscription } from "@/hooks/useOrgSubscription";
+import { SubscriptionAlert, getSubscriptionStatusInfo, isSubscriptionExpired, isRenewalSoon, getDaysUntilRenewal } from "@/components/SubscriptionAlert";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
@@ -208,6 +209,11 @@ function ProfileTab({ userId, profile, onRefresh }: { userId: string; profile: a
             <Badge variant={isActive ? "default" : "destructive"} className="mt-1">
               {isActive ? "✅ Ativo" : "❌ Inativo"}
             </Badge>
+            {profile?.created_at && (
+              <p className="text-[10px] text-muted-foreground mt-1">
+                📅 Membro desde {new Date(profile.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" })}
+              </p>
+            )}
           </div>
         </div>
 
@@ -554,11 +560,18 @@ function BillingTab({ orgId, planName }: { orgId: string | undefined; planName: 
 
   const contractDate = subscription?.current_period_start
     ? new Date(subscription.current_period_start).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" })
-    : "—";
+    : renewalRaw
+      ? new Date(new Date(renewalRaw).getTime() - 30 * 24 * 60 * 60 * 1000).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" })
+      : "—";
 
   const trialEndDate = subscription?.trial_end
     ? new Date(subscription.trial_end).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" })
     : null;
+
+  const subExpired = isSubscriptionExpired(subscription);
+  const renewalSoon = isRenewalSoon(subscription);
+  const daysLeft = getDaysUntilRenewal(subscription);
+  const statusInfo = getSubscriptionStatusInfo(subscription?.status);
 
   const planBadgeClasses = getPlanBadgeClasses(quota?.plan_name);
 
@@ -590,7 +603,8 @@ function BillingTab({ orgId, planName }: { orgId: string | undefined; planName: 
 
   return (
     <div className="space-y-5">
-      {/* ── Resumo da Conta Card ── */}
+      {/* ── Subscription Alert ── */}
+      <SubscriptionAlert orgId={orgId} />
       <Collapsible open={resumoOpen} onOpenChange={setResumoOpen}>
         <div className="rounded-xl border border-blue-200 dark:border-blue-800/40 bg-blue-50/50 dark:bg-blue-950/20 p-5 shadow-md">
           <div className="flex items-center justify-between gap-3">
@@ -665,14 +679,39 @@ function BillingTab({ orgId, planName }: { orgId: string | undefined; planName: 
                   iconClass="bg-blue-500/15 text-blue-600 dark:text-blue-400"
                   loading={quotaLoading}
                 />
-                <BillingSummaryCard
-                  icon={Calendar}
-                  label="Renovação"
-                  value={renewalDate}
-                  sub="próximo ciclo"
-                  iconClass="bg-green-500/15 text-green-600 dark:text-green-400"
-                  loading={quotaLoading}
-                />
+                <div
+                  className={cn(
+                    "rounded-xl border p-5 flex items-center gap-3 shadow-md transition-all duration-300",
+                    (subExpired || renewalSoon)
+                      ? "border-red-500/40 bg-red-500/10 cursor-pointer hover:bg-red-500/20"
+                      : "bg-card hover:shadow-xl"
+                  )}
+                  onClick={(subExpired || renewalSoon) ? openBillingPortal : undefined}
+                  role={(subExpired || renewalSoon) ? "button" : undefined}
+                >
+                  <div className={cn(
+                    "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl",
+                    (subExpired || renewalSoon)
+                      ? "bg-red-500/15 text-red-600 dark:text-red-400"
+                      : "bg-green-500/15 text-green-600 dark:text-green-400"
+                  )}>
+                    {(subExpired || renewalSoon) ? <AlertTriangle className="h-5 w-5" /> : <Calendar className="h-5 w-5" />}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Renovação</p>
+                    {quotaLoading ? (
+                      <Skeleton className="h-6 w-16 mt-0.5" />
+                    ) : (
+                      <>
+                        <p className={cn("text-lg font-bold tracking-tight leading-tight", (subExpired || renewalSoon) ? "text-red-600 dark:text-red-400" : "text-foreground")}>{renewalDate}</p>
+                        <p className="text-[10px] text-muted-foreground">
+                          {subExpired ? "⚠️ Vencida — clique para renovar" : renewalSoon ? `⏰ ${daysLeft} dia${daysLeft !== 1 ? "s" : ""} — clique para gerenciar` : "próximo ciclo"}
+                        </p>
+                      </>
+                    )}
+                  </div>
+                  {(subExpired || renewalSoon) && <ExternalLink className="h-3.5 w-3.5 text-red-500 ml-auto shrink-0" />}
+                </div>
                 {trialEndDate && (
                   <BillingSummaryCard
                     icon={Calendar}
@@ -749,7 +788,7 @@ function BillingTab({ orgId, planName }: { orgId: string | undefined; planName: 
             <div className="flex items-center gap-4 flex-wrap">
               <div className="space-y-1">
                 <p className="text-sm text-muted-foreground">
-                  Status: <span className="font-semibold text-foreground capitalize">{subscription?.status ?? "Nenhuma"}</span>
+                  Status: <span className={cn("font-semibold", statusInfo.color)}>{statusInfo.label}</span>
                 </p>
                 {subscription?.plan_name && (
                   <p className="text-sm text-muted-foreground">

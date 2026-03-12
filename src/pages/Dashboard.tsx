@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Sparkles, FileCode, Layers, Rocket, Crown, Zap, Gift, Star, TrendingUp, ChevronDown, RefreshCw, CreditCard } from "lucide-react";
+import { SubscriptionAlert } from "@/components/SubscriptionAlert";
 import { useQueryClient } from "@tanstack/react-query";
 import { AppShell } from "@/components/layout/AppShell";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -201,6 +202,11 @@ export default function Dashboard() {
       onSignOut={signOut}
     >
       <div className="pb-28">
+        {/* ── Subscription Alert ── */}
+        <div className="mb-4">
+          <SubscriptionAlert orgId={orgId} showToast compact />
+        </div>
+
         {/* ── Greeting ── */}
         <section className="mb-8 animate-fade-in" style={{ animationFillMode: "backwards" }}>
           {isLoading ? (

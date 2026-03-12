@@ -71,7 +71,11 @@ export function MistoInput({
           disabled={!canGenerate}
           type="button"
         >
-          ⚡ Gerar com IA — 1 cota
+          {isGenerating ? (
+            <><span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent mr-2" /> Gerando...</>
+          ) : (
+            "⚡ Gerar com IA — 1 cota"
+          )}
         </button>
       </div>
     </div>

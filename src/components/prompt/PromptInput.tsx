@@ -83,7 +83,7 @@ export function PromptInput({
   const freeLen = freeText.length;
   const manualFilled = Object.values(manualFields).filter(v => v.length > 2).length;
   const canGenerate = inputMode === "free"
-    ? freeLen >= 30 && freeLen <= 600 && !isGenerating
+    ? freeLen >= 30 && freeLen <= 1200 && !isGenerating
     : manualFilled >= 3 && !isGenerating;
 
   const [selectedPlatformId, setSelectedPlatformId] = useState("lovable");
@@ -125,12 +125,12 @@ export function PromptInput({
             className="misto-textarea"
             placeholder="Descreva o que você precisa em texto livre. A IA vai extrair os campos automaticamente e gerar o prompt otimizado..."
             value={freeText}
-            onChange={(e) => onFreeTextChange(e.target.value.slice(0, 600))}
+            onChange={(e) => onFreeTextChange(e.target.value.slice(0, 1200))}
             disabled={isGenerating}
             style={{ minHeight: 220 }}
           />
           <div className={`misto-char-count ${freeLen < 30 ? "warning" : ""}`}>
-            {freeLen} / 600 {freeLen < 30 && "(mín. 30)"}
+            {freeLen} / 1200 {freeLen < 30 && "(mín. 30)"}
           </div>
         </div>
       )}
@@ -216,7 +216,11 @@ export function PromptInput({
       </div>
 
       <button className="misto-gen-btn" onClick={onGenerate} disabled={!canGenerate} type="button">
-        ✨ Gerar Prompt — 1 cota
+        {isGenerating ? (
+          <><span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent mr-2" /> Gerando...</>
+        ) : (
+          "✨ Gerar Prompt — 1 cota"
+        )}
       </button>
     </div>
   );
