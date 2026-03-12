@@ -455,8 +455,13 @@ function BillingTab({ orgId, planName }: { orgId: string | undefined; planName: 
   const { data: quota, isLoading: quotaLoading, isFetching: quotaFetching } = useQuotaBalance(orgId);
   const { data: products, isLoading: productsLoading } = useBillingProducts();
   const { data: packs, isLoading: packsLoading } = useCreditPacks();
+  const { data: subscription } = useOrgSubscription(orgId);
   const [buyingPackId, setBuyingPackId] = useState<string | null>(null);
   const [resumoOpen, setResumoOpen] = useState(true);
+  const [creditosOpen, setCreditosOpen] = useState(false);
+  const [planosOpen, setPlanosOpen] = useState(false);
+  const [assinaturaOpen, setAssinaturaOpen] = useState(false);
+  const [portalLoading, setPortalLoading] = useState(false);
 
   // Filter out topup products
   const subscriptionPlans = (products ?? []).filter(
@@ -498,6 +503,34 @@ function BillingTab({ orgId, planName }: { orgId: string | undefined; planName: 
     }
   };
 
+  const openBillingPortal = async () => {
+    setPortalLoading(true);
+    try {
+      const data = await callEdgeFunction("create-billing-portal", {
+        org_id: orgId,
+        return_url: window.location.href,
+      });
+      if (data?.url) {
+        window.open(data.url, "_blank");
+        return;
+      }
+      if (data?.error === "no_stripe_customer") {
+        toast.error("Nenhuma assinatura ativa encontrada no Stripe.");
+        return;
+      }
+      toast.error("Não foi possível abrir o portal.");
+    } catch (err: any) {
+      const msg = err?.message ?? "";
+      if (msg.includes("no_stripe_customer")) {
+        toast.error("Nenhuma assinatura ativa encontrada no Stripe.");
+      } else {
+        toast.error("Erro ao abrir o portal de assinaturas.");
+      }
+    } finally {
+      setPortalLoading(false);
+    }
+  };
+
   const handleRefreshQuota = () => {
     queryClient.invalidateQueries({ queryKey: ["quota-balance", orgId] });
   };
@@ -514,9 +547,18 @@ function BillingTab({ orgId, planName }: { orgId: string | undefined; planName: 
   const planTotal = quota?.plan_total ?? 0;
   const bonusTotal = bonusRemaining + extraCredits;
 
-  const renewalDate = quota?.current_period_end
-    ? new Date(quota.current_period_end).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })
+  const renewalRaw = quota?.reset_at || subscription?.current_period_end || quota?.current_period_end;
+  const renewalDate = renewalRaw
+    ? new Date(renewalRaw).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" })
     : "—";
+
+  const contractDate = subscription?.current_period_start
+    ? new Date(subscription.current_period_start).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" })
+    : "—";
+
+  const trialEndDate = subscription?.trial_end
+    ? new Date(subscription.trial_end).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" })
+    : null;
 
   const planBadgeClasses = getPlanBadgeClasses(quota?.plan_name);
 
@@ -532,8 +574,22 @@ function BillingTab({ orgId, planName }: { orgId: string | undefined; planName: 
     );
   };
 
+  const collapsibleHeader = (
+    title: string,
+    open: boolean,
+    subtitle?: string,
+  ) => (
+    <div className="flex items-center justify-between flex-1 cursor-pointer gap-3">
+      <div>
+        <p className="text-sm font-semibold text-foreground">{title}</p>
+        {subtitle && !open && <p className="text-xs text-muted-foreground">{subtitle}</p>}
+      </div>
+      <ChevronDown className={cn("h-4 w-4 text-muted-foreground transition-transform duration-200 shrink-0", open && "rotate-180")} />
+    </div>
+  );
+
   return (
-    <div className="space-y-8">
+    <div className="space-y-5">
       {/* ── Resumo da Conta Card ── */}
       <Collapsible open={resumoOpen} onOpenChange={setResumoOpen}>
         <div className="rounded-xl border border-blue-200 dark:border-blue-800/40 bg-blue-50/50 dark:bg-blue-950/20 p-5 shadow-md">
@@ -592,6 +648,44 @@ function BillingTab({ orgId, planName }: { orgId: string | undefined; planName: 
               </div>
             </div>
 
+            {/* Dates */}
+            <div>
+              <div className="flex items-center gap-1.5 mb-3">
+                <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+                  Datas do Plano
+                </p>
+                <InfoTooltip content="Datas de contratação, renovação e trial da sua assinatura." />
+              </div>
+              <div className={cn("grid gap-3", trialEndDate ? "grid-cols-3" : "grid-cols-2")}>
+                <BillingSummaryCard
+                  icon={Calendar}
+                  label="Contratação"
+                  value={contractDate}
+                  sub="início do ciclo"
+                  iconClass="bg-blue-500/15 text-blue-600 dark:text-blue-400"
+                  loading={quotaLoading}
+                />
+                <BillingSummaryCard
+                  icon={Calendar}
+                  label="Renovação"
+                  value={renewalDate}
+                  sub="próximo ciclo"
+                  iconClass="bg-green-500/15 text-green-600 dark:text-green-400"
+                  loading={quotaLoading}
+                />
+                {trialEndDate && (
+                  <BillingSummaryCard
+                    icon={Calendar}
+                    label="Trial até"
+                    value={trialEndDate}
+                    sub="período de teste"
+                    iconClass="bg-yellow-500/15 text-yellow-600 dark:text-yellow-400"
+                    loading={quotaLoading}
+                  />
+                )}
+              </div>
+            </div>
+
             {/* Usage Progress - Plan Quotas */}
             <div>
               <div className="flex items-center gap-1.5 mb-3">
@@ -641,166 +735,221 @@ function BillingTab({ orgId, planName }: { orgId: string | undefined; planName: 
         </div>
       </Collapsible>
 
-
-      {/* Credit Packs — ABOVE plans */}
-      <div className="rounded-xl border bg-card p-6 shadow-sm">
-        <h2 className="text-lg font-bold text-foreground mb-1">Comprar Créditos Extras</h2>
-        <p className="text-sm text-muted-foreground mb-4">
-          Adicione créditos extras para continuar utilizando as funcionalidades de IA.
-        </p>
-        {packsLoading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-3xl">
-            {[1, 2, 3].map((i) => <Skeleton key={i} className="h-48 w-full rounded-xl" />)}
-          </div>
-        ) : (packs ?? []).length === 0 ? (
-          <p className="text-sm text-muted-foreground">Nenhum pacote disponível no momento.</p>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-3xl">
-            {(packs ?? []).map((pack) => (
-              <div
-                key={pack.id}
-                className={cn(
-                  "rounded-xl border p-5 flex flex-col items-center text-center transition-colors",
-                  pack.is_featured
-                    ? "border-primary/40 ring-1 ring-primary/20 bg-primary/5"
-                    : "border-border/60 bg-card/50"
-                )}
-              >
-                {pack.is_featured && (
-                  <span className="rounded-full bg-primary px-3 py-1 text-[10px] font-bold text-primary-foreground uppercase tracking-wider -mt-8 mb-2">
-                    ⭐ Mais popular
-                  </span>
-                )}
-                <Coins className="h-8 w-8 text-primary mb-3" />
-                <p className="text-3xl font-extrabold text-foreground">{pack.credits}</p>
-                <p className="text-xs text-muted-foreground mb-2">créditos</p>
-                <p className="text-lg font-bold text-foreground mb-4">
-                  R$ {Number(pack.price_brl).toFixed(2).replace(".", ",")}
+      {/* ── Gerenciar Assinatura ── */}
+      <Collapsible open={assinaturaOpen} onOpenChange={setAssinaturaOpen}>
+        <div className="rounded-xl border bg-card p-5 shadow-sm">
+          <CollapsibleTrigger className="w-full">
+            {collapsibleHeader(
+              "Gerenciar Assinatura",
+              assinaturaOpen,
+              subscription?.status === "active" ? `Plano ${subscription.plan_name ?? "ativo"} · Renova ${renewalDate}` : "Gerencie sua assinatura via Stripe"
+            )}
+          </CollapsibleTrigger>
+          <CollapsibleContent className="mt-4 space-y-4">
+            <div className="flex items-center gap-4 flex-wrap">
+              <div className="space-y-1">
+                <p className="text-sm text-muted-foreground">
+                  Status: <span className="font-semibold text-foreground capitalize">{subscription?.status ?? "Nenhuma"}</span>
                 </p>
-                <Button
-                  onClick={() => buyCredits(pack.id)}
-                  disabled={buyingPackId !== null}
-                  className="w-full"
-                  variant={pack.is_featured ? "default" : "outline"}
-                >
-                  {buyingPackId === pack.id ? (
-                    <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Processando...</>
-                  ) : (
-                    "Comprar"
-                  )}
-                </Button>
+                {subscription?.plan_name && (
+                  <p className="text-sm text-muted-foreground">
+                    Plano: <span className="font-semibold text-foreground">{subscription.plan_name}</span>
+                  </p>
+                )}
+                {subscription?.cancel_at && (
+                  <p className="text-sm text-destructive font-medium">
+                    ⚠️ Cancelamento programado para {new Date(subscription.cancel_at).toLocaleDateString("pt-BR")}
+                  </p>
+                )}
               </div>
-            ))}
-          </div>
-        )}
-      </div>
+            </div>
+            <Button
+              onClick={openBillingPortal}
+              disabled={portalLoading}
+              variant="outline"
+              className="gap-2"
+            >
+              {portalLoading ? (
+                <><Loader2 className="h-4 w-4 animate-spin" /> Abrindo portal...</>
+              ) : (
+                <><Settings className="h-4 w-4" /> Gerenciar Assinatura no Stripe <ExternalLink className="h-3.5 w-3.5 ml-1" /></>
+              )}
+            </Button>
+            <p className="text-xs text-muted-foreground">
+              No portal você pode atualizar método de pagamento, cancelar ou alterar sua assinatura.
+            </p>
+          </CollapsibleContent>
+        </div>
+      </Collapsible>
 
-      {/* Plans — filtered, no topups, block downgrade */}
-      <div className="rounded-xl border bg-card p-6 shadow-sm">
-        <h2 className="text-lg font-bold text-foreground mb-4">Planos disponíveis</h2>
-        {productsLoading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-            {[1, 2, 3].map((i) => <Skeleton key={i} className="h-72 w-full rounded-xl" />)}
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4 max-w-5xl">
-            {subscriptionPlans.map((plan) => {
-              const planTierKey = (plan.plan_tier ?? plan.name ?? "").toLowerCase();
-              const planTierOrder = TIER_ORDER[planTierKey] ?? 0;
-              const isCurrent = planTierKey === userTierName;
-              const isDowngrade = planTierOrder < userTierOrder;
-              const canSubscribe = planTierOrder > userTierOrder;
-
-              return (
-                <div
-                  key={`${plan.display_name}-${plan.sort_order}`}
-                  className={cn(
-                    "rounded-xl border p-5 transition-colors flex flex-col",
-                    isCurrent ? "border-primary bg-primary/5 ring-2 ring-primary/40" : "border-border/60 bg-card/50",
-                    plan.is_featured && !isCurrent && "border-primary/40 ring-1 ring-primary/20"
-                  )}
-                >
-                  {/* Featured badge */}
-                  {plan.is_featured && (
-                    <div className="flex justify-center -mt-8 mb-2">
-                      <span className="rounded-full bg-primary px-3 py-1 text-[10px] font-bold text-primary-foreground uppercase tracking-wider">
+      {/* ── Comprar Créditos Extras ── */}
+      <Collapsible open={creditosOpen} onOpenChange={setCreditosOpen}>
+        <div className="rounded-xl border bg-card p-5 shadow-sm">
+          <CollapsibleTrigger className="w-full">
+            {collapsibleHeader("Comprar Créditos Extras", creditosOpen, "Adicione créditos avulsos para continuar usando IA")}
+          </CollapsibleTrigger>
+          <CollapsibleContent className="mt-4">
+            <p className="text-sm text-muted-foreground mb-4">
+              Adicione créditos extras para continuar utilizando as funcionalidades de IA.
+            </p>
+            {packsLoading ? (
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-3xl">
+                {[1, 2, 3].map((i) => <Skeleton key={i} className="h-48 w-full rounded-xl" />)}
+              </div>
+            ) : (packs ?? []).length === 0 ? (
+              <p className="text-sm text-muted-foreground">Nenhum pacote disponível no momento.</p>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-3xl">
+                {(packs ?? []).map((pack) => (
+                  <div
+                    key={pack.id}
+                    className={cn(
+                      "rounded-xl border p-5 flex flex-col items-center text-center transition-colors",
+                      pack.is_featured
+                        ? "border-primary/40 ring-1 ring-primary/20 bg-primary/5"
+                        : "border-border/60 bg-card/50"
+                    )}
+                  >
+                    {pack.is_featured && (
+                      <span className="rounded-full bg-primary px-3 py-1 text-[10px] font-bold text-primary-foreground uppercase tracking-wider -mt-8 mb-2">
                         ⭐ Mais popular
                       </span>
-                    </div>
-                  )}
-
-                  {/* Plan name */}
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-xs font-bold uppercase tracking-widest text-primary">
-                      {plan.display_name ?? plan.name ?? "Plano"}
-                    </h3>
-                    {isCurrent && (
-                      <span className="rounded-full bg-primary px-2.5 py-0.5 text-[10px] font-bold text-primary-foreground uppercase">
-                        Atual
-                      </span>
                     )}
-                  </div>
-
-                  {/* Price */}
-                  <div className="mb-1">
-                    <span className="text-4xl font-extrabold text-foreground tracking-tight">
-                      {(() => {
-                        const price = Number(plan.price_brl);
-                        return price === 0 ? "R$ 0" : `R$ ${price}`;
-                      })()}
-                    </span>
-                  </div>
-                  {(() => {
-                    const interval = "mês";
-                    const fmtVal = (val: number) => `${val} / ${interval}`;
-                    return (
-                      <>
-                        <p className="text-xs text-muted-foreground mb-1">por {interval}</p>
-
-                         <div className="flex items-center gap-1.5 mb-3 mt-2">
-                          <p className="text-sm font-semibold text-foreground">
-                            {`${plan.credits_limit} cotas / ${interval}`}
-                          </p>
-                          <InfoTooltip content="As ações consomem cotas do total mensal. Exemplo: 1 Build (5 cotas) equivale a 5 Prompts." />
-                        </div>
-                        <p className="text-[10px] text-muted-foreground mb-2">
-                          Cotas compartilhadas entre todas as ações
-                        </p>
-
-                        <div className="space-y-2 flex-1 mb-4">
-                          {featureRow("✨ Prompts (1 cota)", fmtVal(plan.prompts_limit))}
-                          {featureRow("🏗️ SaaS Specs (2 cotas)", fmtVal(plan.saas_specs_limit))}
-                          {featureRow("⚡ Modo Misto (2 cotas)", fmtVal(plan.modo_misto_limit))}
-                          {featureRow("⚙️ BUILD Engine (5 cotas)", fmtVal(plan.build_engine_limit))}
-                          {featureRow("👥 Membros", plan.members_label ?? "1")}
-                        </div>
-                      </>
-                    );
-                  })()}
-
-                  {isCurrent ? (
-                    <div className="w-full rounded-lg border border-primary/30 bg-primary/5 px-3 py-2 text-center text-xs font-medium text-primary">
-                      ✅ Plano atual
-                    </div>
-                  ) : isDowngrade || planTierOrder === 0 ? (
-                    <div className="w-full rounded-lg border border-border/60 bg-muted/40 px-3 py-2 text-center text-xs font-medium text-muted-foreground">
-                      {planTierOrder === 0 ? "Plano gratuito" : "Downgrade indisponível"}
-                    </div>
-                  ) : canSubscribe ? (
+                    <Coins className="h-8 w-8 text-primary mb-3" />
+                    <p className="text-3xl font-extrabold text-foreground">{pack.credits}</p>
+                    <p className="text-xs text-muted-foreground mb-2">créditos</p>
+                    <p className="text-lg font-bold text-foreground mb-4">
+                      R$ {Number(pack.price_brl).toFixed(2).replace(".", ",")}
+                    </p>
                     <Button
-                      onClick={() => subscribe(plan.stripe_price_id ?? "")}
-                      disabled={!plan.stripe_price_id}
+                      onClick={() => buyCredits(pack.id)}
+                      disabled={buyingPackId !== null}
                       className="w-full"
+                      variant={pack.is_featured ? "default" : "outline"}
                     >
-                      Fazer Upgrade
+                      {buyingPackId === pack.id ? (
+                        <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Processando...</>
+                      ) : (
+                        "Comprar"
+                      )}
                     </Button>
-                  ) : null}
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CollapsibleContent>
+        </div>
+      </Collapsible>
+
+      {/* ── Planos Disponíveis ── */}
+      <Collapsible open={planosOpen} onOpenChange={setPlanosOpen}>
+        <div className="rounded-xl border bg-card p-5 shadow-sm">
+          <CollapsibleTrigger className="w-full">
+            {collapsibleHeader("Planos Disponíveis", planosOpen, "Compare e faça upgrade do seu plano")}
+          </CollapsibleTrigger>
+          <CollapsibleContent className="mt-4">
+            {productsLoading ? (
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                {[1, 2, 3].map((i) => <Skeleton key={i} className="h-72 w-full rounded-xl" />)}
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4 max-w-5xl">
+                {subscriptionPlans.map((plan) => {
+                  const planTierKey = (plan.plan_tier ?? plan.name ?? "").toLowerCase();
+                  const planTierOrder = TIER_ORDER[planTierKey] ?? 0;
+                  const isCurrent = planTierKey === userTierName;
+                  const isDowngrade = planTierOrder < userTierOrder;
+                  const canSubscribe = planTierOrder > userTierOrder;
+
+                  return (
+                    <div
+                      key={`${plan.display_name}-${plan.sort_order}`}
+                      className={cn(
+                        "rounded-xl border p-5 transition-colors flex flex-col",
+                        isCurrent ? "border-primary bg-primary/5 ring-2 ring-primary/40" : "border-border/60 bg-card/50",
+                        plan.is_featured && !isCurrent && "border-primary/40 ring-1 ring-primary/20"
+                      )}
+                    >
+                      {plan.is_featured && (
+                        <div className="flex justify-center -mt-8 mb-2">
+                          <span className="rounded-full bg-primary px-3 py-1 text-[10px] font-bold text-primary-foreground uppercase tracking-wider">
+                            ⭐ Mais popular
+                          </span>
+                        </div>
+                      )}
+
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-xs font-bold uppercase tracking-widest text-primary">
+                          {plan.display_name ?? plan.name ?? "Plano"}
+                        </h3>
+                        {isCurrent && (
+                          <span className="rounded-full bg-primary px-2.5 py-0.5 text-[10px] font-bold text-primary-foreground uppercase">
+                            Atual
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="mb-1">
+                        <span className="text-4xl font-extrabold text-foreground tracking-tight">
+                          {(() => {
+                            const price = Number(plan.price_brl);
+                            return price === 0 ? "R$ 0" : `R$ ${price}`;
+                          })()}
+                        </span>
+                      </div>
+                      {(() => {
+                        const interval = "mês";
+                        const fmtVal = (val: number) => `${val} / ${interval}`;
+                        return (
+                          <>
+                            <p className="text-xs text-muted-foreground mb-1">por {interval}</p>
+
+                             <div className="flex items-center gap-1.5 mb-3 mt-2">
+                              <p className="text-sm font-semibold text-foreground">
+                                {`${plan.credits_limit} cotas / ${interval}`}
+                              </p>
+                              <InfoTooltip content="As ações consomem cotas do total mensal. Exemplo: 1 Build (5 cotas) equivale a 5 Prompts." />
+                            </div>
+                            <p className="text-[10px] text-muted-foreground mb-2">
+                              Cotas compartilhadas entre todas as ações
+                            </p>
+
+                            <div className="space-y-2 flex-1 mb-4">
+                              {featureRow("✨ Prompts (1 cota)", fmtVal(plan.prompts_limit))}
+                              {featureRow("🏗️ SaaS Specs (2 cotas)", fmtVal(plan.saas_specs_limit))}
+                              {featureRow("⚡ Modo Misto (2 cotas)", fmtVal(plan.modo_misto_limit))}
+                              {featureRow("⚙️ BUILD Engine (5 cotas)", fmtVal(plan.build_engine_limit))}
+                              {featureRow("👥 Membros", plan.members_label ?? "1")}
+                            </div>
+                          </>
+                        );
+                      })()}
+
+                      {isCurrent ? (
+                        <div className="w-full rounded-lg border border-primary/30 bg-primary/5 px-3 py-2 text-center text-xs font-medium text-primary">
+                          ✅ Plano atual
+                        </div>
+                      ) : isDowngrade || planTierOrder === 0 ? (
+                        <div className="w-full rounded-lg border border-border/60 bg-muted/40 px-3 py-2 text-center text-xs font-medium text-muted-foreground">
+                          {planTierOrder === 0 ? "Plano gratuito" : "Downgrade indisponível"}
+                        </div>
+                      ) : canSubscribe ? (
+                        <Button
+                          onClick={() => subscribe(plan.stripe_price_id ?? "")}
+                          disabled={!plan.stripe_price_id}
+                          className="w-full"
+                        >
+                          Fazer Upgrade
+                        </Button>
+                      ) : null}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </CollapsibleContent>
+        </div>
+      </Collapsible>
     </div>
   );
 }
