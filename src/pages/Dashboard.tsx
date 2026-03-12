@@ -281,13 +281,13 @@ export default function Dashboard() {
                 ].map((item) => (
                   <div key={item.label} className="rounded-xl border bg-muted/50 p-2.5">
                     <div className="text-sm mb-1">{item.emoji}</div>
-                    <p className="text-[9px] text-muted-foreground uppercase tracking-wider">{item.label}</p>
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider">{item.label}</p>
                     {isQuotaLoading ? (
                       <Skeleton className="h-5 w-10 mt-0.5" />
                     ) : (
                       <>
-                        <p className={cn("font-heading text-[17px] font-extrabold", item.highlight ? "text-primary" : "text-foreground")}>{item.value}</p>
-                        <p className="text-[9px] text-muted-foreground">{item.sub}</p>
+                        <p className={cn("font-heading text-lg font-extrabold", item.highlight ? "text-primary" : "text-foreground")}>{item.value}</p>
+                        <p className="text-[10px] text-muted-foreground">{item.sub}</p>
                       </>
                     )}
                   </div>
