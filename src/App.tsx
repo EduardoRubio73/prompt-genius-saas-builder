@@ -145,6 +145,7 @@ function App() {
           </Routes>
         </BrowserRouter>
       </TooltipProvider>
+      </LoadingProvider>
     </QueryClientProvider>
   );
 }
