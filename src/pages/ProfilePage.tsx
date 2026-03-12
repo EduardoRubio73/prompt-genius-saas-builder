@@ -679,14 +679,39 @@ function BillingTab({ orgId, planName }: { orgId: string | undefined; planName: 
                   iconClass="bg-blue-500/15 text-blue-600 dark:text-blue-400"
                   loading={quotaLoading}
                 />
-                <BillingSummaryCard
-                  icon={Calendar}
-                  label="Renovação"
-                  value={renewalDate}
-                  sub="próximo ciclo"
-                  iconClass="bg-green-500/15 text-green-600 dark:text-green-400"
-                  loading={quotaLoading}
-                />
+                <div
+                  className={cn(
+                    "rounded-xl border p-5 flex items-center gap-3 shadow-md transition-all duration-300",
+                    (subExpired || renewalSoon)
+                      ? "border-red-500/40 bg-red-500/10 cursor-pointer hover:bg-red-500/20"
+                      : "bg-card hover:shadow-xl"
+                  )}
+                  onClick={(subExpired || renewalSoon) ? openBillingPortal : undefined}
+                  role={(subExpired || renewalSoon) ? "button" : undefined}
+                >
+                  <div className={cn(
+                    "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl",
+                    (subExpired || renewalSoon)
+                      ? "bg-red-500/15 text-red-600 dark:text-red-400"
+                      : "bg-green-500/15 text-green-600 dark:text-green-400"
+                  )}>
+                    {(subExpired || renewalSoon) ? <AlertTriangle className="h-5 w-5" /> : <Calendar className="h-5 w-5" />}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Renovação</p>
+                    {quotaLoading ? (
+                      <Skeleton className="h-6 w-16 mt-0.5" />
+                    ) : (
+                      <>
+                        <p className={cn("text-lg font-bold tracking-tight leading-tight", (subExpired || renewalSoon) ? "text-red-600 dark:text-red-400" : "text-foreground")}>{renewalDate}</p>
+                        <p className="text-[10px] text-muted-foreground">
+                          {subExpired ? "⚠️ Vencida — clique para renovar" : renewalSoon ? `⏰ ${daysLeft} dia${daysLeft !== 1 ? "s" : ""} — clique para gerenciar` : "próximo ciclo"}
+                        </p>
+                      </>
+                    )}
+                  </div>
+                  {(subExpired || renewalSoon) && <ExternalLink className="h-3.5 w-3.5 text-red-500 ml-auto shrink-0" />}
+                </div>
                 {trialEndDate && (
                   <BillingSummaryCard
                     icon={Calendar}
