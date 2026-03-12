@@ -133,18 +133,18 @@ function ModeActionCard({
         <Icon className="h-7 w-7 sm:h-8 sm:w-8" />
       </div>
 
-      <h3 className="font-heading text-sm sm:text-base font-bold tracking-tight">{title}</h3>
-      <p className="text-xs sm:text-[11px] text-muted-foreground leading-relaxed">{description}</p>
+      <h3 className="font-heading text-lg sm:text-xl font-semibold tracking-tight">{title}</h3>
+      <p className="text-sm text-muted-foreground leading-relaxed mt-1">{description}</p>
 
       <span className={cn(
-        "rounded-full px-2.5 py-1 text-[10px] sm:text-[11px] font-semibold tabular-nums mt-1",
+        "rounded-full px-3 py-1 text-xs sm:text-sm font-semibold tabular-nums mt-2",
         disabled ? "bg-muted text-muted-foreground" : colors.badge
       )}>
         {cost} {cost === 1 ? "cota" : "cotas"} · até {maxActions}
       </span>
 
       <span className={cn(
-        "mt-auto inline-flex items-center gap-1 text-xs sm:text-[13px] font-semibold transition-colors pt-2",
+        "mt-auto inline-flex items-center gap-1 text-sm font-semibold transition-colors pt-3",
         disabled ? "text-muted-foreground" : colors.text
       )}>
         {disabled ? "Indisponível" : "Iniciar →"}
