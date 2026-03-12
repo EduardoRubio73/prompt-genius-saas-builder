@@ -818,6 +818,8 @@ export default function BuildMode() {
     }
   };
 
+  const { showLoading, hideLoading } = useLoading();
+
   const handleGenerate = useCallback(async () => {
     if (!orgId || !user) { toast.error("Usuário não autenticado"); return; }
 
@@ -828,6 +830,7 @@ export default function BuildMode() {
     if (balance.total_remaining <= 0) { setCreditModal("no_credits"); return; }
 
     startTime.current = Date.now();
+    showLoading("Gerando Projeto BUILD...");
 
     try {
       setStep("generating");
