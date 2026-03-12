@@ -209,11 +209,6 @@ export default function Dashboard() {
       onSignOut={signOut}
     >
       <div className="pb-28">
-        {/* ── Subscription Alert ── */}
-        <div className="mb-4">
-          <SubscriptionAlert orgId={orgId} showToast compact />
-        </div>
-
         {/* ── Greeting ── */}
         <section className="mb-8 animate-fade-in" style={{ animationFillMode: "backwards" }}>
           {isLoading ? (
