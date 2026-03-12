@@ -211,7 +211,7 @@ function ProfileTab({ userId, profile, onRefresh }: { userId: string; profile: a
             </Badge>
             {profile?.created_at && (
               <p className="text-[10px] text-muted-foreground mt-1">
-                📅 Membro desde {new Date(profile.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" })}
+                📅 Cadastrado desde {new Date(profile.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" })}
               </p>
             )}
           </div>
