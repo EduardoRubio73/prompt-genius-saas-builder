@@ -136,6 +136,7 @@ export default function MistoMode() {
 
       setTimeElapsed((Date.now() - startTime.current) / 1000);
       setStep("results");
+      hideLoading();
 
       // Mark session as completed
       await supabase.from("sessions").update({ completed: true, raw_input: userInput }).eq("id", currentSessionId);
