@@ -14,6 +14,7 @@ import { MistoSpecLoading } from "@/components/misto/MistoSpecLoading";
 import { CreditModal } from "@/components/misto/CreditModal";
 import { UnifiedMemorySidebar } from "@/components/UnifiedMemorySidebar";
 import { InfoTooltip } from "@/components/ui/info-tooltip";
+import { CopyButton } from "@/components/CopyButton";
 
 import "../misto/misto.css";
 
