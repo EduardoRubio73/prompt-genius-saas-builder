@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from "react";
+import { useLoading } from "@/contexts/LoadingContext";
 import { useNavigate } from "react-router-dom";
 import { Sun, Moon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
