@@ -243,6 +243,18 @@ async function upsertSubscriptionFromStripe(
     throw new Error(`Upsert subscription failed: ${upsertError.message}`);
   } else {
     console.log("Subscription upserted:", stripeSubscription.id, "for org:", orgId);
+
+    // Sync plan_credits_reset_at with Stripe's current_period_end
+    if (stripeSubscription.status === "active" || stripeSubscription.status === "trialing") {
+      await admin
+        .from("organizations")
+        .update({
+          plan_credits_reset_at: subData.current_period_end,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", orgId);
+      console.log("plan_credits_reset_at synced to:", subData.current_period_end, "for org:", orgId);
+    }
   }
 }
 
@@ -359,12 +371,16 @@ async function handleStripeWebhook(req: Request): Promise<Response> {
         if (event.type === "customer.subscription.updated") {
           const previousAttrs = (event.data as any).previous_attributes;
           if (previousAttrs?.current_period_start !== undefined) {
-            console.log("Period renewed for org:", orgId, "— resetting plan_credits_used");
+            const renewalPeriodEnd = safeTimestamp(
+              (stripeSubscription.items.data[0] as any)?.current_period_end
+              ?? stripeSubscription.current_period_end
+            );
+            console.log("Period renewed for org:", orgId, "— resetting plan_credits_used, new period_end:", renewalPeriodEnd);
             await admin
               .from("organizations")
               .update({
                 plan_credits_used: 0,
-                plan_credits_reset_at: new Date().toISOString(),
+                plan_credits_reset_at: renewalPeriodEnd ?? new Date().toISOString(),
                 updated_at: new Date().toISOString(),
               })
               .eq("id", orgId);
