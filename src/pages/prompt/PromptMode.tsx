@@ -251,6 +251,10 @@ export default function PromptMode() {
     }
   }, [orgId, user, freeText, manualFields, inputMode, destino, selectedSkill, skillComplement, fetchBalance, findSimilarPrompt]);
 
+  const handleGenerateClick = useCallback(() => {
+    handleGenerate();
+  }, [handleGenerate]);
+
   const handleForceAI = useCallback(() => {
     setFromCache(false);
     handleGenerate(true);
