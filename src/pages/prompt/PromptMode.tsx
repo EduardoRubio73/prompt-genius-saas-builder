@@ -324,6 +324,7 @@ export default function PromptMode() {
               searching={searching}
               selectedSkill={selectedSkill} onSelectedSkillChange={setSelectedSkill}
               skillComplement={skillComplement} onSkillComplementChange={setSkillComplement}
+              isSkillMode={isSkillMode}
             />
           )}
 
