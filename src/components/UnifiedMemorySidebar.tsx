@@ -418,6 +418,7 @@ export function UnifiedMemorySidebar({
             <TooltipProvider>
               {[
                 { icon: Sparkles, count: counts.prompt, label: "Prompts", color: "text-primary" },
+                { icon: Zap, count: (counts as any).skill ?? 0, label: "Skills", color: "text-amber-500" },
                 { icon: FileCode, count: counts.saas, label: "Specs", color: "text-accent" },
                 { icon: Rocket, count: counts.build, label: "Builds", color: "text-orange-500" },
                 { icon: Heart, count: counts.favorites, label: "Favoritos", color: "text-rose-400" },
