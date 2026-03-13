@@ -2,7 +2,8 @@ import { useState } from "react";
 import { Sparkles, FileCode, Layers, Rocket, Crown, Zap, Gift, Star, TrendingUp, ChevronDown, RefreshCw, CreditCard } from "lucide-react";
 import { useOrgSubscription } from "@/hooks/useOrgSubscription";
 import { isSubscriptionExpired } from "@/components/SubscriptionAlert";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueryClient, useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { AppShell } from "@/components/layout/AppShell";
 import { Skeleton } from "@/components/ui/skeleton";
 import { InfoTooltip } from "@/components/ui/info-tooltip";
@@ -182,6 +183,48 @@ export default function Dashboard() {
   const [modosOpen, setModosOpen] = useState(true);
   const [shareOpen, setShareOpen] = useState(false);
 
+  // Per-mode counts
+  const { data: promptCount } = useQuery({
+    queryKey: ["mode-count-prompt", orgId],
+    queryFn: async () => {
+      const { count } = await supabase.from("prompt_memory").select("*", { count: "exact", head: true }).eq("org_id", orgId!).eq("categoria", "prompt");
+      return count ?? 0;
+    },
+    enabled: !!orgId,
+  });
+  const { data: skillCount } = useQuery({
+    queryKey: ["mode-count-skill", orgId],
+    queryFn: async () => {
+      const { count } = await supabase.from("prompt_memory").select("*", { count: "exact", head: true }).eq("org_id", orgId!).eq("categoria", "skill");
+      return count ?? 0;
+    },
+    enabled: !!orgId,
+  });
+  const { data: mistoCount } = useQuery({
+    queryKey: ["mode-count-misto", orgId],
+    queryFn: async () => {
+      const { count } = await supabase.from("prompt_memory").select("*", { count: "exact", head: true }).eq("org_id", orgId!).eq("categoria", "misto");
+      return count ?? 0;
+    },
+    enabled: !!orgId,
+  });
+  const { data: specsCount } = useQuery({
+    queryKey: ["mode-count-specs", orgId],
+    queryFn: async () => {
+      const { count } = await supabase.from("saas_specs").select("*", { count: "exact", head: true }).eq("org_id", orgId!);
+      return count ?? 0;
+    },
+    enabled: !!orgId,
+  });
+  const { data: buildCount } = useQuery({
+    queryKey: ["mode-count-build", orgId],
+    queryFn: async () => {
+      const { count } = await supabase.from("build_projects").select("*", { count: "exact", head: true }).eq("org_id", orgId!);
+      return count ?? 0;
+    },
+    enabled: !!orgId,
+  });
+
   const firstName = profile?.full_name?.split(" ")[0] ?? "";
   const isLoading = profileLoading || statsLoading;
   const isQuotaLoading = profileLoading || quotaLoading;
@@ -337,16 +380,18 @@ export default function Dashboard() {
               </div>
 
               {/* Mini stats — 4 columns */}
-              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 border-t border-border pt-3.5">
+              <div className="grid grid-cols-3 gap-2 sm:grid-cols-6 border-t border-border pt-3.5">
                 {[
-                  { label: "Prompts Gerados", value: isLoading ? "—" : formatNumber(stats?.total_prompts ?? 0) },
-                  { label: "Specs Criadas", value: isLoading ? "—" : formatNumber(stats?.total_saas_specs ?? 0) },
-                  { label: "Total de Ações", value: isLoading ? "—" : formatNumber((stats?.total_prompts ?? 0) + (stats?.total_saas_specs ?? 0)) },
-                  { label: "Média Rating", value: isLoading ? "—" : (stats?.avg_prompt_rating ? Number(stats.avg_prompt_rating).toFixed(1) : "—") },
+                  { label: "Prompts", value: isLoading ? "—" : formatNumber(promptCount ?? 0), emoji: "✨" },
+                  { label: "Skills", value: isLoading ? "—" : formatNumber(skillCount ?? 0), emoji: "⚡" },
+                  { label: "Specs", value: isLoading ? "—" : formatNumber(specsCount ?? 0), emoji: "📐" },
+                  { label: "Misto", value: isLoading ? "—" : formatNumber(mistoCount ?? 0), emoji: "🔀" },
+                  { label: "Build", value: isLoading ? "—" : formatNumber(buildCount ?? 0), emoji: "🚀" },
+                  { label: "Média Rating", value: isLoading ? "—" : (stats?.avg_prompt_rating ? Number(stats.avg_prompt_rating).toFixed(1) : "—"), emoji: "⭐" },
                 ].map((s) => (
                   <div key={s.label} className="text-center">
                     <p className="font-heading text-2xl font-extrabold text-foreground">{s.value}</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">{s.label}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">{s.emoji} {s.label}</p>
                   </div>
                 ))}
               </div>

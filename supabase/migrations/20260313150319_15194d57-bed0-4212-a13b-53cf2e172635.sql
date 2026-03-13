@@ -1,0 +1,1 @@
+ALTER TYPE public.session_mode ADD VALUE IF NOT EXISTS 'skill';

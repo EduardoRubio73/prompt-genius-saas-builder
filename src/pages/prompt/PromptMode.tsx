@@ -85,11 +85,6 @@ export default function PromptMode() {
 
   const { showLoading, hideLoading } = useLoading();
 
-  // Unified generate handler — no more intent modal
-  const handleGenerateClick = useCallback(() => {
-    handleGenerate();
-  }, []);
-
   const handleGenerate = useCallback(async (forceAI?: boolean) => {
     if (!orgId || !user) { toast.error("Usuário não autenticado"); return; }
 
@@ -143,7 +138,7 @@ export default function PromptMode() {
       setStep("generating");
 
       const { data: sessionRecord, error: sessErr } = await supabase
-        .from("sessions").insert({ org_id: orgId, user_id: user.id, mode: "prompt" as const, tokens_total: 0 })
+        .from("sessions").insert({ org_id: orgId, user_id: user.id, mode: (inputMode === "skills" ? "skill" : "prompt") as any, tokens_total: 0 })
         .select().single();
       if (sessErr) throw sessErr;
       const currentSessionId = sessionRecord.id;
@@ -237,7 +232,7 @@ export default function PromptMode() {
           especialidade: localRefined.especialidade, persona: localRefined.persona,
           tarefa: localRefined.tarefa, objetivo: localRefined.objetivo,
           contexto: localRefined.contexto,
-          destino, prompt_gerado: localPrompt, rating: null, categoria: "prompt",
+          destino, prompt_gerado: localPrompt, rating: null, categoria: inputMode === "skills" ? "skill" : "prompt",
         }).select("id").single();
 
         if (memRow) setPromptMemoryId(memRow.id);
@@ -255,6 +250,10 @@ export default function PromptMode() {
       setStep("input");
     }
   }, [orgId, user, freeText, manualFields, inputMode, destino, selectedSkill, skillComplement, fetchBalance, findSimilarPrompt]);
+
+  const handleGenerateClick = useCallback(() => {
+    handleGenerate();
+  }, [handleGenerate]);
 
   const handleForceAI = useCallback(() => {
     setFromCache(false);
