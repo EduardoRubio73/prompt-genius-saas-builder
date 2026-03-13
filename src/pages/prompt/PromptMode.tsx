@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import type { Enums } from "@/integrations/supabase/types";
 import { callEdgeFunction } from "@/lib/edgeFunctions";
 import { findSkillById } from "@/hooks/useSkills";
+import { usePromptCache } from "@/hooks/usePromptCache";
 
 import { PromptInput } from "@/components/prompt/PromptInput";
 import { MistoRefining } from "@/components/misto/MistoRefining";
@@ -17,6 +18,7 @@ import { MistoResults } from "@/components/misto/MistoResults";
 import { CreditModal } from "@/components/misto/CreditModal";
 import { UnifiedMemorySidebar } from "@/components/UnifiedMemorySidebar";
 import { CopyButton } from "@/components/CopyButton";
+import { SkillIntentModal } from "@/components/skills/SkillIntentModal";
 import type { MistoFields } from "@/pages/misto/MistoMode";
 
 import "../misto/misto.css";
@@ -56,6 +58,11 @@ export default function PromptMode() {
   const [selectedSkill, setSelectedSkill] = useState<string | null>(null);
   const [skillComplement, setSkillComplement] = useState("");
 
+  // Intent modal + cache states
+  const [intentModalOpen, setIntentModalOpen] = useState(false);
+  const [fromCache, setFromCache] = useState(false);
+  const { findSimilarPrompt, searching } = usePromptCache();
+
   const fetchBalance = useCallback(async () => {
     if (!orgId) return null;
     try {
@@ -73,7 +80,17 @@ export default function PromptMode() {
 
   const { showLoading, hideLoading } = useLoading();
 
-  const handleGenerate = useCallback(async () => {
+  // Called when user clicks "Gerar" — if skills mode, open intent modal instead
+  const handleGenerateClick = useCallback(() => {
+    if (inputMode === "skills") {
+      setIntentModalOpen(true);
+    } else {
+      handleGenerate();
+    }
+  }, [inputMode]);
+
+  // Called after intent selection or directly for free/manual modes
+  const handleGenerate = useCallback(async (intent?: "prompt" | "skill", forceAI?: boolean) => {
     if (!orgId || !user) { toast.error("Usuário não autenticado"); return; }
 
     const balance = await fetchBalance();
@@ -82,11 +99,45 @@ export default function PromptMode() {
     if (balance.account_status === "suspended") { setCreditModal("suspended"); return; }
     if (balance.total_remaining <= 0) { setCreditModal("no_credits"); return; }
 
-    startTime.current = Date.now();
-    showLoading("Gerando Prompt...");
-
     const skill = findSkillById(selectedSkill);
     const skillSystemPrompt = skill?.systemPrompt || undefined;
+
+    // For skills+prompt intent: try cache first (unless forceAI)
+    if (inputMode === "skills" && intent === "prompt" && !forceAI && orgId) {
+      const skillFields: MistoFields = {
+        especialidade: skill?.label || "",
+        persona: skill?.label || "",
+        tarefa: skillComplement || "Executar conforme instruções do agente especializado",
+        objetivo: "Resultado otimizado conforme especialidade do agente",
+        contexto: skillComplement || "",
+        destino: destino,
+      };
+
+      showLoading("Consultando histórico...");
+      const cached = await findSimilarPrompt(skillFields, orgId, destino);
+      if (cached && cached.prompt_gerado) {
+        hideLoading();
+        setFromCache(true);
+        setFields({
+          especialidade: cached.especialidade || skillFields.especialidade,
+          persona: skillFields.persona,
+          tarefa: cached.tarefa || skillFields.tarefa,
+          objetivo: cached.objetivo || skillFields.objetivo,
+          contexto: skillFields.contexto,
+          destino: cached.destino || skillFields.destino,
+        });
+        setPromptGerado(cached.prompt_gerado);
+        setTimeElapsed(0);
+        setStep("results");
+        toast.success("⚡ Resultado encontrado no histórico — 0 cotas consumidas!");
+        return;
+      }
+      hideLoading();
+    }
+
+    setFromCache(false);
+    startTime.current = Date.now();
+    showLoading("Gerando Prompt...");
 
     try {
       setStep("generating");
@@ -102,7 +153,6 @@ export default function PromptMode() {
       let localPrompt: string;
 
       if (inputMode === "skills") {
-        // Skills mode: use refine directly with skill context
         setGenStatus("refining");
         const skillFields: MistoFields = {
           especialidade: skill?.label || "",
@@ -202,17 +252,29 @@ export default function PromptMode() {
       toast.error(err.message || "Erro ao processar.");
       setStep("input");
     }
-  }, [orgId, user, freeText, manualFields, inputMode, destino, selectedSkill, skillComplement, fetchBalance]);
+  }, [orgId, user, freeText, manualFields, inputMode, destino, selectedSkill, skillComplement, fetchBalance, findSimilarPrompt]);
+
+  const handleIntentSelect = useCallback((intent: "prompt" | "skill") => {
+    setIntentModalOpen(false);
+    handleGenerate(intent);
+  }, [handleGenerate]);
+
+  const handleForceAI = useCallback(() => {
+    setFromCache(false);
+    handleGenerate("prompt", true);
+  }, [handleGenerate]);
 
   const handleNewSession = () => {
     setStep("input"); setFreeText(""); setFields(null);
     setManualFields({ especialidade: "", persona: "", tarefa: "", objetivo: "", contexto: "", destino: "" });
     setPromptGerado(""); setPromptRating(0); setIsSaved(false); setTimeElapsed(0); setSessionId(null);
-    setSkillComplement("");
+    setSkillComplement(""); setFromCache(false);
   };
 
   const isGenerating = step === "generating";
   const activeStepIdx = step === "input" ? 0 : step === "generating" ? 1 : 2;
+
+  const skillName = findSkillById(selectedSkill)?.label || "";
 
   return (
     <div className="noise-overlay relative min-h-screen bg-background flex">
@@ -256,7 +318,8 @@ export default function PromptMode() {
               manualFields={manualFields} onManualFieldsChange={setManualFields}
               inputMode={inputMode} onInputModeChange={setInputMode}
               destino={destino} onDestinoChange={setDestino}
-              onGenerate={handleGenerate} isGenerating={isGenerating}
+              onGenerate={handleGenerateClick} isGenerating={isGenerating}
+              searching={searching}
               selectedSkill={selectedSkill} onSelectedSkillChange={setSelectedSkill}
               skillComplement={skillComplement} onSkillComplementChange={setSkillComplement}
             />
@@ -268,17 +331,27 @@ export default function PromptMode() {
 
           {step === "results" && fields && (
             <div className="misto-step-enter">
+              {/* Cache hit banner */}
+              {fromCache && (
+                <div className="cache-hit-banner">
+                  <span>⚡ Resultado do seu histórico — nenhum crédito foi consumido.</span>
+                  <button type="button" onClick={handleForceAI}>Gerar novo com IA</button>
+                </div>
+              )}
+
               <div className="misto-result-header">
                 <div>
                   <div className="misto-rh-title">Prompt Gerado ✨</div>
                   <div className="misto-rh-badges">
                     <span className="misto-rb misto-rb-time">⏱ {timeElapsed.toFixed(1)}s</span>
-                    <span className="misto-rb misto-rb-cota">1 cota consumida</span>
+                    <span className="misto-rb misto-rb-cota">{fromCache ? "0 cotas (histórico)" : "1 cota consumida"}</span>
                   </div>
                 </div>
                 <div className="misto-rh-actions">
                   <button className="misto-btn-sm" onClick={handleNewSession}>Nova Sessão</button>
-                  <span className="misto-btn-sm misto-btn-sm-g" style={{ opacity: 0.7, cursor: "default" }}>Salvo ✓</span>
+                  <span className="misto-btn-sm misto-btn-sm-g" style={{ opacity: 0.7, cursor: "default" }}>
+                    {fromCache ? "Do Histórico ⚡" : "Salvo ✓"}
+                  </span>
                 </div>
               </div>
 
@@ -320,6 +393,14 @@ export default function PromptMode() {
         refreshKey={memoryRefreshKey}
         orgId={orgId}
         defaultMode="prompt"
+      />
+
+      {/* Skill Intent Modal */}
+      <SkillIntentModal
+        open={intentModalOpen}
+        skillName={skillName}
+        onSelect={handleIntentSelect}
+        onClose={() => setIntentModalOpen(false)}
       />
     </div>
   );

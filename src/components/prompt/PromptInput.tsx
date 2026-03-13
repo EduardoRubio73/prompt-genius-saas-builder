@@ -72,6 +72,7 @@ interface PromptInputProps {
   onDestinoChange: (v: Enums<"destination_platform">) => void;
   onGenerate: () => void;
   isGenerating: boolean;
+  searching?: boolean;
   selectedSkill: string | null;
   onSelectedSkillChange: (skill: string | null) => void;
   skillComplement: string;
