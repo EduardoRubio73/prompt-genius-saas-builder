@@ -1,45 +1,48 @@
 
 
-## Fix: Admin Credits Not Saving
+# Integrar Skills & Agentes com dados completos e systemPrompts
 
-### Root Causes
+## Situação Atual
+- `PromptInput.tsx` tem `SKILL_CATEGORIES` hardcoded com 5 categorias e ~22 skills simples (apenas labels, sem systemPrompts)
+- Seleção é **multi-select** (`selectedSkills: string[]`)
+- O payload envia `skills: selectedSkills` (array de strings) mas a edge function não usa os systemPrompts
 
-1. **Missing data**: `admin_users_overview` view doesn't include `plan_credits_total`, `bonus_credits_total`, etc. The form defaults to `0` instead of the real values.
-2. **JS falsy bug**: Line 88 uses `form.plan_credits_total || undefined` — when the value is `0`, `0 || undefined` evaluates to `undefined`, so the field is omitted from the update.
+## O que muda
+1. Substituir dados hardcoded por arquivo JSON externo com **8 categorias e 60 skills**, cada um com `systemPrompt`
+2. Mudar de **multi-select** para **single-select** (apenas 1 skill ativo por vez)
+3. Enviar o `systemPrompt` do skill selecionado no payload para a edge function
+4. Criar hook `useSkills` para tipagem e acesso aos dados
 
-### Solution
+## Arquivos
 
-**1. Fetch actual org data when dialog opens**
-- In `UserDetailDialog`, add a query to fetch the organization record directly from `organizations` table using `user.org_id`
-- Initialize `plan_credits_total` and `bonus_credits_total` from the real org data
+| Arquivo | Mudança |
+|---------|---------|
+| `src/data/skills-data.json` | Criar — copiar JSON do upload |
+| `src/hooks/useSkills.ts` | Criar — tipos `Skill`, `SkillCategory` e hook |
+| `src/components/prompt/PromptInput.tsx` | Remover `SKILL_CATEGORIES` hardcoded, usar `useSkills()`, mudar para single-select (`selectedSkill: string \| null`), renderizar 8 categorias |
+| `src/pages/prompt/PromptMode.tsx` | Mudar `selectedSkills: string[]` → `selectedSkill: string \| null`, enviar `skillSystemPrompt` no payload |
+| `supabase/functions/refine-prompt/index.ts` | Injetar `skillSystemPrompt` recebido no system prompt da LLM |
 
-**2. Fix the save logic**
-- Remove `|| undefined` guards — always send `plan_credits_total` and `bonus_credits_total` to the update call
-- This ensures `0` is a valid value that gets saved
+## Detalhes de Implementação
 
-### Files to Edit
-
-| File | Change |
-|------|--------|
-| `src/pages/admin/AdminUsers.tsx` | Add org data fetch, fix form init + save logic |
-
-### Details
-
-```tsx
-// Add useEffect to load real org data
-const [orgData, setOrgData] = useState<any>(null);
-useEffect(() => {
-  if (user.org_id) {
-    supabase.from("organizations").select("plan_credits_total, bonus_credits_total, plan_credits_used, bonus_credits_used").eq("id", user.org_id).single()
-      .then(({ data }) => {
-        if (data) {
-          setForm(f => ({ ...f, plan_credits_total: data.plan_credits_total, bonus_credits_total: data.bonus_credits_total }));
-        }
-      });
-  }
-}, [user.org_id]);
-
-// Fix save — no more || undefined
-updates: { plan_tier: form.plan_tier, is_active: form.is_active, plan_credits_total: form.plan_credits_total, bonus_credits_total: form.bonus_credits_total }
+### `useSkills.ts`
+```ts
+import skillsData from '@/data/skills-data.json'
+export type Skill = { id: string; label: string; systemPrompt: string }
+export type SkillCategory = { id: string; label: string; skills: Skill[] }
+export function useSkills() { return skillsData.categories as SkillCategory[] }
+export function findSkillById(id: string): Skill | null { ... }
 ```
+
+### `PromptInput.tsx`
+- Props: `selectedSkill: string | null` + `onSelectedSkillChange: (id: string | null) => void`
+- Toggle: clicar no ativo deseleciona, clicar em outro seleciona (toggle single)
+- Usa `useSkills()` em vez de constante hardcoded
+
+### `PromptMode.tsx`
+- Estado: `const [selectedSkill, setSelectedSkill] = useState<string | null>(null)`
+- No payload do `callEdgeFunction("refine-prompt", ...)`: buscar o skill completo via `findSkillById(selectedSkill)` e enviar `skillSystemPrompt: skill?.systemPrompt`
+
+### `refine-prompt/index.ts`
+- Nos handlers `handleDistribute` e `handleRefine`: se `skillSystemPrompt` estiver presente, prepend ao system prompt da LLM como bloco `## Perfil do Assistente\n{skillSystemPrompt}`
 
