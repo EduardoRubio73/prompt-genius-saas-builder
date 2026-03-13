@@ -86,6 +86,10 @@ O prompt final deve ser estruturado, claro, e pronto para uso direto na platafor
 Responda APENAS com JSON válido contendo os campos melhorados + "prompt_gerado":
 {"especialidade":"...","persona":"...","tarefa":"...","objetivo":"...","contexto":"...","destino":"...","prompt_gerado":"O prompt completo e otimizado aqui"}`;
 
+  if (skillSystemPrompt) {
+    system = `## Perfil do Assistente\n${skillSystemPrompt}\n\n${system}`;
+  }
+
   const userMsg = JSON.stringify(fields);
   const result = await callLLM(system, userMsg);
   return parseJsonFromLLM(result);
