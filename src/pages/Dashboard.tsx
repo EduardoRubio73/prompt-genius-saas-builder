@@ -378,7 +378,7 @@ export default function Dashboard() {
             </CollapsibleTrigger>
 
             <CollapsibleContent className="mt-4">
-              <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 auto-rows-fr">
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5 auto-rows-fr">
                 {MODES.map((mode, i) => (
                   <div key={mode.title} className="animate-fade-in" style={{ animationDelay: `${i * 80}ms`, animationFillMode: "backwards" }}>
                     <ModeActionCard

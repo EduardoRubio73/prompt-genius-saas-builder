@@ -246,6 +246,7 @@ export function useUnifiedMemory({
     () => ({
       all: promptEntries.length + saasEntries.length + buildEntries.length,
       prompt: promptEntries.filter((e) => e.type === "prompt").length,
+      skill: promptEntries.filter((e) => e.type === "skill").length,
       saas: saasEntries.length,
       mixed: promptEntries.filter((e) => e.type === "mixed").length,
       build: buildEntries.length,
