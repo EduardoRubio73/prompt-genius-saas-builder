@@ -52,6 +52,7 @@ export default function PromptMode() {
   const startTime = useRef(0);
   const [timeElapsed, setTimeElapsed] = useState(0);
   const [memoryRefreshKey, setMemoryRefreshKey] = useState(0);
+  const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
   const fetchBalance = useCallback(async () => {
     if (!orgId) return null;
     try {
@@ -99,7 +100,7 @@ export default function PromptMode() {
         // Distribute free text into fields
         setGenStatus("distributing");
         const d = await callEdgeFunction("refine-prompt", {
-          action: "distribute", freeText, destino, sessionId: currentSessionId,
+          action: "distribute", freeText, destino, sessionId: currentSessionId, skills: selectedSkills,
         });
         const extracted: MistoFields = {
           especialidade: d.especialidade || "", persona: d.persona || "",
@@ -111,7 +112,7 @@ export default function PromptMode() {
         // Refine
         setGenStatus("refining");
         const r = await callEdgeFunction("refine-prompt", {
-          action: "refine", fields: extracted, destino, sessionId: currentSessionId,
+          action: "refine", fields: extracted, destino, sessionId: currentSessionId, skills: selectedSkills,
         });
         localRefined = {
           especialidade: r.especialidade || extracted.especialidade,
@@ -129,7 +130,7 @@ export default function PromptMode() {
         setGenStatus("refining");
         setFields(manualFields);
         const r = await callEdgeFunction("refine-prompt", {
-          action: "refine", fields: manualFields, destino, sessionId: currentSessionId,
+          action: "refine", fields: manualFields, destino, sessionId: currentSessionId, skills: selectedSkills,
         });
         localRefined = {
           especialidade: r.especialidade || manualFields.especialidade,
@@ -174,7 +175,7 @@ export default function PromptMode() {
       toast.error(err.message || "Erro ao processar.");
       setStep("input");
     }
-  }, [orgId, user, freeText, manualFields, inputMode, destino, fetchBalance]);
+  }, [orgId, user, freeText, manualFields, inputMode, destino, selectedSkills, fetchBalance]);
 
   const handleNewSession = () => {
     setStep("input"); setFreeText(""); setFields(null);
@@ -228,6 +229,7 @@ export default function PromptMode() {
               inputMode={inputMode} onInputModeChange={setInputMode}
               destino={destino} onDestinoChange={setDestino}
               onGenerate={handleGenerate} isGenerating={isGenerating}
+              selectedSkills={selectedSkills} onSelectedSkillsChange={setSelectedSkills}
             />
           )}
 
