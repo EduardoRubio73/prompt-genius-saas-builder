@@ -1696,6 +1696,8 @@ export type Database = {
           formato: string | null
           id: string
           is_favorite: boolean
+          mini_app_generated_at: string | null
+          mini_app_html: string | null
           objetivo: string | null
           org_id: string
           persona: string | null
@@ -1721,6 +1723,8 @@ export type Database = {
           formato?: string | null
           id?: string
           is_favorite?: boolean
+          mini_app_generated_at?: string | null
+          mini_app_html?: string | null
           objetivo?: string | null
           org_id: string
           persona?: string | null
@@ -1746,6 +1750,8 @@ export type Database = {
           formato?: string | null
           id?: string
           is_favorite?: boolean
+          mini_app_generated_at?: string | null
+          mini_app_html?: string | null
           objetivo?: string | null
           org_id?: string
           persona?: string | null
