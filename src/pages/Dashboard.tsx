@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { AppShell } from "@/components/layout/AppShell";
 import { Skeleton } from "@/components/ui/skeleton";
 import { InfoTooltip } from "@/components/ui/info-tooltip";
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
 import { useOrgStats } from "@/hooks/useOrgStats";
@@ -49,6 +50,7 @@ const MODES = [
     cost: 1,
     href: "/prompt",
     colorScheme: "purple" as const,
+    tooltip: "Transforme uma ideia em texto livre em um prompt estruturado e otimizado para qualquer LLM.\nEx: 'Crie um chatbot de atendimento' → prompt completo com persona, contexto e formato.",
   },
   {
     title: "Skill",
@@ -57,6 +59,7 @@ const MODES = [
     cost: 2,
     href: "/prompt?mode=skill",
     colorScheme: "amber" as const,
+    tooltip: "Escolha um agente especialista pronto e gere instruções otimizadas para a tarefa.\nEx: Selecione 'Code Reviewer' e receba um prompt de revisão de código.",
   },
   {
     title: "SaaS Spec",
@@ -65,6 +68,7 @@ const MODES = [
     cost: 2,
     href: "/saas-spec",
     colorScheme: "blue" as const,
+    tooltip: "Responda 7 perguntas sobre seu produto e receba uma especificação técnica completa.\nEx: Descreva seu SaaS de gestão → spec com stack, features e modelo de dados.",
   },
   {
     title: "Modo Misto",
@@ -73,6 +77,7 @@ const MODES = [
     cost: 2,
     href: "/mixed",
     colorScheme: "green" as const,
+    tooltip: "Combina Prompt + Spec em um fluxo automatizado. A IA extrai campos, refina e gera a spec.\nEx: Descreva 'app de delivery' → prompt refinado + spec técnica.",
   },
   {
     title: "BUILD Engine",
@@ -81,6 +86,7 @@ const MODES = [
     cost: 5,
     href: "/build",
     colorScheme: "orange" as const,
+    tooltip: "Da ideia ao pacote completo: PRD, ERD, RBAC, API e mais.\nEx: 'Marketplace de freelancers' → 10 documentos prontos para deploy.",
   },
 ] as const;
 
@@ -429,17 +435,28 @@ export default function Dashboard() {
             </CollapsibleTrigger>
 
             <CollapsibleContent className="mt-4">
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5 auto-rows-fr">
-                {MODES.map((mode, i) => (
-                  <div key={mode.title} className="animate-fade-in" style={{ animationDelay: `${i * 80}ms`, animationFillMode: "backwards" }}>
-                    <ModeActionCard
-                      {...mode}
-                      creditsRemaining={totalRemaining}
-                      disabled={noQuota}
-                    />
-                  </div>
-                ))}
-              </div>
+              <TooltipProvider delayDuration={300}>
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5 auto-rows-fr">
+                  {MODES.map((mode, i) => (
+                    <div key={mode.title} className="animate-fade-in" style={{ animationDelay: `${i * 80}ms`, animationFillMode: "backwards" }}>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div className="h-full">
+                            <ModeActionCard
+                              {...mode}
+                              creditsRemaining={totalRemaining}
+                              disabled={noQuota}
+                            />
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent side="bottom" className="max-w-xs whitespace-pre-line text-xs leading-relaxed">
+                          {mode.tooltip}
+                        </TooltipContent>
+                      </Tooltip>
+                    </div>
+                  ))}
+                </div>
+              </TooltipProvider>
             </CollapsibleContent>
           </div>
         </Collapsible>

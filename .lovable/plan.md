@@ -1,21 +1,45 @@
 
 
-# Adicionar tooltips nos cards de modo do Dashboard
+## Fix: Admin Credits Not Saving
 
-## Mudança
+### Root Causes
 
-**`src/pages/Dashboard.tsx`**
+1. **Missing data**: `admin_users_overview` view doesn't include `plan_credits_total`, `bonus_credits_total`, etc. The form defaults to `0` instead of the real values.
+2. **JS falsy bug**: Line 88 uses `form.plan_credits_total || undefined` — when the value is `0`, `0 || undefined` evaluates to `undefined`, so the field is omitted from the update.
 
-1. Adicionar um campo `tooltip` em cada item do array `MODES` com texto explicativo + exemplo:
-   - **Prompt**: "Transforme uma ideia em texto livre em um prompt estruturado e otimizado para qualquer LLM. Ex: 'Crie um chatbot de atendimento' → prompt completo com persona, contexto e formato."
-   - **Skill**: "Escolha um agente especialista pronto (ex: Arquiteto de Software, UX Writer) e gere instruções otimizadas para a tarefa. Ex: Selecione 'Code Reviewer' e receba um prompt de revisão de código."
-   - **SaaS Spec**: "Responda 7 perguntas sobre seu produto e receba uma especificação técnica completa. Ex: Descreva seu SaaS de gestão → spec com stack, features, modelo de dados."
-   - **Modo Misto**: "Combina Prompt + Spec em um fluxo automatizado. A IA extrai campos, refina e gera a spec. Ex: Descreva 'app de delivery' → prompt refinado + spec técnica."
-   - **BUILD Engine**: "Da ideia ao pacote completo: PRD, ERD, RBAC, API e mais. Ex: 'Marketplace de freelancers' → 10 documentos prontos para deploy."
+### Solution
 
-2. Envolver o `<button>` do `ModeActionCard` com `<Tooltip>` / `<TooltipTrigger>` / `<TooltipContent>` do Radix, mostrando o texto ao passar o mouse. Importar `TooltipProvider` no nível do grid para não precisar de um provider por card.
+**1. Fetch actual org data when dialog opens**
+- In `UserDetailDialog`, add a query to fetch the organization record directly from `organizations` table using `user.org_id`
+- Initialize `plan_credits_total` and `bonus_credits_total` from the real org data
 
-3. O tooltip aparece no `side="bottom"` para não sobrepor o card vizinho.
+**2. Fix the save logic**
+- Remove `|| undefined` guards — always send `plan_credits_total` and `bonus_credits_total` to the update call
+- This ensures `0` is a valid value that gets saved
 
-**Arquivo:** `src/pages/Dashboard.tsx` (único arquivo modificado)
+### Files to Edit
+
+| File | Change |
+|------|--------|
+| `src/pages/admin/AdminUsers.tsx` | Add org data fetch, fix form init + save logic |
+
+### Details
+
+```tsx
+// Add useEffect to load real org data
+const [orgData, setOrgData] = useState<any>(null);
+useEffect(() => {
+  if (user.org_id) {
+    supabase.from("organizations").select("plan_credits_total, bonus_credits_total, plan_credits_used, bonus_credits_used").eq("id", user.org_id).single()
+      .then(({ data }) => {
+        if (data) {
+          setForm(f => ({ ...f, plan_credits_total: data.plan_credits_total, bonus_credits_total: data.bonus_credits_total }));
+        }
+      });
+  }
+}, [user.org_id]);
+
+// Fix save — no more || undefined
+updates: { plan_tier: form.plan_tier, is_active: form.is_active, plan_credits_total: form.plan_credits_total, bonus_credits_total: form.bonus_credits_total }
+```
 
