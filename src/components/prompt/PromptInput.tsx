@@ -79,6 +79,7 @@ interface PromptInputProps {
   onSelectedSkillChange: (skill: string | null) => void;
   skillComplement: string;
   onSkillComplementChange: (v: string) => void;
+  isSkillMode?: boolean;
 }
 
 export function PromptInput({
