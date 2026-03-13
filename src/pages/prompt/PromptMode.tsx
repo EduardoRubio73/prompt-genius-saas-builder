@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { useLoading } from "@/contexts/LoadingContext";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Sun, Moon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -33,6 +33,8 @@ const stepsDef = [
 
 export default function PromptMode() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const isSkillMode = searchParams.get("mode") === "skill";
   const { user } = useAuth();
   const { data: profile } = useProfile(user?.id);
   const { theme, toggleTheme } = useTheme();
@@ -43,7 +45,7 @@ export default function PromptMode() {
   const [manualFields, setManualFields] = useState<MistoFields>({
     especialidade: "", persona: "", tarefa: "", objetivo: "", contexto: "", destino: "",
   });
-  const [inputMode, setInputMode] = useState<"free" | "manual" | "skills">("free");
+  const [inputMode, setInputMode] = useState<"free" | "manual" | "skills">(isSkillMode ? "skills" : "free");
   const [destino, setDestino] = useState<Enums<"destination_platform">>("lovable");
   const [fields, setFields] = useState<MistoFields | null>(null);
   const [promptGerado, setPromptGerado] = useState("");
@@ -283,7 +285,7 @@ export default function PromptMode() {
           <button className="misto-back-btn" onClick={() => navigate("/dashboard")}>← Dashboard</button>
           <div className="misto-mode-badge" style={{ background: "hsl(var(--primary) / 0.1)", borderColor: "hsl(var(--primary) / 0.25)" }}>
             <span className="misto-badge-pulse" style={{ background: "hsl(var(--primary))", boxShadow: "0 0 8px hsl(var(--primary))" }} />
-            <span style={{ color: "hsl(var(--primary))" }}>✨ Modo Prompt</span>
+            <span style={{ color: "hsl(var(--primary))" }}>{isSkillMode ? "⚡ Modo Skill" : "✨ Modo Prompt"}</span>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <button className="misto-theme-toggle" onClick={toggleTheme} aria-label="Alternar tema">
@@ -322,6 +324,7 @@ export default function PromptMode() {
               searching={searching}
               selectedSkill={selectedSkill} onSelectedSkillChange={setSelectedSkill}
               skillComplement={skillComplement} onSkillComplementChange={setSkillComplement}
+              isSkillMode={isSkillMode}
             />
           )}
 

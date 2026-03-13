@@ -1,79 +1,45 @@
 
 
-# Implementar Tarefas do LOVABLE_FINAL_COMPLETO.md
+## Fix: Admin Credits Not Saving
 
-## O que já existe vs. o que falta
+### Root Causes
 
-Muito do que o documento pede **já está implementado**:
-- ✅ Skills & Agentes tab com categorias e pills (PromptInput.tsx)
-- ✅ Single-select de skills
-- ✅ Complement card com textarea
-- ✅ Cache semântico (usePromptCache.ts)
-- ✅ SkillIntentModal
-- ✅ `?mode=skill` detection — **NÃO existe ainda**
-- ✅ Botão dinâmico "Consultando histórico..." / "Gerando..."
+1. **Missing data**: `admin_users_overview` view doesn't include `plan_credits_total`, `bonus_credits_total`, etc. The form defaults to `0` instead of the real values.
+2. **JS falsy bug**: Line 88 uses `form.plan_credits_total || undefined` — when the value is `0`, `0 || undefined` evaluates to `undefined`, so the field is omitted from the update.
 
-## Tarefas pendentes
+### Solution
 
-### 1. Card "Skill" no Dashboard
-Adicionar um 5º card no array `MODES` em `src/pages/Dashboard.tsx`, entre Prompt e SaaS Spec, com custo 2, cor amber, ícone `Zap`, e `href: "/prompt?mode=skill"`.
+**1. Fetch actual org data when dialog opens**
+- In `UserDetailDialog`, add a query to fetch the organization record directly from `organizations` table using `user.org_id`
+- Initialize `plan_credits_total` and `bonus_credits_total` from the real org data
 
-### 2. Detectar `?mode=skill` no PromptMode
-Em `src/pages/prompt/PromptMode.tsx`:
-- Ler `useSearchParams()` para `mode=skill`
-- Se `isSkillMode`, inicializar `inputMode` como `"skills"` em vez de `"free"`
-- Mudar label do modo badge de "Modo Prompt" para "Modo Skill"
-- Mudar label do botão para "⚡ Gerar Skill — 2 cotas" quando `isSkillMode`
-- Usar `creditCost = isSkillMode ? 2 : 1` (para futuro débito diferenciado)
+**2. Fix the save logic**
+- Remove `|| undefined` guards — always send `plan_credits_total` and `bonus_credits_total` to the update call
+- This ensures `0` is a valid value that gets saved
 
-### 3. Substituir pills por SkillGroupList colapsável
-Criar `src/data/skillGroups.ts` com dados de grupos + emojis conforme documento.
-Criar `src/components/skills/SkillGroupList.tsx` com accordion por grupo e botão "Criar Skill Personalizada".
-Atualizar `PromptInput.tsx` para usar `SkillGroupList` em vez dos pills atuais por categoria.
+### Files to Edit
 
-### 4. Tooltip no campo de detalhes do agente
-No complement card dentro de `PromptInput.tsx`, adicionar ícone `HelpCircle` com `Tooltip` contendo sugestões de uso.
+| File | Change |
+|------|--------|
+| `src/pages/admin/AdminUsers.tsx` | Add org data fetch, fix form init + save logic |
 
-### 5. Botão dinâmico por modo
-Em `PromptInput.tsx`, aceitar nova prop `isSkillMode` e mudar o label do botão:
-- Skills mode: `"⚡ Gerar Skill — 2 cotas"`
-- Normal: `"✨ Gerar Prompt — 1 cota"`
+### Details
 
-## Arquivos
+```tsx
+// Add useEffect to load real org data
+const [orgData, setOrgData] = useState<any>(null);
+useEffect(() => {
+  if (user.org_id) {
+    supabase.from("organizations").select("plan_credits_total, bonus_credits_total, plan_credits_used, bonus_credits_used").eq("id", user.org_id).single()
+      .then(({ data }) => {
+        if (data) {
+          setForm(f => ({ ...f, plan_credits_total: data.plan_credits_total, bonus_credits_total: data.bonus_credits_total }));
+        }
+      });
+  }
+}, [user.org_id]);
 
-| Arquivo | Ação |
-|---------|------|
-| `src/data/skillGroups.ts` | **CRIAR** — dados dos grupos com emoji |
-| `src/components/skills/SkillGroupList.tsx` | **CRIAR** — componente colapsável |
-| `src/pages/Dashboard.tsx` | **EDITAR** — adicionar card Skill no array MODES |
-| `src/pages/prompt/PromptMode.tsx` | **EDITAR** — detectar `?mode=skill`, passar `isSkillMode` |
-| `src/components/prompt/PromptInput.tsx` | **EDITAR** — usar SkillGroupList, tooltip, botão dinâmico |
-
-## Detalhes
-
-### Dashboard MODES array — inserir após Prompt (index 1):
-```ts
-{
-  title: "Skill",
-  description: "Selecione um agente especialista e gere uma skill otimizada",
-  icon: Zap,
-  cost: 2,
-  href: "/prompt?mode=skill",
-  colorScheme: "amber" as const,
-},
+// Fix save — no more || undefined
+updates: { plan_tier: form.plan_tier, is_active: form.is_active, plan_credits_total: form.plan_credits_total, bonus_credits_total: form.bonus_credits_total }
 ```
-
-### PromptMode — useSearchParams:
-```ts
-const [searchParams] = useSearchParams();
-const isSkillMode = searchParams.get("mode") === "skill";
-// Initialize inputMode based on URL
-const [inputMode, setInputMode] = useState<"free"|"manual"|"skills">(isSkillMode ? "skills" : "free");
-```
-
-### SkillGroupList
-Accordion-style list replacing flat pills. Each group header shows emoji + label, expands to show skill pills. Includes "Criar Skill Personalizada" dashed button at bottom. Maps skill IDs to existing `skills-data.json` via `findSkillById` for systemPrompt lookup.
-
-### Tooltip
-Add `HelpCircle` + `Tooltip` with usage suggestions next to the complement textarea label.
 

@@ -50,6 +50,14 @@ const MODES = [
     colorScheme: "purple" as const,
   },
   {
+    title: "Skill",
+    description: "Selecione um agente especialista e gere uma skill otimizada",
+    icon: Zap,
+    cost: 2,
+    href: "/prompt?mode=skill",
+    colorScheme: "amber" as const,
+  },
+  {
     title: "SaaS Spec",
     description: "7 perguntas → spec técnica completa",
     icon: FileCode,

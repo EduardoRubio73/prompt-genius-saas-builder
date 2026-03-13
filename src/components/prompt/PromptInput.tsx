@@ -2,8 +2,10 @@ import { useState } from "react";
 import type { Enums } from "@/integrations/supabase/types";
 import type { MistoFields } from "@/pages/misto/MistoMode";
 import { InfoTooltip } from "@/components/ui/info-tooltip";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, HelpCircle } from "lucide-react";
 import { useSkills, findSkillById } from "@/hooks/useSkills";
+import { SkillGroupList } from "@/components/skills/SkillGroupList";
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
 
 type DbPlatform = Enums<"destination_platform">;
 
@@ -77,6 +79,7 @@ interface PromptInputProps {
   onSelectedSkillChange: (skill: string | null) => void;
   skillComplement: string;
   onSkillComplementChange: (v: string) => void;
+  isSkillMode?: boolean;
 }
 
 export function PromptInput({
@@ -87,6 +90,7 @@ export function PromptInput({
   onGenerate, isGenerating, searching,
   selectedSkill, onSelectedSkillChange,
   skillComplement, onSkillComplementChange,
+  isSkillMode,
 }: PromptInputProps) {
   const freeLen = freeText.length;
   const manualFilled = Object.values(manualFields).filter(v => v.length > 2).length;
@@ -254,48 +258,33 @@ export function PromptInput({
       {/* Skills & Agentes — only in skills mode */}
       {inputMode === "skills" && (
         <div style={{ marginTop: 20 }}>
-          <div className={`skills-card ${skillsOpen ? "open" : ""}`}>
-            <button
-              className="skills-header"
-              onClick={() => setSkillsOpen(o => !o)}
-              type="button"
-            >
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <span>🧠 Skills & Agentes</span>
-                <span className="skills-badge">NOVO</span>
-              </div>
-              <ChevronDown className={`platform-group-chevron ${skillsOpen ? "rotated" : ""}`} />
-            </button>
-            {skillsOpen && (
-              <div className="skills-body">
-                {skillCategories.map((cat) => (
-                  <div key={cat.id} style={{ marginBottom: 14 }}>
-                    <div className="skills-category-label">{cat.label}</div>
-                    <div className="skills-pills">
-                      {cat.skills.map((skill) => (
-                        <button
-                          key={skill.id}
-                          type="button"
-                          className={`skill-pill ${selectedSkill === skill.id ? "active" : ""}`}
-                          onClick={() => toggleSkill(skill.id)}
-                        >
-                          {skill.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+          <SkillGroupList
+            selectedSkill={selectedSkill}
+            onSelectSkill={onSelectedSkillChange}
+          />
         </div>
       )}
 
       {/* Complement card — appears when a skill is selected in skills mode */}
       {inputMode === "skills" && selectedSkill && selectedSkillData && (
         <div className="complement-card" style={{ marginTop: 20 }}>
-          <div style={{ marginBottom: 12 }}>
+          <div style={{ marginBottom: 12, display: "flex", alignItems: "center", gap: 8 }}>
             <span className="selected-skill-tag">{selectedSkillData.label}</span>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
+                </TooltipTrigger>
+                <TooltipContent side="right">
+                  <p className="font-semibold mb-1">Sugestões de uso:</p>
+                  <ul className="text-xs space-y-0.5 list-disc pl-3">
+                    <li>Descreva o contexto do seu projeto</li>
+                    <li>Adicione restrições ou preferências</li>
+                    <li>Informe stack, público-alvo ou domínio</li>
+                  </ul>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </div>
           <div className="card-hint">
             O agente já possui instruções especializadas. Use este campo apenas para complementar com detalhes do seu caso específico.
@@ -315,7 +304,7 @@ export function PromptInput({
       )}
 
       <button className="misto-gen-btn" onClick={onGenerate} disabled={!canGenerate} type="button">
-        {searching ? "🔍 Consultando histórico..." : isGenerating ? "⏳ Gerando..." : "✨ Gerar Prompt — 1 cota"}
+        {searching ? "🔍 Consultando histórico..." : isGenerating ? "⏳ Gerando..." : isSkillMode || inputMode === "skills" ? "⚡ Gerar Skill — 2 cotas" : "✨ Gerar Prompt — 1 cota"}
       </button>
     </div>
   );
