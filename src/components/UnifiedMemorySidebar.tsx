@@ -116,7 +116,7 @@ function EntryCard({
           )}
         >
           <TypeIcon className="w-2.5 h-2.5" />
-          {entry.type === "prompt" ? "Prompt" : entry.type === "saas" ? "Spec" : entry.type === "build" ? "Build" : "Misto"}
+          {entry.type === "prompt" ? "Prompt" : entry.type === "skill" ? "Skill" : entry.type === "saas" ? "Spec" : entry.type === "build" ? "Build" : "Misto"}
         </span>
 
         <div className="flex items-center gap-1.5 ml-auto">
