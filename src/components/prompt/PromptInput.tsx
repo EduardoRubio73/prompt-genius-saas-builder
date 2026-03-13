@@ -2,8 +2,10 @@ import { useState } from "react";
 import type { Enums } from "@/integrations/supabase/types";
 import type { MistoFields } from "@/pages/misto/MistoMode";
 import { InfoTooltip } from "@/components/ui/info-tooltip";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, HelpCircle } from "lucide-react";
 import { useSkills, findSkillById } from "@/hooks/useSkills";
+import { SkillGroupList } from "@/components/skills/SkillGroupList";
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
 
 type DbPlatform = Enums<"destination_platform">;
 
