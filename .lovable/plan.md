@@ -1,45 +1,45 @@
 
 
-## Fix: Admin Credits Not Saving
+# Fix "Usuário não autenticado" + Adicionar todos os modos nas stats
 
-### Root Causes
+## Problema 1 — Auth toast na Skill
 
-1. **Missing data**: `admin_users_overview` view doesn't include `plan_credits_total`, `bonus_credits_total`, etc. The form defaults to `0` instead of the real values.
-2. **JS falsy bug**: Line 88 uses `form.plan_credits_total || undefined` — when the value is `0`, `0 || undefined` evaluates to `undefined`, so the field is omitted from the update.
+`handleGenerateClick` (linha 89) tem `useCallback(() => handleGenerate(), [])` — dependency array vazio. Isso captura uma versão stale de `handleGenerate` onde `orgId` e `user` ainda são `undefined`. Além disso, ao salvar no banco:
+- `sessions.mode` é sempre `"prompt"` (linha 146) — deveria ser `"skill"` quando `isSkillMode`
+- `prompt_memory.categoria` é sempre `"prompt"` (linha 240) — deveria ser `"skill"` quando `inputMode === "skills"`
 
-### Solution
+### Correções em `src/pages/prompt/PromptMode.tsx`:
+1. Corrigir dependency array de `handleGenerateClick`: `[handleGenerate]`
+2. Linha 146: `mode: isSkillMode ? "skill" : "prompt"` (precisa verificar se o enum do banco aceita "skill" — se não, criar migration)
+3. Linha 240: `categoria: inputMode === "skills" ? "skill" : "prompt"`
 
-**1. Fetch actual org data when dialog opens**
-- In `UserDetailDialog`, add a query to fetch the organization record directly from `organizations` table using `user.org_id`
-- Initialize `plan_credits_total` and `bonus_credits_total` from the real org data
+### Migration necessária:
+Verificar se a coluna `mode` da tabela `sessions` aceita `"skill"` como valor. Se for enum, precisa adicionar o valor.
 
-**2. Fix the save logic**
-- Remove `|| undefined` guards — always send `plan_credits_total` and `bonus_credits_total` to the update call
-- This ensures `0` is a valid value that gets saved
+## Problema 2 — Stats do Dashboard com todos os modos
 
-### Files to Edit
+Atualmente o grid de mini stats (linha 340) mostra 4 colunas. Precisa mostrar 5 modos separados:
+- **Prompts** — count de `prompt_memory` onde `categoria = 'prompt'`
+- **Skills** — count de `prompt_memory` onde `categoria = 'skill'`
+- **Specs** — count de `saas_specs`
+- **Misto** — count de `prompt_memory` onde `categoria = 'misto'`
+- **Build** — count de `build_projects`
 
-| File | Change |
-|------|--------|
-| `src/pages/admin/AdminUsers.tsx` | Add org data fetch, fix form init + save logic |
+O RPC `get_org_stats` não separa por categoria. Solução: queries diretas no Dashboard via `useQuery` ou adaptar o RPC.
 
-### Details
+### Abordagem: queries client-side no `Dashboard.tsx`
+Adicionar queries separadas para contar por categoria de `prompt_memory` e `build_projects`, e atualizar o grid para 5 colunas com os 5 modos + Média Rating (6 colunas total, ou 5 + rating).
 
-```tsx
-// Add useEffect to load real org data
-const [orgData, setOrgData] = useState<any>(null);
-useEffect(() => {
-  if (user.org_id) {
-    supabase.from("organizations").select("plan_credits_total, bonus_credits_total, plan_credits_used, bonus_credits_used").eq("id", user.org_id).single()
-      .then(({ data }) => {
-        if (data) {
-          setForm(f => ({ ...f, plan_credits_total: data.plan_credits_total, bonus_credits_total: data.bonus_credits_total }));
-        }
-      });
-  }
-}, [user.org_id]);
+### Mudanças em `src/pages/Dashboard.tsx`:
+- Importar `supabase` e adicionar `useQuery` para counts por modo
+- Grid de stats: 5 modos + rating = 6 itens, grid `sm:grid-cols-3 lg:grid-cols-6`
+- Cada modo com seu emoji/ícone: Prompts, Skills, Specs, Misto, Build, Rating
 
-// Fix save — no more || undefined
-updates: { plan_tier: form.plan_tier, is_active: form.is_active, plan_credits_total: form.plan_credits_total, bonus_credits_total: form.bonus_credits_total }
-```
+## Arquivos
+
+| Arquivo | Ação |
+|---------|------|
+| `src/pages/prompt/PromptMode.tsx` | Fix stale closure, salvar `categoria` e `mode` corretos |
+| `src/pages/Dashboard.tsx` | Stats grid com todos os 5 modos |
+| Migration SQL | Adicionar `'skill'` ao enum de `sessions.mode` se necessário |
 
