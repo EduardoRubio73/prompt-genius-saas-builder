@@ -108,6 +108,12 @@ const COLOR_MAP = {
     text: "text-amber-700 dark:text-amber-400",
     badge: "bg-amber-500/20 text-amber-700 dark:text-amber-400",
   },
+  orange: {
+    card: "bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-950/40 dark:to-orange-900/20 border-orange-200 dark:border-orange-800/40",
+    iconWrap: "bg-orange-500/15 dark:bg-orange-400/15",
+    text: "text-orange-600 dark:text-orange-400",
+    badge: "bg-orange-500/15 text-orange-600 dark:text-orange-400",
+  },
 };
 
 // ── Mode Action Card ──
