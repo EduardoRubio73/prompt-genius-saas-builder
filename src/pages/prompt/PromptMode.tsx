@@ -14,11 +14,9 @@ import { usePromptCache } from "@/hooks/usePromptCache";
 
 import { PromptInput } from "@/components/prompt/PromptInput";
 import { MistoRefining } from "@/components/misto/MistoRefining";
-import { MistoResults } from "@/components/misto/MistoResults";
 import { CreditModal } from "@/components/misto/CreditModal";
 import { UnifiedMemorySidebar } from "@/components/UnifiedMemorySidebar";
 import { CopyButton } from "@/components/CopyButton";
-import { SkillIntentModal } from "@/components/skills/SkillIntentModal";
 import type { MistoFields } from "@/pages/misto/MistoMode";
 
 import "../misto/misto.css";
@@ -60,10 +58,15 @@ export default function PromptMode() {
   const [selectedSkill, setSelectedSkill] = useState<string | null>(null);
   const [skillComplement, setSkillComplement] = useState("");
 
-  // Intent modal + cache states
-  const [intentModalOpen, setIntentModalOpen] = useState(false);
+  // Cache state
   const [fromCache, setFromCache] = useState(false);
   const { findSimilarPrompt, searching } = usePromptCache();
+
+  // Mini App states
+  const [promptMemoryId, setPromptMemoryId] = useState<string | null>(null);
+  const [miniAppHtml, setMiniAppHtml] = useState<string | null>(null);
+  const [generatingMiniApp, setGeneratingMiniApp] = useState(false);
+  const [showMiniApp, setShowMiniApp] = useState(false);
 
   const fetchBalance = useCallback(async () => {
     if (!orgId) return null;
@@ -82,17 +85,12 @@ export default function PromptMode() {
 
   const { showLoading, hideLoading } = useLoading();
 
-  // Called when user clicks "Gerar" — if skills mode, open intent modal instead
+  // Unified generate handler — no more intent modal
   const handleGenerateClick = useCallback(() => {
-    if (inputMode === "skills") {
-      setIntentModalOpen(true);
-    } else {
-      handleGenerate();
-    }
-  }, [inputMode]);
+    handleGenerate();
+  }, []);
 
-  // Called after intent selection or directly for free/manual modes
-  const handleGenerate = useCallback(async (intent?: "prompt" | "skill", forceAI?: boolean) => {
+  const handleGenerate = useCallback(async (forceAI?: boolean) => {
     if (!orgId || !user) { toast.error("Usuário não autenticado"); return; }
 
     const balance = await fetchBalance();
@@ -104,8 +102,8 @@ export default function PromptMode() {
     const skill = findSkillById(selectedSkill);
     const skillSystemPrompt = skill?.systemPrompt || undefined;
 
-    // For skills+prompt intent: try cache first (unless forceAI)
-    if (inputMode === "skills" && intent === "prompt" && !forceAI && orgId) {
+    // For skills mode: try cache first (unless forceAI)
+    if (inputMode === "skills" && !forceAI && orgId) {
       const skillFields: MistoFields = {
         especialidade: skill?.label || "",
         persona: skill?.label || "",
@@ -234,13 +232,15 @@ export default function PromptMode() {
       await supabase.from("sessions").update({ completed: true }).eq("id", currentSessionId);
 
       try {
-        await supabase.from("prompt_memory").insert({
+        const { data: memRow } = await supabase.from("prompt_memory").insert({
           session_id: currentSessionId, org_id: orgId, user_id: user.id,
           especialidade: localRefined.especialidade, persona: localRefined.persona,
           tarefa: localRefined.tarefa, objetivo: localRefined.objetivo,
           contexto: localRefined.contexto,
           destino, prompt_gerado: localPrompt, rating: null, categoria: "prompt",
-        });
+        }).select("id").single();
+
+        if (memRow) setPromptMemoryId(memRow.id);
         setIsSaved(true);
         setMemoryRefreshKey(k => k + 1);
         toast.success("✅ Salvo automaticamente");
@@ -256,27 +256,50 @@ export default function PromptMode() {
     }
   }, [orgId, user, freeText, manualFields, inputMode, destino, selectedSkill, skillComplement, fetchBalance, findSimilarPrompt]);
 
-  const handleIntentSelect = useCallback((intent: "prompt" | "skill") => {
-    setIntentModalOpen(false);
-    handleGenerate(intent);
-  }, [handleGenerate]);
-
   const handleForceAI = useCallback(() => {
     setFromCache(false);
-    handleGenerate("prompt", true);
+    handleGenerate(true);
   }, [handleGenerate]);
+
+  const handleGenerateMiniApp = useCallback(async () => {
+    if (!promptMemoryId || !promptGerado) {
+      toast.error("Nenhum prompt salvo para gerar mini app");
+      return;
+    }
+    setGeneratingMiniApp(true);
+    try {
+      const result = await callEdgeFunction("generate-mini-app", {
+        prompt_memory_id: promptMemoryId,
+        especialidade: fields?.especialidade || "",
+        tarefa: fields?.tarefa || "",
+        objetivo: fields?.objetivo || "",
+        contexto: fields?.contexto || "",
+        prompt_gerado: promptGerado,
+      });
+      if (result.html) {
+        setMiniAppHtml(result.html);
+        setShowMiniApp(true);
+        toast.success("🚀 Mini App gerado com sucesso!");
+      } else {
+        toast.error("Erro ao gerar Mini App");
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao gerar Mini App");
+    } finally {
+      setGeneratingMiniApp(false);
+    }
+  }, [promptMemoryId, promptGerado, fields]);
 
   const handleNewSession = () => {
     setStep("input"); setFreeText(""); setFields(null);
     setManualFields({ especialidade: "", persona: "", tarefa: "", objetivo: "", contexto: "", destino: "" });
     setPromptGerado(""); setPromptRating(0); setIsSaved(false); setTimeElapsed(0); setSessionId(null);
     setSkillComplement(""); setFromCache(false);
+    setPromptMemoryId(null); setMiniAppHtml(null); setShowMiniApp(false); setGeneratingMiniApp(false);
   };
 
   const isGenerating = step === "generating";
   const activeStepIdx = step === "input" ? 0 : step === "generating" ? 1 : 2;
-
-  const skillName = findSkillById(selectedSkill)?.label || "";
 
   return (
     <div className="noise-overlay relative min-h-screen bg-background flex">
@@ -374,6 +397,48 @@ export default function PromptMode() {
                   </div>
                   <div className="misto-prompt-text">{promptGerado}</div>
                 </div>
+
+                {/* Mini App Section */}
+                {isSkillMode && promptMemoryId && !fromCache && (
+                  <div className="mini-app-section">
+                    {!miniAppHtml ? (
+                      <button
+                        className="mini-app-generate-btn"
+                        onClick={handleGenerateMiniApp}
+                        disabled={generatingMiniApp}
+                      >
+                        {generatingMiniApp ? (
+                          <span className="inline-flex items-center gap-2">
+                            <span className="mini-app-spinner" /> Gerando Mini App...
+                          </span>
+                        ) : (
+                          "🚀 Gerar Mini App — 0 cotas"
+                        )}
+                      </button>
+                    ) : (
+                      <div className="mini-app-preview-wrapper">
+                        <div className="mini-app-preview-header">
+                          <button
+                            className="mini-app-toggle-btn"
+                            onClick={() => setShowMiniApp(!showMiniApp)}
+                          >
+                            {showMiniApp ? "🔽 Ocultar Mini App" : "🚀 Abrir Mini App"}
+                          </button>
+                          <CopyButton text={miniAppHtml} label="Copiar HTML" className="misto-copy-btn misto-copy-btn-v" />
+                        </div>
+                        {showMiniApp && (
+                          <iframe
+                            className="mini-app-iframe"
+                            srcDoc={miniAppHtml}
+                            sandbox="allow-scripts"
+                            title="Mini App Preview"
+                          />
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 <div style={{ marginTop: 16 }}>
                   <div className="misto-rating-row">
                     <span className="misto-rating-label">Avaliar:</span>
@@ -396,14 +461,6 @@ export default function PromptMode() {
         refreshKey={memoryRefreshKey}
         orgId={orgId}
         defaultMode="prompt"
-      />
-
-      {/* Skill Intent Modal */}
-      <SkillIntentModal
-        open={intentModalOpen}
-        skillName={skillName}
-        onSelect={handleIntentSelect}
-        onClose={() => setIntentModalOpen(false)}
       />
     </div>
   );

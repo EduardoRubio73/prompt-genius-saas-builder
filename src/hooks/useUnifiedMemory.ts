@@ -33,6 +33,9 @@ export interface UnifiedMemoryEntry {
   outputs?: Record<string, string> | null;
   // Mixed: spec content
   spec_md?: string | null;
+  // Mini App
+  mini_app_html?: string | null;
+  mini_app_generated_at?: string | null;
 }
 
 interface UseUnifiedMemoryOptions {
