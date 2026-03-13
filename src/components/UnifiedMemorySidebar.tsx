@@ -58,6 +58,7 @@ const FILTER_TABS = [
 
 const TYPE_COLORS: Record<MemoryMode, string> = {
   prompt: "text-primary bg-primary/10 border-primary/20",
+  skill: "text-amber-600 bg-amber-500/10 border-amber-500/20",
   saas: "text-accent bg-accent/10 border-accent/20",
   mixed: "text-secondary bg-secondary/10 border-secondary/20",
   build: "text-orange-500 bg-orange-500/10 border-orange-500/20",
