@@ -68,6 +68,10 @@ Dado um texto livre do usuário, extraia e distribua as informações nos seguin
 Responda APENAS com JSON válido, sem markdown. Exemplo:
 {"especialidade":"...","persona":"...","tarefa":"...","objetivo":"...","contexto":"...","destino":"${destino}"}`;
 
+  if (skillSystemPrompt) {
+    system = `## Perfil do Assistente\n${skillSystemPrompt}\n\n${system}`;
+  }
+
   const result = await callLLM(system, freeText);
   return parseJsonFromLLM(result);
 }
