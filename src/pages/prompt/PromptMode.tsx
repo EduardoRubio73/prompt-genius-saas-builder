@@ -85,6 +85,10 @@ export default function PromptMode() {
 
   const { showLoading, hideLoading } = useLoading();
 
+  const handleGenerateClick = useCallback(() => {
+    handleGenerate();
+  }, [handleGenerate]);
+
 
   const handleGenerate = useCallback(async (forceAI?: boolean) => {
     if (!orgId || !user) { toast.error("Usuário não autenticado"); return; }
