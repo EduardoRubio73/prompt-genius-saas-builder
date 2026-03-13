@@ -66,6 +66,7 @@ const TYPE_COLORS: Record<MemoryMode, string> = {
 
 const TYPE_ICONS: Record<MemoryMode, React.ElementType> = {
   prompt: Sparkles,
+  skill: Zap,
   saas: FileCode,
   mixed: Layers,
   build: Rocket,
