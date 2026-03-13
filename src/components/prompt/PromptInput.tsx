@@ -304,7 +304,37 @@ export function PromptInput({
         </div>
       )}
 
-      <button className="misto-gen-btn" onClick={onGenerate} disabled={!canGenerate} type="button">
+      {/* Custom skill card */}
+      {inputMode === "skills" && selectedSkill === "custom" && (
+        <div className="complement-card" style={{ marginTop: 20 }}>
+          <div style={{ marginBottom: 12, display: "flex", alignItems: "center", gap: 8 }}>
+            <span className="selected-skill-tag">🛠️ Skill Personalizada</span>
+          </div>
+          <div className="card-hint">
+            Crie um agente sob medida. Defina o nome e as instruções que a IA deve seguir.
+          </div>
+          <input
+            className="prompt-field-input"
+            placeholder="Nome da skill (ex: Especialista em Next.js, Revisor de Copy...)"
+            value={customSkillName}
+            onChange={(e) => setCustomSkillName(e.target.value.slice(0, 100))}
+            disabled={isGenerating}
+            style={{ marginTop: 12, width: "100%" }}
+          />
+          <textarea
+            className="misto-textarea"
+            placeholder="Descreva as instruções do agente: o que ele deve fazer, como deve se comportar, restrições, formato de saída..."
+            value={skillComplement}
+            onChange={(e) => onSkillComplementChange(e.target.value.slice(0, 1200))}
+            disabled={isGenerating}
+            style={{ minHeight: 140, marginTop: 12 }}
+          />
+          <div className="misto-char-count">
+            {skillComplement.length} / 1200
+          </div>
+        </div>
+      )}
+
         {searching ? "🔍 Consultando histórico..." : isGenerating ? "⏳ Gerando..." : isSkillMode || inputMode === "skills" ? "⚡ Gerar Skill — 2 cotas" : "✨ Gerar Prompt — 1 cota"}
       </button>
     </div>
