@@ -260,10 +260,10 @@ Deno.serve(async (req) => {
 
     switch (action) {
       case "distribute":
-        result = await handleDistribute(freeText || "", destino || "lovable");
+        result = await handleDistribute(freeText || "", destino || "lovable", skillSystemPrompt);
         break;
       case "refine":
-        result = await handleRefine(fields || {}, destino || "lovable");
+        result = await handleRefine(fields || {}, destino || "lovable", skillSystemPrompt);
         break;
       case "saas-spec":
         result = await handleSaasSpec(
