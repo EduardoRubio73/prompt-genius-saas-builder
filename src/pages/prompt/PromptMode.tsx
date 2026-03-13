@@ -9,6 +9,7 @@ import { useTheme } from "@/hooks/useTheme";
 import { toast } from "sonner";
 import type { Enums } from "@/integrations/supabase/types";
 import { callEdgeFunction } from "@/lib/edgeFunctions";
+import { findSkillById } from "@/hooks/useSkills";
 
 import { PromptInput } from "@/components/prompt/PromptInput";
 import { MistoRefining } from "@/components/misto/MistoRefining";
@@ -52,7 +53,8 @@ export default function PromptMode() {
   const startTime = useRef(0);
   const [timeElapsed, setTimeElapsed] = useState(0);
   const [memoryRefreshKey, setMemoryRefreshKey] = useState(0);
-  const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
+  const [selectedSkill, setSelectedSkill] = useState<string | null>(null);
+
   const fetchBalance = useCallback(async () => {
     if (!orgId) return null;
     try {
@@ -82,10 +84,13 @@ export default function PromptMode() {
     startTime.current = Date.now();
     showLoading("Gerando Prompt...");
 
+    // Resolve skill system prompt
+    const skill = findSkillById(selectedSkill);
+    const skillSystemPrompt = skill?.systemPrompt || undefined;
+
     try {
       setStep("generating");
 
-      // Create session BEFORE calling edge function
       const { data: sessionRecord, error: sessErr } = await supabase
         .from("sessions").insert({ org_id: orgId, user_id: user.id, mode: "prompt" as const, tokens_total: 0 })
         .select().single();
@@ -97,10 +102,9 @@ export default function PromptMode() {
       let localPrompt: string;
 
       if (inputMode === "free") {
-        // Distribute free text into fields
         setGenStatus("distributing");
         const d = await callEdgeFunction("refine-prompt", {
-          action: "distribute", freeText, destino, sessionId: currentSessionId, skills: selectedSkills,
+          action: "distribute", freeText, destino, sessionId: currentSessionId, skillSystemPrompt,
         });
         const extracted: MistoFields = {
           especialidade: d.especialidade || "", persona: d.persona || "",
@@ -109,10 +113,9 @@ export default function PromptMode() {
         };
         setFields(extracted);
 
-        // Refine
         setGenStatus("refining");
         const r = await callEdgeFunction("refine-prompt", {
-          action: "refine", fields: extracted, destino, sessionId: currentSessionId, skills: selectedSkills,
+          action: "refine", fields: extracted, destino, sessionId: currentSessionId, skillSystemPrompt,
         });
         localRefined = {
           especialidade: r.especialidade || extracted.especialidade,
@@ -126,11 +129,10 @@ export default function PromptMode() {
         setFields(localRefined);
         setPromptGerado(localPrompt);
       } else {
-        // Manual fields → skip distribute, go straight to refine
         setGenStatus("refining");
         setFields(manualFields);
         const r = await callEdgeFunction("refine-prompt", {
-          action: "refine", fields: manualFields, destino, sessionId: currentSessionId, skills: selectedSkills,
+          action: "refine", fields: manualFields, destino, sessionId: currentSessionId, skillSystemPrompt,
         });
         localRefined = {
           especialidade: r.especialidade || manualFields.especialidade,
@@ -150,10 +152,8 @@ export default function PromptMode() {
       hideLoading();
       fetchBalance();
 
-      // Mark session completed
       await supabase.from("sessions").update({ completed: true }).eq("id", currentSessionId);
 
-      // Auto-save using local variables (state hasn't updated yet)
       try {
         await supabase.from("prompt_memory").insert({
           session_id: currentSessionId, org_id: orgId, user_id: user.id,
@@ -175,7 +175,7 @@ export default function PromptMode() {
       toast.error(err.message || "Erro ao processar.");
       setStep("input");
     }
-  }, [orgId, user, freeText, manualFields, inputMode, destino, selectedSkills, fetchBalance]);
+  }, [orgId, user, freeText, manualFields, inputMode, destino, selectedSkill, fetchBalance]);
 
   const handleNewSession = () => {
     setStep("input"); setFreeText(""); setFields(null);
@@ -229,7 +229,7 @@ export default function PromptMode() {
               inputMode={inputMode} onInputModeChange={setInputMode}
               destino={destino} onDestinoChange={setDestino}
               onGenerate={handleGenerate} isGenerating={isGenerating}
-              selectedSkills={selectedSkills} onSelectedSkillsChange={setSelectedSkills}
+              selectedSkill={selectedSkill} onSelectedSkillChange={setSelectedSkill}
             />
           )}
 

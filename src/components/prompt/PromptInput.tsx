@@ -3,6 +3,7 @@ import type { Enums } from "@/integrations/supabase/types";
 import type { MistoFields } from "@/pages/misto/MistoMode";
 import { InfoTooltip } from "@/components/ui/info-tooltip";
 import { ChevronDown } from "lucide-react";
+import { useSkills } from "@/hooks/useSkills";
 
 type DbPlatform = Enums<"destination_platform">;
 
@@ -51,54 +52,6 @@ const platformGroups: { label: string; groupKey: string; items: PlatformOption[]
   },
 ];
 
-const SKILL_CATEGORIES = [
-  {
-    label: "💼 Negócios & Finanças",
-    skills: [
-      "💰 Especialista Financeiro",
-      "📈 Consultor de Marketing",
-      "🛒 Especialista em Vendas",
-      "📊 Analista de Negócios",
-      "🧾 Contador Virtual",
-    ],
-  },
-  {
-    label: "⚖️ Jurídico & Compliance",
-    skills: [
-      "⚖️ Especialista Jurídico",
-      "🔒 LGPD & Privacidade",
-      "📜 Especialista em Contratos",
-    ],
-  },
-  {
-    label: "💻 Tecnologia & Dev",
-    skills: [
-      "🏗️ Arquiteto de Software",
-      "🔍 Code Reviewer",
-      "🎨 Especialista UX/UI",
-      "☁️ DevOps & Cloud",
-    ],
-  },
-  {
-    label: "✍️ Conteúdo & Criatividade",
-    skills: [
-      "✍️ Copywriter Pro",
-      "🔎 Redator SEO",
-      "🎬 Roteirista",
-      "📱 Social Media",
-    ],
-  },
-  {
-    label: "🏥 Saúde & Carreira",
-    skills: [
-      "🥗 Nutricionista Virtual",
-      "💪 Personal Trainer",
-      "🎯 Coach de Carreira",
-      "📚 Tutor Acadêmico",
-    ],
-  },
-];
-
 const fieldDefs = [
   { key: "especialidade" as const, icon: "🎓", label: "Especialidade", placeholder: "Ex: Engenheiro de Software Sênior", tip: "Qual o perfil técnico da IA? Ex: Dev Backend, Designer UX, PM" },
   { key: "persona" as const, icon: "👤", label: "Persona", placeholder: "Ex: Técnico e direto ao ponto", tip: "Tom e estilo da resposta. Ex: Didático, Conciso, Criativo" },
@@ -119,8 +72,8 @@ interface PromptInputProps {
   onDestinoChange: (v: Enums<"destination_platform">) => void;
   onGenerate: () => void;
   isGenerating: boolean;
-  selectedSkills: string[];
-  onSelectedSkillsChange: (skills: string[]) => void;
+  selectedSkill: string | null;
+  onSelectedSkillChange: (skill: string | null) => void;
 }
 
 export function PromptInput({
@@ -129,7 +82,7 @@ export function PromptInput({
   inputMode, onInputModeChange,
   destino, onDestinoChange,
   onGenerate, isGenerating,
-  selectedSkills, onSelectedSkillsChange,
+  selectedSkill, onSelectedSkillChange,
 }: PromptInputProps) {
   const freeLen = freeText.length;
   const manualFilled = Object.values(manualFields).filter(v => v.length > 2).length;
@@ -146,6 +99,8 @@ export function PromptInput({
   });
   const [skillsOpen, setSkillsOpen] = useState(true);
 
+  const skillCategories = useSkills();
+
   const toggleGroup = (group: string) =>
     setOpenGroups(prev => ({ ...prev, [group]: !prev[group] }));
 
@@ -154,11 +109,8 @@ export function PromptInput({
     onDestinoChange(p.dbValue);
   };
 
-  const toggleSkill = (skill: string) => {
-    const newSkills = selectedSkills.includes(skill)
-      ? selectedSkills.filter(s => s !== skill)
-      : [...selectedSkills, skill];
-    onSelectedSkillsChange(newSkills);
+  const toggleSkill = (skillId: string) => {
+    onSelectedSkillChange(selectedSkill === skillId ? null : skillId);
   };
 
   return (
@@ -290,18 +242,18 @@ export function PromptInput({
           </button>
           {skillsOpen && (
             <div className="skills-body">
-              {SKILL_CATEGORIES.map((cat) => (
-                <div key={cat.label} style={{ marginBottom: 14 }}>
+              {skillCategories.map((cat) => (
+                <div key={cat.id} style={{ marginBottom: 14 }}>
                   <div className="skills-category-label">{cat.label}</div>
                   <div className="skills-pills">
                     {cat.skills.map((skill) => (
                       <button
-                        key={skill}
+                        key={skill.id}
                         type="button"
-                        className={`skill-pill ${selectedSkills.includes(skill) ? "active" : ""}`}
-                        onClick={() => toggleSkill(skill)}
+                        className={`skill-pill ${selectedSkill === skill.id ? "active" : ""}`}
+                        onClick={() => toggleSkill(skill.id)}
                       >
-                        {skill}
+                        {skill.label}
                       </button>
                     ))}
                   </div>

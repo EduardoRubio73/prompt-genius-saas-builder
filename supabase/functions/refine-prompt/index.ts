@@ -55,8 +55,8 @@ function parseJsonFromLLM(text: string): Record<string, unknown> {
   }
 }
 
-async function handleDistribute(freeText: string, destino: string) {
-  const system = `Você é um assistente especializado em engenharia de prompt. 
+async function handleDistribute(freeText: string, destino: string, skillSystemPrompt?: string) {
+  let system = `Você é um assistente especializado em engenharia de prompt. 
 Dado um texto livre do usuário, extraia e distribua as informações nos seguintes campos JSON:
 - especialidade: área de conhecimento do agente (ex: "Full-Stack Developer", "UX Designer")
 - persona: papel/personalidade que o agente deve assumir
