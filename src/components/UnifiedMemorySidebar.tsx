@@ -279,6 +279,7 @@ export function UnifiedMemorySidebar({
                 {MODE_TABS.map(({ value, label, icon: Icon }) => {
                   const count = value === "all" ? counts.all
                     : value === "prompt" ? counts.prompt
+                    : value === "skill" ? (counts as any).skill ?? 0
                     : value === "saas" ? counts.saas
                     : value === "mixed" ? (counts as any).mixed ?? 0
                     : value === "build" ? (counts as any).build ?? 0
