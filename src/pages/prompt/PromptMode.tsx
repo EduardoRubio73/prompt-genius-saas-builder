@@ -229,6 +229,7 @@ export default function PromptMode() {
               inputMode={inputMode} onInputModeChange={setInputMode}
               destino={destino} onDestinoChange={setDestino}
               onGenerate={handleGenerate} isGenerating={isGenerating}
+              selectedSkills={selectedSkills} onSelectedSkillsChange={setSelectedSkills}
             />
           )}
 

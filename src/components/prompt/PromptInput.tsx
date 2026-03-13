@@ -51,6 +51,54 @@ const platformGroups: { label: string; groupKey: string; items: PlatformOption[]
   },
 ];
 
+const SKILL_CATEGORIES = [
+  {
+    label: "💼 Negócios & Finanças",
+    skills: [
+      "💰 Especialista Financeiro",
+      "📈 Consultor de Marketing",
+      "🛒 Especialista em Vendas",
+      "📊 Analista de Negócios",
+      "🧾 Contador Virtual",
+    ],
+  },
+  {
+    label: "⚖️ Jurídico & Compliance",
+    skills: [
+      "⚖️ Especialista Jurídico",
+      "🔒 LGPD & Privacidade",
+      "📜 Especialista em Contratos",
+    ],
+  },
+  {
+    label: "💻 Tecnologia & Dev",
+    skills: [
+      "🏗️ Arquiteto de Software",
+      "🔍 Code Reviewer",
+      "🎨 Especialista UX/UI",
+      "☁️ DevOps & Cloud",
+    ],
+  },
+  {
+    label: "✍️ Conteúdo & Criatividade",
+    skills: [
+      "✍️ Copywriter Pro",
+      "🔎 Redator SEO",
+      "🎬 Roteirista",
+      "📱 Social Media",
+    ],
+  },
+  {
+    label: "🏥 Saúde & Carreira",
+    skills: [
+      "🥗 Nutricionista Virtual",
+      "💪 Personal Trainer",
+      "🎯 Coach de Carreira",
+      "📚 Tutor Acadêmico",
+    ],
+  },
+];
+
 const fieldDefs = [
   { key: "especialidade" as const, icon: "🎓", label: "Especialidade", placeholder: "Ex: Engenheiro de Software Sênior", tip: "Qual o perfil técnico da IA? Ex: Dev Backend, Designer UX, PM" },
   { key: "persona" as const, icon: "👤", label: "Persona", placeholder: "Ex: Técnico e direto ao ponto", tip: "Tom e estilo da resposta. Ex: Didático, Conciso, Criativo" },
@@ -71,6 +119,8 @@ interface PromptInputProps {
   onDestinoChange: (v: Enums<"destination_platform">) => void;
   onGenerate: () => void;
   isGenerating: boolean;
+  selectedSkills: string[];
+  onSelectedSkillsChange: (skills: string[]) => void;
 }
 
 export function PromptInput({
@@ -79,6 +129,7 @@ export function PromptInput({
   inputMode, onInputModeChange,
   destino, onDestinoChange,
   onGenerate, isGenerating,
+  selectedSkills, onSelectedSkillsChange,
 }: PromptInputProps) {
   const freeLen = freeText.length;
   const manualFilled = Object.values(manualFields).filter(v => v.length > 2).length;
@@ -93,6 +144,7 @@ export function PromptInput({
     ides: "",
     llms: "",
   });
+  const [skillsOpen, setSkillsOpen] = useState(true);
 
   const toggleGroup = (group: string) =>
     setOpenGroups(prev => ({ ...prev, [group]: !prev[group] }));
@@ -100,6 +152,13 @@ export function PromptInput({
   const selectPlatform = (p: PlatformOption) => {
     setSelectedPlatformId(p.id);
     onDestinoChange(p.dbValue);
+  };
+
+  const toggleSkill = (skill: string) => {
+    const newSkills = selectedSkills.includes(skill)
+      ? selectedSkills.filter(s => s !== skill)
+      : [...selectedSkills, skill];
+    onSelectedSkillsChange(newSkills);
   };
 
   return (
@@ -212,6 +271,44 @@ export function PromptInput({
               )}
             </div>
           ))}
+        </div>
+      </div>
+
+      {/* Skills & Agentes */}
+      <div style={{ marginTop: 20 }}>
+        <div className={`skills-card ${skillsOpen ? "open" : ""}`}>
+          <button
+            className="skills-header"
+            onClick={() => setSkillsOpen(o => !o)}
+            type="button"
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <span>🧠 Skills & Agentes</span>
+              <span className="skills-badge">NOVO</span>
+            </div>
+            <ChevronDown className={`platform-group-chevron ${skillsOpen ? "rotated" : ""}`} />
+          </button>
+          {skillsOpen && (
+            <div className="skills-body">
+              {SKILL_CATEGORIES.map((cat) => (
+                <div key={cat.label} style={{ marginBottom: 14 }}>
+                  <div className="skills-category-label">{cat.label}</div>
+                  <div className="skills-pills">
+                    {cat.skills.map((skill) => (
+                      <button
+                        key={skill}
+                        type="button"
+                        className={`skill-pill ${selectedSkills.includes(skill) ? "active" : ""}`}
+                        onClick={() => toggleSkill(skill)}
+                      >
+                        {skill}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
