@@ -26,6 +26,15 @@ export default defineConfig(({ mode }) => ({
       },
       devOptions: {
         enabled: false
+      },
+      manifest: {
+        name: "Prompt Genius SaaS Builder",
+        short_name: "PromptGenius",
+        start_url: "/genius/",
+        scope: "/genius/",
+        display: "standalone",
+        theme_color: "#0f172a",
+        background_color: "#ffffff"
       }
     }),
     mode === "development" && componentTagger()
