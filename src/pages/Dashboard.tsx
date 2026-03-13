@@ -79,7 +79,7 @@ const MODES = [
     icon: Rocket,
     cost: 5,
     href: "/build",
-    colorScheme: "amber" as const,
+    colorScheme: "orange" as const,
   },
 ] as const;
 
