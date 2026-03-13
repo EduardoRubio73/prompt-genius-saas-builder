@@ -41,7 +41,7 @@ export default function PromptMode() {
   const [manualFields, setManualFields] = useState<MistoFields>({
     especialidade: "", persona: "", tarefa: "", objetivo: "", contexto: "", destino: "",
   });
-  const [inputMode, setInputMode] = useState<"free" | "manual">("free");
+  const [inputMode, setInputMode] = useState<"free" | "manual" | "skills">("free");
   const [destino, setDestino] = useState<Enums<"destination_platform">>("lovable");
   const [fields, setFields] = useState<MistoFields | null>(null);
   const [promptGerado, setPromptGerado] = useState("");
@@ -54,6 +54,7 @@ export default function PromptMode() {
   const [timeElapsed, setTimeElapsed] = useState(0);
   const [memoryRefreshKey, setMemoryRefreshKey] = useState(0);
   const [selectedSkill, setSelectedSkill] = useState<string | null>(null);
+  const [skillComplement, setSkillComplement] = useState("");
 
   const fetchBalance = useCallback(async () => {
     if (!orgId) return null;
@@ -84,7 +85,6 @@ export default function PromptMode() {
     startTime.current = Date.now();
     showLoading("Gerando Prompt...");
 
-    // Resolve skill system prompt
     const skill = findSkillById(selectedSkill);
     const skillSystemPrompt = skill?.systemPrompt || undefined;
 
@@ -101,7 +101,34 @@ export default function PromptMode() {
       let localRefined: MistoFields;
       let localPrompt: string;
 
-      if (inputMode === "free") {
+      if (inputMode === "skills") {
+        // Skills mode: use refine directly with skill context
+        setGenStatus("refining");
+        const skillFields: MistoFields = {
+          especialidade: skill?.label || "",
+          persona: skill?.label || "",
+          tarefa: skillComplement || "Executar conforme instruções do agente especializado",
+          objetivo: "Resultado otimizado conforme especialidade do agente",
+          contexto: skillComplement || "",
+          destino: destino,
+        };
+        setFields(skillFields);
+
+        const r = await callEdgeFunction("refine-prompt", {
+          action: "refine", fields: skillFields, destino, sessionId: currentSessionId, skillSystemPrompt,
+        });
+        localRefined = {
+          especialidade: r.especialidade || skillFields.especialidade,
+          persona: r.persona || skillFields.persona,
+          tarefa: r.tarefa || skillFields.tarefa,
+          objetivo: r.objetivo || skillFields.objetivo,
+          contexto: r.contexto || skillFields.contexto,
+          destino: r.destino || skillFields.destino,
+        };
+        localPrompt = r.prompt_gerado || "";
+        setFields(localRefined);
+        setPromptGerado(localPrompt);
+      } else if (inputMode === "free") {
         setGenStatus("distributing");
         const d = await callEdgeFunction("refine-prompt", {
           action: "distribute", freeText, destino, sessionId: currentSessionId, skillSystemPrompt,
@@ -175,12 +202,13 @@ export default function PromptMode() {
       toast.error(err.message || "Erro ao processar.");
       setStep("input");
     }
-  }, [orgId, user, freeText, manualFields, inputMode, destino, selectedSkill, fetchBalance]);
+  }, [orgId, user, freeText, manualFields, inputMode, destino, selectedSkill, skillComplement, fetchBalance]);
 
   const handleNewSession = () => {
     setStep("input"); setFreeText(""); setFields(null);
     setManualFields({ especialidade: "", persona: "", tarefa: "", objetivo: "", contexto: "", destino: "" });
     setPromptGerado(""); setPromptRating(0); setIsSaved(false); setTimeElapsed(0); setSessionId(null);
+    setSkillComplement("");
   };
 
   const isGenerating = step === "generating";
@@ -230,6 +258,7 @@ export default function PromptMode() {
               destino={destino} onDestinoChange={setDestino}
               onGenerate={handleGenerate} isGenerating={isGenerating}
               selectedSkill={selectedSkill} onSelectedSkillChange={setSelectedSkill}
+              skillComplement={skillComplement} onSkillComplementChange={setSkillComplement}
             />
           )}
 

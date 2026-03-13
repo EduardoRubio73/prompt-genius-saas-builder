@@ -3,7 +3,7 @@ import type { Enums } from "@/integrations/supabase/types";
 import type { MistoFields } from "@/pages/misto/MistoMode";
 import { InfoTooltip } from "@/components/ui/info-tooltip";
 import { ChevronDown } from "lucide-react";
-import { useSkills } from "@/hooks/useSkills";
+import { useSkills, findSkillById } from "@/hooks/useSkills";
 
 type DbPlatform = Enums<"destination_platform">;
 
@@ -66,14 +66,16 @@ interface PromptInputProps {
   onFreeTextChange: (v: string) => void;
   manualFields: MistoFields;
   onManualFieldsChange: (f: MistoFields) => void;
-  inputMode: "free" | "manual";
-  onInputModeChange: (m: "free" | "manual") => void;
+  inputMode: "free" | "manual" | "skills";
+  onInputModeChange: (m: "free" | "manual" | "skills") => void;
   destino: Enums<"destination_platform">;
   onDestinoChange: (v: Enums<"destination_platform">) => void;
   onGenerate: () => void;
   isGenerating: boolean;
   selectedSkill: string | null;
   onSelectedSkillChange: (skill: string | null) => void;
+  skillComplement: string;
+  onSkillComplementChange: (v: string) => void;
 }
 
 export function PromptInput({
@@ -83,12 +85,16 @@ export function PromptInput({
   destino, onDestinoChange,
   onGenerate, isGenerating,
   selectedSkill, onSelectedSkillChange,
+  skillComplement, onSkillComplementChange,
 }: PromptInputProps) {
   const freeLen = freeText.length;
   const manualFilled = Object.values(manualFields).filter(v => v.length > 2).length;
-  const canGenerate = inputMode === "free"
-    ? freeLen >= 30 && freeLen <= 1200 && !isGenerating
-    : manualFilled >= 3 && !isGenerating;
+  const canGenerate =
+    inputMode === "free"
+      ? freeLen >= 30 && freeLen <= 1200 && !isGenerating
+      : inputMode === "manual"
+        ? manualFilled >= 3 && !isGenerating
+        : selectedSkill !== null && !isGenerating;
 
   const [selectedPlatformId, setSelectedPlatformId] = useState("lovable");
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({ "🏗️ Builders": true });
@@ -110,8 +116,20 @@ export function PromptInput({
   };
 
   const toggleSkill = (skillId: string) => {
-    onSelectedSkillChange(selectedSkill === skillId ? null : skillId);
+    if (selectedSkill === skillId) {
+      onSelectedSkillChange(null);
+      onSkillComplementChange("");
+    } else {
+      onSelectedSkillChange(skillId);
+    }
   };
+
+  const selectedSkillData = findSkillById(selectedSkill);
+
+  // Filter platform groups based on mode
+  const visiblePlatformGroups = inputMode === "skills"
+    ? platformGroups.filter(g => g.groupKey === "llms")
+    : platformGroups;
 
   return (
     <div className="misto-step-enter">
@@ -123,9 +141,15 @@ export function PromptInput({
         <button className={`misto-rt ${inputMode === "manual" ? "on" : ""}`} onClick={() => onInputModeChange("manual")}>
           📝 Campos Manuais
         </button>
+        <button
+          className={`misto-rt tab-skills ${inputMode === "skills" ? "on" : ""}`}
+          onClick={() => onInputModeChange("skills")}
+        >
+          🧠 Skills & Agentes
+        </button>
       </div>
 
-      {/* Left panel: free text — full width */}
+      {/* Free text mode */}
       {inputMode === "free" && (
         <div className="prompt-panel">
           <div className="misto-input-label" style={{ display: "flex", alignItems: "center", gap: 6 }}>
@@ -146,7 +170,7 @@ export function PromptInput({
         </div>
       )}
 
-      {/* Manual fields — full width */}
+      {/* Manual fields mode */}
       {inputMode === "manual" && (
         <div className="prompt-panel">
           <div className="misto-input-label">📝 Preencha os campos diretamente</div>
@@ -173,14 +197,14 @@ export function PromptInput({
         </div>
       )}
 
-      {/* Platform selector — grouped collapsible */}
+      {/* Platform selector — filtered by mode */}
       <div style={{ marginTop: 20 }}>
         <div className="misto-destino-label" style={{ display: "flex", alignItems: "center", gap: 6 }}>
           🚀 Plataforma de destino
           <InfoTooltip content="Escolha onde o prompt será usado. Cada plataforma tem otimizações específicas de formato e linguagem." />
         </div>
         <div className="platform-groups">
-          {platformGroups.map((group) => (
+          {visiblePlatformGroups.map((group) => (
             <div key={group.label} className={`platform-group ${openGroups[group.label] ? "open" : ""}`}>
               <button
                 className="platform-group-header"
@@ -226,43 +250,68 @@ export function PromptInput({
         </div>
       </div>
 
-      {/* Skills & Agentes */}
-      <div style={{ marginTop: 20 }}>
-        <div className={`skills-card ${skillsOpen ? "open" : ""}`}>
-          <button
-            className="skills-header"
-            onClick={() => setSkillsOpen(o => !o)}
-            type="button"
-          >
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <span>🧠 Skills & Agentes</span>
-              <span className="skills-badge">NOVO</span>
-            </div>
-            <ChevronDown className={`platform-group-chevron ${skillsOpen ? "rotated" : ""}`} />
-          </button>
-          {skillsOpen && (
-            <div className="skills-body">
-              {skillCategories.map((cat) => (
-                <div key={cat.id} style={{ marginBottom: 14 }}>
-                  <div className="skills-category-label">{cat.label}</div>
-                  <div className="skills-pills">
-                    {cat.skills.map((skill) => (
-                      <button
-                        key={skill.id}
-                        type="button"
-                        className={`skill-pill ${selectedSkill === skill.id ? "active" : ""}`}
-                        onClick={() => toggleSkill(skill.id)}
-                      >
-                        {skill.label}
-                      </button>
-                    ))}
+      {/* Skills & Agentes — only in skills mode */}
+      {inputMode === "skills" && (
+        <div style={{ marginTop: 20 }}>
+          <div className={`skills-card ${skillsOpen ? "open" : ""}`}>
+            <button
+              className="skills-header"
+              onClick={() => setSkillsOpen(o => !o)}
+              type="button"
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span>🧠 Skills & Agentes</span>
+                <span className="skills-badge">NOVO</span>
+              </div>
+              <ChevronDown className={`platform-group-chevron ${skillsOpen ? "rotated" : ""}`} />
+            </button>
+            {skillsOpen && (
+              <div className="skills-body">
+                {skillCategories.map((cat) => (
+                  <div key={cat.id} style={{ marginBottom: 14 }}>
+                    <div className="skills-category-label">{cat.label}</div>
+                    <div className="skills-pills">
+                      {cat.skills.map((skill) => (
+                        <button
+                          key={skill.id}
+                          type="button"
+                          className={`skill-pill ${selectedSkill === skill.id ? "active" : ""}`}
+                          onClick={() => toggleSkill(skill.id)}
+                        >
+                          {skill.label}
+                        </button>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          )}
+                ))}
+              </div>
+            )}
+          </div>
         </div>
-      </div>
+      )}
+
+      {/* Complement card — appears when a skill is selected in skills mode */}
+      {inputMode === "skills" && selectedSkill && selectedSkillData && (
+        <div className="complement-card" style={{ marginTop: 20 }}>
+          <div style={{ marginBottom: 12 }}>
+            <span className="selected-skill-tag">{selectedSkillData.label}</span>
+          </div>
+          <div className="card-hint">
+            O agente já possui instruções especializadas. Use este campo apenas para complementar com detalhes do seu caso específico.
+          </div>
+          <textarea
+            className="misto-textarea"
+            placeholder="Adicione detalhes do seu caso específico, contexto adicional, restrições ou preferências..."
+            value={skillComplement}
+            onChange={(e) => onSkillComplementChange(e.target.value.slice(0, 1200))}
+            disabled={isGenerating}
+            style={{ minHeight: 120, marginTop: 12 }}
+          />
+          <div className="misto-char-count">
+            {skillComplement.length} / 1200
+          </div>
+        </div>
+      )}
 
       <button className="misto-gen-btn" onClick={onGenerate} disabled={!canGenerate} type="button">
         ✨ Gerar Prompt — 1 cota
