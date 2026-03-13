@@ -85,10 +85,6 @@ export default function PromptMode() {
 
   const { showLoading, hideLoading } = useLoading();
 
-  // Unified generate handler — no more intent modal
-  const handleGenerateClick = useCallback(() => {
-    handleGenerate();
-  }, [handleGenerate]);
 
   const handleGenerate = useCallback(async (forceAI?: boolean) => {
     if (!orgId || !user) { toast.error("Usuário não autenticado"); return; }
