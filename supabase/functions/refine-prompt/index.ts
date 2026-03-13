@@ -76,8 +76,8 @@ Responda APENAS com JSON válido, sem markdown. Exemplo:
   return parseJsonFromLLM(result);
 }
 
-async function handleRefine(fields: Record<string, string>, destino: string) {
-  const system = `Você é um engenheiro de prompt sênior. Receba campos estruturados e:
+async function handleRefine(fields: Record<string, string>, destino: string, skillSystemPrompt?: string) {
+  let system = `Você é um engenheiro de prompt sênior. Receba campos estruturados e:
 1. Melhore cada campo com mais clareza e especificidade
 2. Gere um prompt final otimizado para a plataforma "${destino}"
 
