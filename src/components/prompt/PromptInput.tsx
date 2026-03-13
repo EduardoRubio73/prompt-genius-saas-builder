@@ -258,40 +258,10 @@ export function PromptInput({
       {/* Skills & Agentes — only in skills mode */}
       {inputMode === "skills" && (
         <div style={{ marginTop: 20 }}>
-          <div className={`skills-card ${skillsOpen ? "open" : ""}`}>
-            <button
-              className="skills-header"
-              onClick={() => setSkillsOpen(o => !o)}
-              type="button"
-            >
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <span>🧠 Skills & Agentes</span>
-                <span className="skills-badge">NOVO</span>
-              </div>
-              <ChevronDown className={`platform-group-chevron ${skillsOpen ? "rotated" : ""}`} />
-            </button>
-            {skillsOpen && (
-              <div className="skills-body">
-                {skillCategories.map((cat) => (
-                  <div key={cat.id} style={{ marginBottom: 14 }}>
-                    <div className="skills-category-label">{cat.label}</div>
-                    <div className="skills-pills">
-                      {cat.skills.map((skill) => (
-                        <button
-                          key={skill.id}
-                          type="button"
-                          className={`skill-pill ${selectedSkill === skill.id ? "active" : ""}`}
-                          onClick={() => toggleSkill(skill.id)}
-                        >
-                          {skill.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+          <SkillGroupList
+            selectedSkill={selectedSkill}
+            onSelectSkill={onSelectedSkillChange}
+          />
         </div>
       )}
 
