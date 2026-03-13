@@ -237,7 +237,7 @@ export default function PromptMode() {
           especialidade: localRefined.especialidade, persona: localRefined.persona,
           tarefa: localRefined.tarefa, objetivo: localRefined.objetivo,
           contexto: localRefined.contexto,
-          destino, prompt_gerado: localPrompt, rating: null, categoria: "prompt",
+          destino, prompt_gerado: localPrompt, rating: null, categoria: inputMode === "skills" ? "skill" : "prompt",
         }).select("id").single();
 
         if (memRow) setPromptMemoryId(memRow.id);

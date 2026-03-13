@@ -3004,7 +3004,7 @@ export type Database = {
         | "completed"
         | "rewarded"
         | "expired"
-      session_mode: "prompt" | "saas" | "misto" | "build"
+      session_mode: "prompt" | "saas" | "misto" | "build" | "skill"
       subscription_status:
         | "trialing"
         | "active"
@@ -3169,7 +3169,7 @@ export const Constants = {
       member_role: ["owner", "admin", "member", "viewer"],
       plan_tier: ["free", "starter", "pro", "enterprise"],
       referral_status: ["pending", "trial", "completed", "rewarded", "expired"],
-      session_mode: ["prompt", "saas", "misto", "build"],
+      session_mode: ["prompt", "saas", "misto", "build", "skill"],
       subscription_status: [
         "trialing",
         "active",
