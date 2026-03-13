@@ -44,6 +44,7 @@ interface UnifiedMemorySidebarProps {
 const MODE_TABS: { value: "all" | MemoryMode; label: string; icon: React.ElementType }[] = [
   { value: "all", label: "Todos", icon: Brain },
   { value: "prompt", label: "Prompts", icon: Sparkles },
+  { value: "skill", label: "Skill", icon: Zap },
   { value: "saas", label: "Specs", icon: FileCode },
   { value: "mixed", label: "Misto", icon: Layers },
   { value: "build", label: "Build", icon: Rocket },
