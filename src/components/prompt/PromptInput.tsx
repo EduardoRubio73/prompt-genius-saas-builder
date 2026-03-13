@@ -84,7 +84,7 @@ export function PromptInput({
   manualFields, onManualFieldsChange,
   inputMode, onInputModeChange,
   destino, onDestinoChange,
-  onGenerate, isGenerating,
+  onGenerate, isGenerating, searching,
   selectedSkill, onSelectedSkillChange,
   skillComplement, onSkillComplementChange,
 }: PromptInputProps) {
