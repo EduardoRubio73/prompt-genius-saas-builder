@@ -1,60 +1,45 @@
 
 
-# Atualizar Interface do PromptInput com base no HTML v2
+## Fix: Admin Credits Not Saving
 
-## Resumo
+### Root Causes
 
-Adicionar um terceiro modo "skills" na barra de abas, com comportamento específico: oculta Builders/IDEs, mostra apenas LLMs + card de Skills, e exibe um card de complemento ao selecionar um skill.
+1. **Missing data**: `admin_users_overview` view doesn't include `plan_credits_total`, `bonus_credits_total`, etc. The form defaults to `0` instead of the real values.
+2. **JS falsy bug**: Line 88 uses `form.plan_credits_total || undefined` — when the value is `0`, `0 || undefined` evaluates to `undefined`, so the field is omitted from the update.
 
-## Mudanças
+### Solution
 
-### 1. `src/components/prompt/PromptInput.tsx`
+**1. Fetch actual org data when dialog opens**
+- In `UserDetailDialog`, add a query to fetch the organization record directly from `organizations` table using `user.org_id`
+- Initialize `plan_credits_total` and `bonus_credits_total` from the real org data
 
-- Expandir `inputMode` de `"free" | "manual"` para `"free" | "manual" | "skills"`
-- Adicionar terceira aba `🧠 Skills & Agentes` com classe CSS especial para estilo roxo quando ativa
-- Novo estado `skillComplement: string` para o textarea de complemento
-- Nova prop `onSkillComplementChange` para propagar o texto de complemento ao parent
+**2. Fix the save logic**
+- Remove `|| undefined` guards — always send `plan_credits_total` and `bonus_credits_total` to the update call
+- This ensures `0` is a valid value that gets saved
 
-**Comportamento por modo:**
-- `"free"`: textarea + todos os 3 accordions de plataforma + skills card (como está hoje)
-- `"manual"`: campos manuais + todos os 3 accordions (como está hoje)
-- `"skills"`: SEM textarea/campos, SEM Builders/IDEs — mostra apenas LLMs accordion + Skills card + Complement card
+### Files to Edit
 
-**Complement card** (aparece quando `selectedSkill !== null` E `inputMode === "skills"`):
-- Badge roxo com nome do skill selecionado (lookup via `findSkillById`)
-- Texto explicativo em caixa com borda roxa à esquerda
-- Textarea para contexto adicional (max 1200 chars)
-- Ocultar e limpar ao desselecionar skill
+| File | Change |
+|------|--------|
+| `src/pages/admin/AdminUsers.tsx` | Add org data fetch, fix form init + save logic |
 
-**Validação `canGenerate` para modo skills:**
-- `selectedSkill !== null && !isGenerating`
+### Details
 
-**Remover** o skills card dos modos `free` e `manual` (ficará visível apenas no modo `skills`).
+```tsx
+// Add useEffect to load real org data
+const [orgData, setOrgData] = useState<any>(null);
+useEffect(() => {
+  if (user.org_id) {
+    supabase.from("organizations").select("plan_credits_total, bonus_credits_total, plan_credits_used, bonus_credits_used").eq("id", user.org_id).single()
+      .then(({ data }) => {
+        if (data) {
+          setForm(f => ({ ...f, plan_credits_total: data.plan_credits_total, bonus_credits_total: data.bonus_credits_total }));
+        }
+      });
+  }
+}, [user.org_id]);
 
-### 2. `src/pages/prompt/PromptMode.tsx`
-
-- Mudar tipo de `inputMode` para incluir `"skills"`
-- Adicionar estado `skillComplement: string`
-- Passar `skillComplement` e `onSkillComplementChange` ao `PromptInput`
-- No `handleGenerate`, quando `inputMode === "skills"`:
-  - Usar `skillComplement` como `freeText` no payload (se preenchido)
-  - Enviar `skillSystemPrompt` como já faz hoje
-  - Chamar `refine-prompt` com action `"refine"` diretamente (sem distribute), montando fields a partir do skill selecionado
-
-### 3. `src/pages/misto/misto.css`
-
-Adicionar estilos:
-- `.misto-rt.tab-skills.on` — fundo `#f5f0ff`, cor `#5b21b6`, borda `1.5px solid #e8e0ff`
-- `.complement-card` — borda `1.5px solid #e8e0ff`, border-radius 16px, padding 20px
-- `.complement-card .card-hint` — fundo `#faf7ff`, border-left `3px solid #c4b5fd`, font-size 12px
-- `.selected-skill-tag` — fundo `#7c3aed`, cor white, border-radius 999px, font-size 12px
-- Dark mode variants para todos os acima
-
-## Arquivos Modificados
-
-| Arquivo | Mudança |
-|---------|---------|
-| `src/components/prompt/PromptInput.tsx` | Terceira aba, lógica de visibilidade por modo, complement card |
-| `src/pages/prompt/PromptMode.tsx` | Novo estado `skillComplement`, tipo de inputMode expandido, payload para modo skills |
-| `src/pages/misto/misto.css` | Estilos para tab skills ativa, complement card, selected-skill-tag |
+// Fix save — no more || undefined
+updates: { plan_tier: form.plan_tier, is_active: form.is_active, plan_credits_total: form.plan_credits_total, bonus_credits_total: form.bonus_credits_total }
+```
 

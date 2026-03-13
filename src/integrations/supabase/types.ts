@@ -2876,6 +2876,36 @@ export type Database = {
       }
       is_org_admin: { Args: { p_org_id: string }; Returns: boolean }
       is_super_admin: { Args: never; Returns: boolean }
+      match_prompts: {
+        Args: {
+          filter_categoria?: string
+          filter_destino?: string
+          filter_org_id?: string
+          match_count?: number
+          match_threshold?: number
+          query_embedding: string
+        }
+        Returns: {
+          categoria: string
+          contexto: string
+          created_at: string
+          destino: string
+          especialidade: string
+          formato: string
+          id: string
+          is_favorite: boolean
+          objetivo: string
+          persona: string
+          prompt_gerado: string
+          rating: number
+          referencias: string
+          restricoes: string
+          similarity: number
+          tags: string[]
+          tarefa: string
+          tokens_consumed: number
+        }[]
+      }
       process_credit_purchase: {
         Args: { p_purchase_id: string; p_stripe_pi_id: string }
         Returns: undefined
@@ -2887,6 +2917,29 @@ export type Database = {
       reward_referral_if_paid: {
         Args: { p_org_id: string }
         Returns: undefined
+      }
+      search_prompts_text: {
+        Args: {
+          filter_destino?: string
+          filter_org_id?: string
+          match_count?: number
+          search_query: string
+        }
+        Returns: {
+          categoria: string
+          created_at: string
+          destino: string
+          especialidade: string
+          id: string
+          is_favorite: boolean
+          objetivo: string
+          prompt_gerado: string
+          rating: number
+          relevance: number
+          tags: string[]
+          tarefa: string
+          tokens_consumed: number
+        }[]
       }
       sync_stripe_price: {
         Args: {

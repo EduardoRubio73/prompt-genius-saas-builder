@@ -1252,3 +1252,60 @@
   border-color: hsl(270 76% 53%);
   color: white;
 }
+
+/* Skills tab active state */
+.misto-rt.tab-skills.on {
+  background: hsl(270 100% 97%);
+  color: hsl(270 76% 36%);
+  border: 1.5px solid hsl(270 50% 92%);
+}
+.misto-rt.tab-skills:hover:not(.on) {
+  color: hsl(270 76% 36%);
+}
+
+/* Complement card */
+.complement-card {
+  background: hsl(var(--mode-surface));
+  border: 1.5px solid hsl(270 50% 92%);
+  border-radius: 16px;
+  padding: 20px;
+}
+.complement-card .card-hint {
+  background: hsl(270 100% 98%);
+  border-left: 3px solid hsl(270 70% 76%);
+  padding: 10px 14px;
+  border-radius: 0 8px 8px 0;
+  font-size: 12px;
+  color: hsl(var(--mode-text-muted));
+  line-height: 1.5;
+}
+.selected-skill-tag {
+  display: inline-block;
+  background: hsl(270 76% 53%);
+  color: white;
+  border-radius: 999px;
+  padding: 4px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+}
+
+/* Dark mode: skills tab */
+:root[data-theme="dark"] .misto-rt.tab-skills.on {
+  background: hsl(270 30% 16%);
+  color: hsl(270 80% 75%);
+  border-color: hsl(270 40% 30%);
+}
+/* Dark mode: complement card */
+:root[data-theme="dark"] .complement-card {
+  background: hsl(var(--mode-surface));
+  border-color: hsl(270 40% 30%);
+}
+:root[data-theme="dark"] .complement-card .card-hint {
+  background: hsl(270 20% 14%);
+  border-left-color: hsl(270 50% 45%);
+}
+:root[data-theme="dark"] .selected-skill-tag {
+  background: hsl(270 76% 53%);
+  color: white;
+}
