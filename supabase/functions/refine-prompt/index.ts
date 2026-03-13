@@ -193,7 +193,7 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json();
-    const { action, freeText, fields, destino, promptFields, originalInput, answers, sessionId } = body ?? {};
+    const { action, freeText, fields, destino, promptFields, originalInput, answers, sessionId, skillSystemPrompt } = body ?? {};
 
     const isUuid = (value: string) =>
       /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
