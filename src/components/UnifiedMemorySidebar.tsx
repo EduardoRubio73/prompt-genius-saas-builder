@@ -403,6 +403,7 @@ export function UnifiedMemorySidebar({
               <div className="px-3 py-2 border-t border-border shrink-0">
                 <p className="text-[9px] text-muted-foreground text-center tabular-nums">
                   {counts.prompt} prompt{counts.prompt !== 1 ? "s" : ""} ·{" "}
+                  {(counts as any).skill ?? 0} skill{(counts as any).skill !== 1 ? "s" : ""} ·{" "}
                   {counts.saas} spec{counts.saas !== 1 ? "s" : ""} ·{" "}
                   {counts.build} build{counts.build !== 1 ? "s" : ""} ·{" "}
                   {counts.favorites} favorito{counts.favorites !== 1 ? "s" : ""}
