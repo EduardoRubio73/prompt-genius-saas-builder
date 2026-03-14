@@ -399,7 +399,8 @@ const handleSubscribe = async (priceId: string | null) => {
       {/* NAV */}
       <nav>
         <a className="nav-logo" href="#">
-          <img alt="Prompt Genius SaaS Builder" src="/lovable-uploads/a06a4c23-de16-4d60-a563-0ed4f968f538.png" />
+          <img alt="Prompt Genius SaaS Builder" src={`${import.meta.env.BASE_URL}lovable-uploads/a06a4c23-de16-4d60-a563-0ed4f968f538.png`}
+/>
           <span className="nav-name">Prompt Genius SaaS Builder Engineer </span>
         </a>
         <div className="nav-r">
@@ -414,7 +415,8 @@ const handleSubscribe = async (priceId: string | null) => {
       {/* HERO */}
       <section className="hero">
         <div className="hero-logo-wrap">
-          <img alt="Prompt Genius SaaS Builder" className="hero-logo object-fill" src="/lovable-uploads/688355bf-1ebd-477f-a16a-4f11633d41d7.png" />
+          <img alt="Prompt Genius SaaS Builder" className="hero-logo object-fill" src={`${import.meta.env.BASE_URL}lovable-uploads/688355bf-1ebd-477f-a16a-4f11633d41d7.png`}
+/>
         </div>
         <div className="tag"><span className="tag-dot" />IA + SaaS Builder + Programa de Indicação</div>
         <h1>
