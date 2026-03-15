@@ -15,7 +15,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import logo from "@/assets/logo.png";
+import AuthBrand from "@/components/auth/AuthBrand";
+import SocialLogin from "@/components/auth/SocialLogin";
 
 // ────────────────────────────────────────────────────────────────────────────────
 // Helper functions
