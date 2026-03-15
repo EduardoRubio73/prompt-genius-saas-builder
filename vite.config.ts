@@ -20,39 +20,6 @@ export default defineConfig(() => ({
     componentTagger(),
     VitePWA({
       registerType: "autoUpdate",
-      injectRegister: "auto",
-      includeAssets: [
-        "favicon.ico",
-        "icons/icon-180x180.png",
-        "icons/icon-192x192.png",
-        "icons/icon-512x512.png",
-      ],
-      manifest: {
-        name: "Genius",
-        short_name: "Genius",
-        start_url: "/genius/",
-        scope: "/genius/",
-        display: "standalone",
-        background_color: "#0f172a",
-        theme_color: "#0f172a",
-        icons: [
-          {
-            src: "/genius/icons/icon-192x192.png",
-            sizes: "192x192",
-            type: "image/png",
-          },
-          {
-            src: "/genius/icons/icon-512x512.png",
-            sizes: "512x512",
-            type: "image/png",
-          },
-          {
-            src: "/genius/icons/icon-180x180.png",
-            sizes: "180x180",
-            type: "image/png",
-          },
-        ],
-      },
     }),
   ],
 
