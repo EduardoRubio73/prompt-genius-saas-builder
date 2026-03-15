@@ -256,10 +256,12 @@ html, body {
 }
 .landing-page .mc::before { content: ''; position: absolute; inset: 0; opacity: 0; transition: opacity .3s; pointer-events: none; }
 .landing-page .mc-p::before { background: radial-gradient(ellipse at top left,rgba(168,85,247,.12),transparent 60%); }
+.landing-page .mc-sk::before { background: radial-gradient(ellipse at top left,rgba(245,158,11,.12),transparent 60%); }
 .landing-page .mc-s::before { background: radial-gradient(ellipse at top left,rgba(59,130,246,.12),transparent 60%); }
 .landing-page .mc-m::before { background: radial-gradient(ellipse at top left,rgba(0,200,255,.1),transparent 60%); }
 .landing-page .mc:hover::before { opacity: 1; }
 .landing-page .mc-p:hover { border-color: rgba(168,85,247,.4); }
+.landing-page .mc-sk:hover { border-color: rgba(245,158,11,.4); }
 .landing-page .mc-s:hover { border-color: rgba(59,130,246,.4); }
 .landing-page .mc-m:hover { border-color: rgba(0,200,255,.35); }
 .landing-page .mc-badge {
