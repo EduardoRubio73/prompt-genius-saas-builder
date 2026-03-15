@@ -424,7 +424,7 @@ const handleSubscribe = async (priceId: string | null) => {
           <span className="tw-line"><span className="grad"><TypeWriter words={["com IA — ganhe cotas", "1 cota ≈ R$0,87", "em segundos, com IA", "BUILD ≈ R$4,35", "e indique amigos"]} /></span></span>
           <br />indicando amigos
         </h1>
-        <p className="hero-sub">Quatro modos de IA para gerar prompts perfeitos e especificações técnicas completas. Indique um amigo e ambos ganham 5 cotas extras gratuitamente.</p>
+        <p className="hero-sub">Cinco modos de IA para gerar prompts perfeitos, acionar 60+ agentes especializados e criar especificações técnicas completas. Indique um amigo e ambos ganham 5 cotas extras gratuitamente.</p>
         <div className="hero-acts">
           <button className="btn-p" onClick={() => navigate("/login")}>Começar Grátis — 7 dias →</button>
           <a href="#indicacao" className="btn-o">Ver programa de indicação</a>
