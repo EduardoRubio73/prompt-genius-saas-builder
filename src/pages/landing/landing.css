@@ -177,6 +177,7 @@ html, body {
 .landing-page .dr { background: #FF5F57; } .landing-page .dy { background: #FEBC2E; } .landing-page .dg { background: #28C840; }
 .landing-page .mock-label { margin-left: 8px; font-size: 11.5px; color: var(--mu); }
 .landing-page .mock-body { padding: 24px; display: grid; grid-template-columns: repeat(5,1fr); gap: 10px; }
+@media(max-width:640px) { .landing-page .mock-body { grid-template-columns: repeat(2,1fr); } }
 .landing-page .mp {
   padding: 16px; border-radius: 10px;
   border: 1px solid rgba(255,255,255,.07);
