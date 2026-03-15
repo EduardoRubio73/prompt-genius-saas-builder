@@ -490,12 +490,13 @@ const handleSubscribe = async (priceId: string | null) => {
       <section className="modes rv">
         <div className="wrap">
           <div className="tag">Como funciona</div>
-          <h2 className="sh">Quatro modos, <TypeWriter words={["uma plataforma", "resultados reais", "zero retrabalho"]} /></h2>
-          <div className="modes-grid">
+          <h2 className="sh">Cinco modos, <TypeWriter words={["uma plataforma", "resultados reais", "zero retrabalho"]} /></h2>
+          <div className="modes-grid modes-grid-5">
             <div className="mc mc-p"><div className="mc-badge mb-pop">Mais usado</div><div className="mc-icon">✨</div><div className="mc-title">Gerador de Prompt</div><div className="mc-desc">Escreva sua ideia. A IA distribui em especialidade, persona, tarefa, objetivo e contexto. Copie o prompt pronto.</div><div className="mc-pill"><strong>1 cota</strong> por geração</div><div className="mc-n">01</div></div>
-            <div className="mc mc-s"><div className="mc-icon">🏗️</div><div className="mc-title">SaaS Builder</div><div className="mc-desc">7 perguntas objetivas geram especificação técnica Markdown completa pronta para o Lovable.</div><div className="mc-pill"><strong>2 cotas</strong> por geração</div><div className="mc-n">02</div></div>
-            <div className="mc mc-m"><div className="mc-badge mb-new">Novo ⚡</div><div className="mc-icon">⚡</div><div className="mc-title">Modo Misto</div><div className="mc-desc">Um input único gera prompt otimizado + spec técnica completa. O mais poderoso dos quatro modos.</div><div className="mc-pill"><strong>3 cotas</strong> por sessão</div><div className="mc-n">03</div></div>
-            <div className="mc mc-m"><div className="mc-badge mb-new">PRO 🚀</div><div className="mc-icon">⚙️</div><div className="mc-title">BUILD Engine</div><div className="mc-desc">Transforme uma ideia em pacote deploy-ready: PRD, SQL, prompts e documentação completa. Economia de até R$50 por projeto.</div><div className="mc-pill"><strong>5 cotas</strong> por projeto</div><div className="mc-n">04</div></div>
+            <div className="mc mc-sk"><div className="mc-badge mb-new">60+ agentes</div><div className="mc-icon">🧠</div><div className="mc-title">Modo Skill</div><div className="mc-desc">Escolha entre 60+ agentes especializados em 8 categorias. Cada agente possui persona e sistema de prompt próprio.</div><div className="mc-pill"><strong>2 cotas</strong> por geração</div><div className="mc-n">02</div></div>
+            <div className="mc mc-s"><div className="mc-icon">🏗️</div><div className="mc-title">SaaS Builder</div><div className="mc-desc">7 perguntas objetivas geram especificação técnica Markdown completa pronta para o Lovable.</div><div className="mc-pill"><strong>2 cotas</strong> por geração</div><div className="mc-n">03</div></div>
+            <div className="mc mc-m"><div className="mc-badge mb-new">Novo ⚡</div><div className="mc-icon">⚡</div><div className="mc-title">Modo Misto</div><div className="mc-desc">Um input único gera prompt otimizado + spec técnica completa. O mais poderoso dos cinco modos.</div><div className="mc-pill"><strong>3 cotas</strong> por sessão</div><div className="mc-n">04</div></div>
+            <div className="mc mc-m"><div className="mc-badge mb-new">PRO 🚀</div><div className="mc-icon">⚙️</div><div className="mc-title">BUILD Engine</div><div className="mc-desc">Transforme uma ideia em pacote deploy-ready: PRD, SQL, prompts e documentação completa. Economia de até R$50 por projeto.</div><div className="mc-pill"><strong>5 cotas</strong> por projeto</div><div className="mc-n">05</div></div>
           </div>
         </div>
       </section>
