@@ -5,7 +5,6 @@ import path from "path";
 import { componentTagger } from "lovable-tagger";
 
 export default defineConfig(({ mode }) => ({
-  base: "/genius/",
 
   server: {
     host: "::",
@@ -34,8 +33,8 @@ export default defineConfig(({ mode }) => ({
         name: "Prompt Genius SaaS Builder",
         short_name: "PromptGenius",
 
-        start_url: "/genius/",
-        scope: "/genius/",
+        start_url: "/",
+        scope: "/",
 
         display: "standalone",
         theme_color: "#0f172a",
@@ -43,12 +42,12 @@ export default defineConfig(({ mode }) => ({
 
         icons: [
           {
-            src: "/genius/icons/icon-192x192.png",
+            src: "/icons/icon-192x192.png",
             sizes: "192x192",
             type: "image/png"
           },
           {
-            src: "/genius/icons/icon-512x512.png",
+            src: "/icons/icon-512x512.png",
             sizes: "512x512",
             type: "image/png"
           }

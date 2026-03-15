@@ -38,7 +38,7 @@ const TERMS_CONTENT =
     <p>Ao criar uma conta ou utilizar qualquer funcionalidade da plataforma Prompt Genius SaaS Builder ("Plataforma"), você ("Usuário") declara que leu, compreendeu e concorda com os presentes Termos de Uso ("Termos"). Caso não concorde com qualquer disposição, não utilize a Plataforma.</p>
 
     <h3>2. Descrição do Serviço</h3>
-    <p>O Prompt Genius SaaS Builder é uma plataforma de geração de prompts e especificações técnicas assistida por Inteligência Artificial. A Plataforma oferece quatro modos principais: Gerador de Prompt, SaaS Builder Wizard, Modo Misto e BUILD Engine.</p>
+    <p>O Prompt Genius SaaS Builder é uma plataforma de geração de prompts e especificações técnicas assistida por Inteligência Artificial. A Plataforma oferece cinco modos principais: Gerador de Prompt, Modo Skill (60+ agentes de IA), SaaS Builder Wizard, Modo Misto e BUILD Engine.</p>
 
     <h3>3. Cadastro e Conta</h3>
     <p>3.1. Para acessar os recursos da Plataforma, é necessário criar uma conta com e-mail válido e senha.</p>
@@ -424,7 +424,7 @@ const handleSubscribe = async (priceId: string | null) => {
           <span className="tw-line"><span className="grad"><TypeWriter words={["com IA — ganhe cotas", "1 cota ≈ R$0,87", "em segundos, com IA", "BUILD ≈ R$4,35", "e indique amigos"]} /></span></span>
           <br />indicando amigos
         </h1>
-        <p className="hero-sub">Quatro modos de IA para gerar prompts perfeitos e especificações técnicas completas. Indique um amigo e ambos ganham 5 cotas extras gratuitamente.</p>
+        <p className="hero-sub">Cinco modos de IA para gerar prompts perfeitos, acionar 60+ agentes especializados e criar especificações técnicas completas. Indique um amigo e ambos ganham 5 cotas extras gratuitamente.</p>
         <div className="hero-acts">
           <button className="btn-p" onClick={() => navigate("/login")}>Começar Grátis — 7 dias →</button>
           <a href="#indicacao" className="btn-o">Ver programa de indicação</a>
@@ -444,8 +444,10 @@ const handleSubscribe = async (priceId: string | null) => {
             </div>
             <div className="mock-body">
               <div className="mp"><div className="mp-i">✨</div><div className="mp-n">Gerador Prompt</div><div className="mp-d">Texto → Estruturado</div></div>
+              <div className="mp"><div className="mp-i">🧠</div><div className="mp-n">Modo Skill</div><div className="mp-d">60+ agentes de IA</div></div>
               <div className="mp hi"><div className="mp-i">⚡</div><div className="mp-n">Modo Misto</div><div className="mp-d">Prompt + SaaS juntos</div></div>
               <div className="mp"><div className="mp-i">🏗️</div><div className="mp-n">SaaS Builder</div><div className="mp-d">7 perguntas → Spec</div></div>
+              <div className="mp"><div className="mp-i">⚙️</div><div className="mp-n">BUILD Engine</div><div className="mp-d">Ideia → Deploy-ready</div></div>
               <div className="mock-sep"><div className="sep-l" /><span>gerado em ~3s · 1 cota consumida</span><div className="sep-l" /></div>
               <div className="mock-out"><span>// Prompt gerado:</span> Atue como especialista em SaaS B2B. Persona: consultor direto. <span>TAREFA:</span> Criar sistema de CRM com IA... <span>// + Spec Next.js 15 + Supabase + Stripe pronta para Lovable ✓</span></div>
             </div>
@@ -456,7 +458,7 @@ const handleSubscribe = async (priceId: string | null) => {
       {/* STATS */}
       <div className="stats-bar rv">
         <div className="stats-inner">
-          <div className="st"><div className="st-v">3</div><div className="st-l">Modos de IA</div></div>
+          <div className="st"><div className="st-v">5</div><div className="st-l">Modos de IA</div></div>
           <div className="st"><div className="st-v">&lt;3s</div><div className="st-l">Tempo de geração</div></div>
           <div className="st"><div className="st-v">7</div><div className="st-l">Plataformas</div></div>
           <div className="st"><div className="st-v">+5</div><div className="st-l">Cotas por indicação</div></div>
@@ -469,8 +471,9 @@ const handleSubscribe = async (priceId: string | null) => {
         <div className="wrap">
           <div className="tag">Funcionalidades</div>
           <h2 className="sh">Tudo que você precisa para <TypeWriter words={["construir mais rápido", "lançar com IA", "escalar do zero"]} /></h2>
-          <div className="feat-grid feat-grid-4">
+          <div className="feat-grid feat-grid-5">
             <div className="fc"><div className="fc-i iv">✨</div><div className="fc-t">Gerador de Prompt</div><div className="fc-d">Texto livre → campos estruturados: especialidade, persona, tarefa, objetivo e contexto. Prompt pronto em segundos.</div></div>
+            <div className="fc"><div className="fc-i ia">🧠</div><div className="fc-t">Modo Skill</div><div className="fc-d">60+ agentes de IA em 8 categorias: negócios, jurídico, tech, marketing, criatividade, saúde, educação e nichos Brasil.</div></div>
             <div className="fc"><div className="fc-i ib">🏗️</div><div className="fc-t">SaaS Builder Wizard</div><div className="fc-d">7 perguntas geram spec técnica completa: stack, banco, arquitetura, segurança e plano de implementação.</div></div>
             <div className="fc"><div className="fc-i ic">⚡</div><div className="fc-t">Modo Misto — 2 outputs</div><div className="fc-d">Um input gera simultaneamente prompt otimizado E spec técnica, retroalimentados automaticamente.</div></div>
             <div className="fc"><div className="fc-i ip">⚙️</div><div className="fc-t">BUILD Engine</div><div className="fc-d">Transforme uma ideia em pacote deploy-ready: PRD, SQL, prompts e documentação completa. Economia de até R$50 por projeto.</div></div>
@@ -487,12 +490,13 @@ const handleSubscribe = async (priceId: string | null) => {
       <section className="modes rv">
         <div className="wrap">
           <div className="tag">Como funciona</div>
-          <h2 className="sh">Quatro modos, <TypeWriter words={["uma plataforma", "resultados reais", "zero retrabalho"]} /></h2>
-          <div className="modes-grid">
+          <h2 className="sh">Cinco modos, <TypeWriter words={["uma plataforma", "resultados reais", "zero retrabalho"]} /></h2>
+          <div className="modes-grid modes-grid-5">
             <div className="mc mc-p"><div className="mc-badge mb-pop">Mais usado</div><div className="mc-icon">✨</div><div className="mc-title">Gerador de Prompt</div><div className="mc-desc">Escreva sua ideia. A IA distribui em especialidade, persona, tarefa, objetivo e contexto. Copie o prompt pronto.</div><div className="mc-pill"><strong>1 cota</strong> por geração</div><div className="mc-n">01</div></div>
-            <div className="mc mc-s"><div className="mc-icon">🏗️</div><div className="mc-title">SaaS Builder</div><div className="mc-desc">7 perguntas objetivas geram especificação técnica Markdown completa pronta para o Lovable.</div><div className="mc-pill"><strong>2 cotas</strong> por geração</div><div className="mc-n">02</div></div>
-            <div className="mc mc-m"><div className="mc-badge mb-new">Novo ⚡</div><div className="mc-icon">⚡</div><div className="mc-title">Modo Misto</div><div className="mc-desc">Um input único gera prompt otimizado + spec técnica completa. O mais poderoso dos quatro modos.</div><div className="mc-pill"><strong>3 cotas</strong> por sessão</div><div className="mc-n">03</div></div>
-            <div className="mc mc-m"><div className="mc-badge mb-new">PRO 🚀</div><div className="mc-icon">⚙️</div><div className="mc-title">BUILD Engine</div><div className="mc-desc">Transforme uma ideia em pacote deploy-ready: PRD, SQL, prompts e documentação completa. Economia de até R$50 por projeto.</div><div className="mc-pill"><strong>5 cotas</strong> por projeto</div><div className="mc-n">04</div></div>
+            <div className="mc mc-sk"><div className="mc-badge mb-new">60+ agentes</div><div className="mc-icon">🧠</div><div className="mc-title">Modo Skill</div><div className="mc-desc">Escolha entre 60+ agentes especializados em 8 categorias. Cada agente possui persona e sistema de prompt próprio.</div><div className="mc-pill"><strong>2 cotas</strong> por geração</div><div className="mc-n">02</div></div>
+            <div className="mc mc-s"><div className="mc-icon">🏗️</div><div className="mc-title">SaaS Builder</div><div className="mc-desc">7 perguntas objetivas geram especificação técnica Markdown completa pronta para o Lovable.</div><div className="mc-pill"><strong>2 cotas</strong> por geração</div><div className="mc-n">03</div></div>
+            <div className="mc mc-m"><div className="mc-badge mb-new">Novo ⚡</div><div className="mc-icon">⚡</div><div className="mc-title">Modo Misto</div><div className="mc-desc">Um input único gera prompt otimizado + spec técnica completa. O mais poderoso dos cinco modos.</div><div className="mc-pill"><strong>3 cotas</strong> por sessão</div><div className="mc-n">04</div></div>
+            <div className="mc mc-m"><div className="mc-badge mb-new">PRO 🚀</div><div className="mc-icon">⚙️</div><div className="mc-title">BUILD Engine</div><div className="mc-desc">Transforme uma ideia em pacote deploy-ready: PRD, SQL, prompts e documentação completa. Economia de até R$50 por projeto.</div><div className="mc-pill"><strong>5 cotas</strong> por projeto</div><div className="mc-n">05</div></div>
           </div>
         </div>
       </section>
@@ -610,6 +614,7 @@ const handleSubscribe = async (priceId: string | null) => {
                   <div className="pc-div" />
                   <div className="pc-limits">
                     <div className="lrow"><span className="ll">✨ Prompts (1 cota)</span><span className={`lv ${colorClass}`}>{fmtVal(p.prompts_limit)}</span></div>
+                    <div className="lrow"><span className="ll">🧠 Skills (2 cotas)</span><span className={`lv ${colorClass}`}>{isUnlimited ? "Ilimitado" : `${Math.floor(p.credits_limit / 2)} / ${interval}`}</span></div>
                     <div className="lrow"><span className="ll">🏗️ SaaS Specs (2 cotas)</span><span className={`lv ${colorClass}`}>{fmtVal(p.saas_specs_limit)}</span></div>
                     <div className="lrow"><span className="ll">⚡ Modo Misto (2 cotas)</span><span className={`lv ${colorClass}`}>{fmtVal(p.modo_misto_limit)}</span></div>
                     <div className="lrow"><span className="ll">⚙️ BUILD Engine (5 cotas)</span><span className={`lv ${colorClass}`}>{fmtVal(p.build_engine_limit)}</span></div>
@@ -664,7 +669,7 @@ const handleSubscribe = async (priceId: string | null) => {
           <h2 className="sh" style={{ margin: "0 auto" }}>Perguntas <TypeWriter words={["frequentes", "importantes", "respondidas"]} /></h2>
         </div>
         <div className="faq-wrap">
-          <FaqItem q='O que conta como uma "cota"?' a='Cada ação consome cotas diferenciadas: <strong>Prompt = 1 cota</strong>, <strong>SaaS Spec = 2 cotas</strong>, <strong>Modo Misto = 3 cotas</strong>, <strong>BUILD Engine = 5 cotas</strong>. Refinar texto <strong>não</strong> consome cota adicional.' />
+          <FaqItem q='O que conta como uma "cota"?' a='Cada ação consome cotas diferenciadas: <strong>Prompt = 1 cota</strong>, <strong>Skill = 2 cotas</strong>, <strong>SaaS Spec = 2 cotas</strong>, <strong>Modo Misto = 3 cotas</strong>, <strong>BUILD Engine = 5 cotas</strong>. Refinar texto <strong>não</strong> consome cota adicional.' />
           <FaqItem q="As cotas adicionais realmente nunca expiram?" a="Sim. Cotas compradas e cotas ganhas por indicação são permanentes e se acumulam indefinidamente." />
           <FaqItem q="O que acontece quando o trial de 7 dias termina?" a="No dia 6 você recebe um aviso. No dia 8 a conta é bloqueada. Para retomar, assine qualquer plano ou compre cotas avulsas." />
           <FaqItem q="Tem limite de indicações?" a="Não. Você pode indicar quantas pessoas quiser. Cada indicação válida = 5 cotas permanentes para você e o indicado." />

@@ -61,7 +61,7 @@ function App() {
           <Toaster />
           <Sonner />
 
-          <BrowserRouter basename="/genius">
+          <BrowserRouter>
             <Routes>
 
               <Route path="/" element={<LandingPage />} />
