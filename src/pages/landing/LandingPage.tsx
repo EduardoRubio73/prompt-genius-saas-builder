@@ -614,6 +614,7 @@ const handleSubscribe = async (priceId: string | null) => {
                   <div className="pc-div" />
                   <div className="pc-limits">
                     <div className="lrow"><span className="ll">✨ Prompts (1 cota)</span><span className={`lv ${colorClass}`}>{fmtVal(p.prompts_limit)}</span></div>
+                    <div className="lrow"><span className="ll">🧠 Skills (2 cotas)</span><span className={`lv ${colorClass}`}>{isUnlimited ? "Ilimitado" : `${Math.floor(p.credits_limit / 2)} / ${interval}`}</span></div>
                     <div className="lrow"><span className="ll">🏗️ SaaS Specs (2 cotas)</span><span className={`lv ${colorClass}`}>{fmtVal(p.saas_specs_limit)}</span></div>
                     <div className="lrow"><span className="ll">⚡ Modo Misto (2 cotas)</span><span className={`lv ${colorClass}`}>{fmtVal(p.modo_misto_limit)}</span></div>
                     <div className="lrow"><span className="ll">⚙️ BUILD Engine (5 cotas)</span><span className={`lv ${colorClass}`}>{fmtVal(p.build_engine_limit)}</span></div>
