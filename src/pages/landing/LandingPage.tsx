@@ -38,7 +38,7 @@ const TERMS_CONTENT =
     <p>Ao criar uma conta ou utilizar qualquer funcionalidade da plataforma Prompt Genius SaaS Builder ("Plataforma"), você ("Usuário") declara que leu, compreendeu e concorda com os presentes Termos de Uso ("Termos"). Caso não concorde com qualquer disposição, não utilize a Plataforma.</p>
 
     <h3>2. Descrição do Serviço</h3>
-    <p>O Prompt Genius SaaS Builder é uma plataforma de geração de prompts e especificações técnicas assistida por Inteligência Artificial. A Plataforma oferece quatro modos principais: Gerador de Prompt, SaaS Builder Wizard, Modo Misto e BUILD Engine.</p>
+    <p>O Prompt Genius SaaS Builder é uma plataforma de geração de prompts e especificações técnicas assistida por Inteligência Artificial. A Plataforma oferece cinco modos principais: Gerador de Prompt, Modo Skill (60+ agentes de IA), SaaS Builder Wizard, Modo Misto e BUILD Engine.</p>
 
     <h3>3. Cadastro e Conta</h3>
     <p>3.1. Para acessar os recursos da Plataforma, é necessário criar uma conta com e-mail válido e senha.</p>
