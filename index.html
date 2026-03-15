@@ -1,81 +1,20 @@
 <!doctype html>
 <html lang="pt-BR">
-
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
-  <title>Genius</title>
-
-  <meta name="description" content="Gere e refine prompts com IA. Crie especificações SaaS completas." />
-  <meta name="author" content="Prompt Genius SaaS Builder" />
-  <meta name="theme-color" content="#0f172a" />
-
-  <link rel="manifest" href="%BASE_URL%manifest.webmanifest" />
-  <link rel="apple-touch-icon" sizes="180x180" href="%BASE_URL%icons/icon-180x180.png" />
-
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-
-  <meta property="og:title" content="Genius" />
-  <meta name="twitter:title" content="Genius" />
-
-  <meta property="og:description" content="Gere e refine prompts com IA. Crie especificações SaaS completas." />
-  <meta name="twitter:description" content="Gere e refine prompts com IA. Crie especificações SaaS completas." />
-
-  <meta property="og:image" content="https://storage.googleapis.com/gpt-engineer-file-uploads/z0Y7UIkeyARjywIxQe9YD31L99E3/social-images/social-1772674392832-_BUILD_ENGINE-removebg-preview.webp" />
-  <meta name="twitter:image" content="https://storage.googleapis.com/gpt-engineer-file-uploads/z0Y7UIkeyARjywIxQe9YD31L99E3/social-images/social-1772674392832-_BUILD_ENGINE-removebg-preview.webp" />
-
-  <meta name="twitter:card" content="summary_large_image" />
-  <meta property="og:type" content="website" />
-
-  <style>
-    #lovable-badge { opacity: 0; pointer-events: none; }
-    #genius-badge { position: fixed; right: 18px; bottom: 18px; z-index: 9999; display: inline-flex; align-items: center; gap: .6rem; padding: .65rem 1.1rem; border-radius: 999px; background: linear-gradient(135deg, #0f172a, #1e293b); color: #f8fafc; font-family: system-ui, -apple-system, sans-serif; font-size: .9rem; font-weight: 700; box-shadow: 0 15px 40px rgba(0, 0, 0, .5), inset 0 0 0 1px rgba(255, 255, 255, .08); cursor: pointer; transition: .25s; }
-    #genius-badge:hover { transform: translateY(-4px); }
-    #genius-badge img { width: 22px; height: 22px; border-radius: 50%; }
-    #genius-menu { position: fixed; right: 18px; bottom: 95px; z-index: 9998; display: flex; flex-direction: column; gap: 8px; padding: 14px; min-width: 230px; background: rgba(15, 23, 42, .98); border-radius: 20px; opacity: 0; transform: translateY(20px) scale(.95); pointer-events: none; transition: .25s; }
-    #genius-menu.open { opacity: 1; transform: translateY(0) scale(1); pointer-events: auto; }
-    #genius-menu a, #genius-menu button { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: 14px; color: #fff; text-decoration: none; font-size: .875rem; background: transparent; border: none; cursor: pointer; transition: .2s; }
-    #genius-menu a:hover, #genius-menu button:hover { background: rgba(255, 255, 255, .06); transform: translateX(4px); }
-  </style>
-</head>
-
-<body>
-  <div id="root"></div>
-
-  <div id="genius-badge">
-    <img src="%BASE_URL%icons/icon-192x192.png" alt="Ícone Genius" />
-    <span>Genius</span>
-  </div>
-
-  <div id="genius-menu">
-    <a href="%BASE_URL%">Home</a>
-    <button onclick="abrirModalContato()">Contato / Suporte</button>
-  </div>
-
-  <script>
-    const badge = document.getElementById("genius-badge");
-    const menu = document.getElementById("genius-menu");
-
-    badge?.addEventListener("click", () => {
-      menu?.classList.toggle("open");
-    });
-
-    document.addEventListener("click", (e) => {
-      if (badge && menu && !badge.contains(e.target) && !menu.contains(e.target)) {
-        menu.classList.remove("open");
-      }
-    });
-
-    function abrirModalContato() {
-      document.dispatchEvent(new CustomEvent("open-contact-modal"));
-      menu?.classList.remove("open");
-    }
-  </script>
-
-  <script type="module" src="%BASE_URL%src/main.tsx"></script>
-</body>
-
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Genius</title>
+    <meta name="description" content="Gere e refine prompts com IA. Crie especificações SaaS completas." />
+    <meta name="author" content="Prompt Genius SaaS Builder" />
+    <meta name="theme-color" content="#0f172a" />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="apple-touch-icon" sizes="180x180" href="icons/icon-180x180.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
 </html>

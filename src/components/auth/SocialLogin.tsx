@@ -8,10 +8,12 @@ export default function SocialLogin({ disabled }: { disabled?: boolean }) {
 
   const loginGoogle = async () => {
     setLoading(true);
+    const redirectTo = `${window.location.origin}/genius/dashboard`;
+
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: "https://www.zragencyia.com.br/genius/dashboard",
+        redirectTo,
       },
     });
     if (error) {
