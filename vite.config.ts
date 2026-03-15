@@ -5,7 +5,7 @@ import path from "path";
 import { componentTagger } from "lovable-tagger";
 
 export default defineConfig(() => ({
-  base: "/",
+  base: "/genius/",
 
   server: {
     host: true,
