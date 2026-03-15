@@ -458,7 +458,7 @@ const handleSubscribe = async (priceId: string | null) => {
       {/* STATS */}
       <div className="stats-bar rv">
         <div className="stats-inner">
-          <div className="st"><div className="st-v">3</div><div className="st-l">Modos de IA</div></div>
+          <div className="st"><div className="st-v">5</div><div className="st-l">Modos de IA</div></div>
           <div className="st"><div className="st-v">&lt;3s</div><div className="st-l">Tempo de geração</div></div>
           <div className="st"><div className="st-v">7</div><div className="st-l">Plataformas</div></div>
           <div className="st"><div className="st-v">+5</div><div className="st-l">Cotas por indicação</div></div>
