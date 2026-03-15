@@ -471,8 +471,9 @@ const handleSubscribe = async (priceId: string | null) => {
         <div className="wrap">
           <div className="tag">Funcionalidades</div>
           <h2 className="sh">Tudo que você precisa para <TypeWriter words={["construir mais rápido", "lançar com IA", "escalar do zero"]} /></h2>
-          <div className="feat-grid feat-grid-4">
+          <div className="feat-grid feat-grid-5">
             <div className="fc"><div className="fc-i iv">✨</div><div className="fc-t">Gerador de Prompt</div><div className="fc-d">Texto livre → campos estruturados: especialidade, persona, tarefa, objetivo e contexto. Prompt pronto em segundos.</div></div>
+            <div className="fc"><div className="fc-i ia">🧠</div><div className="fc-t">Modo Skill</div><div className="fc-d">60+ agentes de IA em 8 categorias: negócios, jurídico, tech, marketing, criatividade, saúde, educação e nichos Brasil.</div></div>
             <div className="fc"><div className="fc-i ib">🏗️</div><div className="fc-t">SaaS Builder Wizard</div><div className="fc-d">7 perguntas geram spec técnica completa: stack, banco, arquitetura, segurança e plano de implementação.</div></div>
             <div className="fc"><div className="fc-i ic">⚡</div><div className="fc-t">Modo Misto — 2 outputs</div><div className="fc-d">Um input gera simultaneamente prompt otimizado E spec técnica, retroalimentados automaticamente.</div></div>
             <div className="fc"><div className="fc-i ip">⚙️</div><div className="fc-t">BUILD Engine</div><div className="fc-d">Transforme uma ideia em pacote deploy-ready: PRD, SQL, prompts e documentação completa. Economia de até R$50 por projeto.</div></div>
