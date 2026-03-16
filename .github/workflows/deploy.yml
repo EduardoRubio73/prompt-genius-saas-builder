@@ -7,9 +7,11 @@ on:
 
 jobs:
   build-and-deploy:
+
     runs-on: ubuntu-latest
 
     steps:
+
       - name: Checkout
         uses: actions/checkout@v4
 
@@ -17,12 +19,9 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: npm
 
-      - name: Clean install
-        run: |
-          rm -rf node_modules
-          npm install --legacy-peer-deps
+      - name: Install dependencies
+        run: npm install --legacy-peer-deps
 
       - name: Build project
         run: npm run build
@@ -39,11 +38,11 @@ jobs:
           cat > dist/.htaccess << 'EOF'
           <IfModule mod_rewrite.c>
             RewriteEngine On
-            RewriteBase /
+            RewriteBase /genius/
             RewriteRule ^index\.html$ - [L]
             RewriteCond %{REQUEST_FILENAME} !-f
             RewriteCond %{REQUEST_FILENAME} !-d
-            RewriteRule . /index.html [L]
+            RewriteRule . /genius/index.html [L]
           </IfModule>
           EOF
 
@@ -57,9 +56,3 @@ jobs:
           local-dir: dist/
           server-dir: /genius/
           dangerous-clean-slate: false
-          log-level: verbose
-          exclude: |
-            **/.git*
-            **/.github/**
-            **/node_modules/**
-            **/.env*
