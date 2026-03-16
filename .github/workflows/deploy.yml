@@ -1,4 +1,4 @@
-name: Deploy Lovable via FTP na Hostinger
+name: Deploy Genius via FTP
 
 on:
   push:
@@ -6,6 +6,7 @@ on:
   workflow_dispatch:
 
 jobs:
+
   build-and-deploy:
 
     runs-on: ubuntu-latest
@@ -29,11 +30,14 @@ jobs:
       - name: Ensure dist exists
         run: |
           if [ ! -d "dist" ]; then
-            echo "Build failed. dist folder not found."
+            echo "Build failed"
             exit 1
           fi
 
-      - name: Create SPA .htaccess
+      - name: Ensure assets directory
+        run: mkdir -p dist/assets
+
+      - name: Create SPA htaccess
         run: |
           cat > dist/.htaccess << 'EOF'
           <IfModule mod_rewrite.c>
@@ -50,9 +54,8 @@ jobs:
         uses: SamKirkland/FTP-Deploy-Action@v4.3.4
         with:
           server: ${{ secrets.FTP_HOST }}
-          port: 21
           username: ${{ secrets.FTP_USER }}
           password: ${{ secrets.FTP_PASS }}
+          port: 21
           local-dir: dist/
           server-dir: /genius/
-          dangerous-clean-slate: false
