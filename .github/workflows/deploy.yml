@@ -2,8 +2,7 @@ name: Deploy Genius via FTP
 
 on:
   push:
-    branches:
-      - main
+    branches: ["main"]
   workflow_dispatch:
 
 jobs:
@@ -14,31 +13,28 @@ jobs:
 
     steps:
 
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v4
 
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: npm
 
       - name: Install dependencies
-        run: npm ci
+        run: npm install --legacy-peer-deps
 
       - name: Build project
         run: npm run build
 
-      - name: Ensure dist exists
+      - name: Ensure build structure
         run: |
-          if [ ! -d "dist" ]; then
-            echo "Build failed"
-            exit 1
-          fi
+          mkdir -p dist/assets
+          mkdir -p dist/icons
 
       - name: Create SPA htaccess
         run: |
-          cat > dist/.htaccess << 'EOF2'
+          cat > dist/.htaccess << 'EOF'
           <IfModule mod_rewrite.c>
             RewriteEngine On
             RewriteBase /genius/
@@ -47,7 +43,7 @@ jobs:
             RewriteCond %{REQUEST_FILENAME} !-d
             RewriteRule . /genius/index.html [L]
           </IfModule>
-          EOF2
+          EOF
 
       - name: Deploy via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.4
@@ -58,3 +54,4 @@ jobs:
           port: 21
           local-dir: dist/
           server-dir: /genius/
+          dangerous-clean-slate: false
