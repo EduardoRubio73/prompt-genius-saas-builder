@@ -32,7 +32,7 @@ jobs:
       - name: Ensure dist exists
         run: |
           if [ ! -d "dist" ]; then
-            echo "Build failed. dist folder not found."
+            echo "Build failed"
             exit 1
           fi
 
@@ -58,4 +58,3 @@ jobs:
           port: 21
           local-dir: dist/
           server-dir: /genius/
-          dangerous-clean-slate: false
