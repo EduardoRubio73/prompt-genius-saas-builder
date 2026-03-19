@@ -1,62 +1,26 @@
 
 
-# BUILD Pack Completo — Expansão para 15 Fases
+# Correções: Preview + Modal + Deploy Edge Function
 
-## Resumo
+## Problema 1: Preview em branco
+O `vite.config.ts` tem `base: "/genius/"`, então o app só funciona em `/genius/`. No preview do Lovable, a URL raiz `/` não encontra nada. Solução: remover o `base` em desenvolvimento (usar apenas em produção).
 
-Expandir o BUILD Mode de 10 para 15 outputs, melhorar prompts existentes (SQL e build_prompt), e atualizar todo o frontend para suportar as novas fases.
+**Arquivo:** `vite.config.ts`
+- Mudar `base` para usar variável de ambiente ou condicional: em dev usa `/`, em build usa `/genius/`
 
-## Mudanças
+## Problema 2: Botão "Copiar" duplicado no footer do modal
+No `UnifiedMemoryDetailDialog.tsx` (linha 552-554), existe um botão "Copiar" genérico no footer que é redundante — já existe um "Copiar" dentro do bloco de conteúdo (linha 487) e o "Copiar Documento Mestre" para builds.
 
-### 1. Edge Function — 5 novos outputs + prompts melhorados
-**Arquivo:** `supabase/functions/refine-prompt/index.ts`
+**Arquivo:** `src/components/UnifiedMemoryDetailDialog.tsx`
+- Remover o botão `<Button variant="outline" ...> Copiar</Button>` do footer (linhas 552-554)
 
-Refatorar `handleBuild()` para gerar cada output com chamadas `callLLM` individuais em vez de um único JSON monolítico. Adicionar 5 novos outputs:
-- `design_system_md` — Design System com CSS variables, tipografia, PWA manifest
-- `routes_crud_md` — Rotas React Router + especificação field-level por tela
-- `landing_page_md` — Copy completo da landing page (6 seções + SEO)
-- `seed_data_md` — SQL seed com usuários demo por role
-- `checklist_deps_md` — Checklist de validação + dependências npm + .env
+## Problema 3: Deploy da Edge Function atualizada
+A edge function `refine-prompt` foi editada para 15 fases paralelas mas precisa ser deployada para funcionar.
 
-Melhorar prompts existentes:
-- `sql_schema` — incluir ENUMs, índices, RLS separado por operação
-- `build_prompt` — referenciar fases 11/12, lazy loading, navegação
+**Ação:** Deploy da edge function `refine-prompt` via ferramenta Supabase
 
-Cada output será gerado com uma chamada `callLLM` separada usando os prompts detalhados do documento. As 15 chamadas serão feitas em paralelo com `Promise.allSettled` para performance.
-
-### 2. Atualizar `src/lib/build-master-doc.ts`
-- Expandir `BuildOutputs` com 5 novas keys: `designSystem`, `routesCrud`, `landingPage`, `seedData`, `checklistDeps`
-- Expandir `PHASE_LABELS` com fases 11-15 (emojis e títulos conforme doc)
-- Expandir `PHASE_ORDER` para incluir as 5 novas fases
-- Atualizar título da fase 05 SQL para incluir "ENUMs"
-
-### 3. Atualizar `src/components/UnifiedMemoryDetailDialog.tsx`
-- Adicionar 5 entradas em `BUILD_DOC_LABELS` (design_system_md, routes_crud_md, etc.)
-- Adicionar 5 entradas em `BUILD_DOC_FILES` (11-Design.md, 12-Rotas.md, etc.)
-- Atualizar `handleCopyAll` e `handleDownloadZip` para mapear as 5 novas keys
-
-### 4. Atualizar `src/pages/build/BuildMode.tsx`
-- Adicionar 5 entradas em `DOC_LABELS` para as novas fases
-
-### Retrocompatibilidade
-- Builds anteriores (10 fases) continuam funcionando — novas fases são opcionais
-- Tabs só aparecem se o output existir (filtro `filter(([, v]) => v)` já existe)
-- `PHASE_ORDER` pula fases sem conteúdo automaticamente
-
-### Detalhes técnicos da Edge Function
-
-A função `handleBuild` será refatorada de uma única chamada LLM retornando JSON para 15 chamadas paralelas, cada uma com prompt especializado. Isso melhora a qualidade de cada output e evita o limite de tokens de uma única resposta.
-
-```text
-handleBuild(answers)
-├── Promise.allSettled([
-│   callLLM(prdPrompt),
-│   callLLM(erdPrompt),
-│   callLLM(rbacPrompt),
-│   ... (12 mais)
-│])
-└── return { prd_md, erd_md, ..., checklist_deps_md }
-```
-
-O `max_tokens` será aumentado para 16384 nas chamadas individuais para permitir outputs mais detalhados.
+## Resumo das mudanças
+1. `vite.config.ts` — condicional no `base` para preview funcionar
+2. `UnifiedMemoryDetailDialog.tsx` — remover botão "Copiar" duplicado do footer
+3. Deploy edge function `refine-prompt`
 
