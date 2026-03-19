@@ -39,7 +39,6 @@ import {
   Briefcase,
   Download,
   FileArchive,
-  ClipboardList,
 } from "lucide-react";
 import { toast } from "sonner";
 import JSZip from "jszip";
@@ -101,6 +100,7 @@ const BUILD_DOC_LABELS: Record<string, string> = {
   landing_page_md: "🏠 Landing",
   seed_data_md: "🌱 Seed",
   checklist_deps_md: "✅ Checklist",
+  master_md: "🏗️ Master MD",
 };
 
 const BUILD_DOC_FILES: Record<string, string> = {
@@ -161,7 +161,13 @@ export function UnifiedMemoryDetailDialog({
   const buildOutputs = entry.type === "build" && entry.outputs
     ? Object.entries(entry.outputs).filter(([, v]) => v)
     : [];
-  const buildDocKeys = buildOutputs.map(([k]) => k);
+  const buildDocKeys = buildOutputs
+    .map(([k]) => k)
+    .sort((a, b) => {
+      if (a === "master_md") return 1;
+      if (b === "master_md") return -1;
+      return 0;
+    });
 
   // Mixed tabs
   const hasMixedSpec = entry.type === "mixed" && entry.spec_md;
@@ -195,54 +201,6 @@ export function UnifiedMemoryDetailDialog({
   const handleCopy = async () => {
     await navigator.clipboard.writeText(activeContent);
     toast.success("Conteúdo copiado!");
-  };
-
-  const handleCopyAll = async () => {
-    if (!entry.outputs) return;
-    const answers = (entry.answers || {}) as Record<string, string>;
-    const o = entry.outputs as Record<string, string>;
-
-    const doc = generateBuildMasterDoc(
-      {
-        erd: o.erd_md,
-        prd: o.prd_md,
-        rbac: o.rbac_md,
-        roadmap: o.roadmap_md,
-        sql: o.sql_schema,
-        fluxosUx: o.ux_flows_md,
-        admin: o.admin_doc_md,
-        prompt: o.build_prompt,
-        testes: o.test_plan_md,
-        deploy: o.deploy_guide_md,
-        designSystem: o.design_system_md,
-        routesCrud: o.routes_crud_md,
-        landingPage: o.landing_page_md,
-        seedData: o.seed_data_md,
-        checklistDeps: o.checklist_deps_md,
-      },
-      {
-        appName: answers.productName || answers.appName || entry.title || "Projeto",
-        dor: answers.dor,
-        roles: answers.roles,
-        modelo: answers.modelo,
-        cargo: answers.cargo,
-        tone: answers.tone,
-        authMethod: answers.authMethod,
-        revenueModel: answers.revenueModel,
-        integrations: answers.integrations,
-        primaryColor: answers.primaryColor,
-        brandName: answers.brandName,
-        stackFrontend: answers.stackFrontend,
-        stackBackend: answers.stackBackend,
-        stackDatabase: answers.stackDatabase,
-        stackHosting: answers.stackHosting,
-        stackIcons: answers.stackIcons,
-        stackStyling: answers.stackStyling,
-      }
-    );
-
-    await navigator.clipboard.writeText(doc);
-    toast.success("Documento mestre copiado!");
   };
 
   const handleDownloadZip = async () => {
@@ -352,6 +310,20 @@ export function UnifiedMemoryDetailDialog({
         ? "Especificação Gerada"
         : "Prompt Gerado";
 
+  const getBuildTabClassName = (tabKey: string) => {
+    const isMasterTab = entry.type === "build" && tabKey === "master_md";
+
+    if (currentActiveTab === tabKey) {
+      return isMasterTab
+        ? "bg-orange-100 text-orange-700 border-orange-300"
+        : "bg-primary/15 text-primary border-primary/30";
+    }
+
+    return isMasterTab
+      ? "bg-orange-50 text-orange-600 border-orange-200 hover:bg-orange-100"
+      : "bg-muted/50 text-muted-foreground border-border/60 hover:bg-muted";
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] gap-0 p-0 flex flex-col overflow-hidden">
@@ -459,11 +431,7 @@ export function UnifiedMemoryDetailDialog({
                 <button
                   key={tab.key}
                   onClick={() => setActiveTab(tab.key)}
-                  className={`text-[10px] px-2.5 py-1 rounded-full border font-medium transition-colors ${
-                    currentActiveTab === tab.key
-                      ? "bg-primary/15 text-primary border-primary/30"
-                      : "bg-muted/50 text-muted-foreground border-border/60 hover:bg-muted"
-                  }`}
+                  className={`text-[10px] px-2.5 py-1 rounded-full border font-medium transition-colors ${getBuildTabClassName(tab.key)}`}
                 >
                   {tab.label}
                 </button>
@@ -533,14 +501,9 @@ export function UnifiedMemoryDetailDialog({
 
           {/* Mode-specific actions */}
           {entry.type === "build" && entry.outputs && (
-            <>
-              <Button variant="outline" size="sm" className="gap-2" onClick={handleCopyAll}>
-                <ClipboardList className="w-3.5 h-3.5" /> Copiar Documento Mestre
-              </Button>
-              <Button variant="outline" size="sm" className="gap-2" onClick={handleDownloadZip}>
-                <FileArchive className="w-3.5 h-3.5" /> Baixar .zip
-              </Button>
-            </>
+            <Button variant="outline" size="sm" className="gap-2" onClick={handleDownloadZip}>
+              <FileArchive className="w-3.5 h-3.5" /> Baixar .zip
+            </Button>
           )}
 
           {(entry.type === "saas" || entry.type === "mixed") && (
