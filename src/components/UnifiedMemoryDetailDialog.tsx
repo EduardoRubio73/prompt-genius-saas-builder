@@ -204,6 +204,11 @@ export function UnifiedMemoryDetailDialog({
         prompt: o.build_prompt,
         testes: o.test_plan_md,
         deploy: o.deploy_guide_md,
+        designSystem: o.design_system_md,
+        routesCrud: o.routes_crud_md,
+        landingPage: o.landing_page_md,
+        seedData: o.seed_data_md,
+        checklistDeps: o.checklist_deps_md,
       },
       {
         appName: answers.productName || answers.appName || entry.title || "Projeto",
