@@ -93,9 +93,14 @@ const BUILD_DOC_LABELS: Record<string, string> = {
   test_plan_md: "🧪 Testes",
   roadmap_md: "🗺️ Roadmap",
   admin_doc_md: "⚙️ Admin",
-  sql_schema: "💾 SQL",
-  build_prompt: "🤖 Prompt",
-  deploy_guide_md: "🚀 Deploy",
+  sql_schema: "🗄️ SQL",
+  build_prompt: "🚀 Prompt",
+  deploy_guide_md: "☁️ Deploy",
+  design_system_md: "🎨 Design",
+  routes_crud_md: "📐 Rotas/CRUD",
+  landing_page_md: "🏠 Landing",
+  seed_data_md: "🌱 Seed",
+  checklist_deps_md: "✅ Checklist",
 };
 
 const BUILD_DOC_FILES: Record<string, string> = {
@@ -109,6 +114,11 @@ const BUILD_DOC_FILES: Record<string, string> = {
   build_prompt: "08-Prompts.md",
   test_plan_md: "09-Testes.md",
   deploy_guide_md: "10-Deploy.md",
+  design_system_md: "11-Design.md",
+  routes_crud_md: "12-Rotas.md",
+  landing_page_md: "13-Landing.md",
+  seed_data_md: "14-Seed.md",
+  checklist_deps_md: "15-Checklist.md",
 };
 
 const FIELD_META = [
@@ -204,6 +214,11 @@ export function UnifiedMemoryDetailDialog({
         prompt: o.build_prompt,
         testes: o.test_plan_md,
         deploy: o.deploy_guide_md,
+        designSystem: o.design_system_md,
+        routesCrud: o.routes_crud_md,
+        landingPage: o.landing_page_md,
+        seedData: o.seed_data_md,
+        checklistDeps: o.checklist_deps_md,
       },
       {
         appName: answers.productName || answers.appName || entry.title || "Projeto",
@@ -250,6 +265,9 @@ export function UnifiedMemoryDetailDialog({
         erd: o.erd_md, prd: o.prd_md, rbac: o.rbac_md, roadmap: o.roadmap_md,
         sql: o.sql_schema, fluxosUx: o.ux_flows_md, admin: o.admin_doc_md,
         prompt: o.build_prompt, testes: o.test_plan_md, deploy: o.deploy_guide_md,
+        designSystem: o.design_system_md, routesCrud: o.routes_crud_md,
+        landingPage: o.landing_page_md, seedData: o.seed_data_md,
+        checklistDeps: o.checklist_deps_md,
       },
       {
         appName: answers.productName || answers.appName || entry.title || "Projeto",
