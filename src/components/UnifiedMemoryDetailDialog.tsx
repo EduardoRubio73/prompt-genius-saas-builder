@@ -549,9 +549,6 @@ export function UnifiedMemoryDetailDialog({
             </Button>
           )}
 
-          <Button variant="outline" size="sm" className="gap-2" onClick={handleCopy}>
-            <Copy className="w-3.5 h-3.5" /> Copiar
-          </Button>
 
           {entry.type === "prompt" && onUseAsBase && (
             <Button size="sm" className="gap-2" onClick={handleUseAsBase}>
