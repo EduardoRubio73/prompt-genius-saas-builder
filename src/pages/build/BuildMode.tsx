@@ -63,9 +63,14 @@ const DOC_LABELS: Record<string, string> = {
   test_plan_md: "🧪 Plano de Testes",
   roadmap_md: "🗺️ Roadmap",
   admin_doc_md: "⚙️ Doc Admin",
-  sql_schema: "💾 SQL Schema",
-  build_prompt: "🤖 Build Prompt",
-  deploy_guide_md: "🚀 Guia de Deploy",
+  sql_schema: "🗄️ SQL Schema",
+  build_prompt: "🚀 Build Prompt",
+  deploy_guide_md: "☁️ Guia de Deploy",
+  design_system_md: "🎨 Design System",
+  routes_crud_md: "📐 Rotas & CRUD",
+  landing_page_md: "🏠 Landing Page",
+  seed_data_md: "🌱 Seed Data",
+  checklist_deps_md: "✅ Checklist",
 };
 
 const DOC_KEYS = Object.keys(DOC_LABELS);
