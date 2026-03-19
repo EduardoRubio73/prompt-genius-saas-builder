@@ -41,6 +41,13 @@ import ReferralPage from "./pages/ReferralPage";
 
 const queryClient = new QueryClient();
 
+const routerBasename = (() => {
+  const baseUrl = import.meta.env.BASE_URL.trim();
+  const sanitizedBase = baseUrl.replace(/^\/+|\/+$/g, "");
+
+  return sanitizedBase ? `/${sanitizedBase}` : "/";
+})();
+
 function App() {
 
   useEffect(() => {
@@ -67,7 +74,7 @@ function App() {
           <Toaster />
           <Sonner />
 
-          <BrowserRouter basename="/genius">
+          <BrowserRouter basename={routerBasename}>
 
             <Routes>
 
