@@ -1,4 +1,5 @@
 export interface BuildOutputs {
+  // Fases originais
   erd?: string;
   prd?: string;
   rbac?: string;
@@ -9,6 +10,12 @@ export interface BuildOutputs {
   prompt?: string;
   testes?: string;
   deploy?: string;
+  // Novas fases
+  designSystem?: string;
+  routesCrud?: string;
+  landingPage?: string;
+  seedData?: string;
+  checklistDeps?: string;
 }
 
 export interface BuildMetadata {
@@ -33,21 +40,27 @@ export interface BuildMetadata {
 }
 
 const PHASE_LABELS: Record<string, { num: string; title: string; emoji: string }> = {
-  erd: { num: '01', title: 'ERD — Modelo de Dados', emoji: '🗂' },
-  prd: { num: '02', title: 'PRD — Requisitos do Produto', emoji: '📋' },
-  rbac: { num: '03', title: 'RBAC — Controle de Acesso', emoji: '🔐' },
-  roadmap: { num: '04', title: 'Roadmap de Desenvolvimento', emoji: '🗺' },
-  sql: { num: '05', title: 'SQL — Schema + RLS + Triggers', emoji: '🗄' },
-  fluxosUx: { num: '06', title: 'Fluxos UX — Jornadas do Usuário', emoji: '🔄' },
-  admin: { num: '07', title: 'Painel Administrativo', emoji: '⚙' },
-  prompt: { num: '08', title: 'Prompt de Implementação (Lovable)', emoji: '🚀' },
-  testes: { num: '09', title: 'Plano de Testes', emoji: '✅' },
-  deploy: { num: '10', title: 'Deploy e Infraestrutura', emoji: '☁' },
+  erd:            { num: '01', title: 'ERD — Modelo de Dados',              emoji: '🗂️' },
+  prd:            { num: '02', title: 'PRD — Requisitos do Produto',         emoji: '📋' },
+  rbac:           { num: '03', title: 'RBAC — Controle de Acesso',           emoji: '🔐' },
+  roadmap:        { num: '04', title: 'Roadmap de Desenvolvimento',          emoji: '🗺️' },
+  sql:            { num: '05', title: 'SQL — Schema + ENUMs + RLS',          emoji: '🗄️' },
+  fluxosUx:       { num: '06', title: 'Fluxos UX — Jornadas do Usuário',    emoji: '🔄' },
+  admin:          { num: '07', title: 'Painel Administrativo',               emoji: '⚙️' },
+  prompt:         { num: '08', title: 'Prompt de Implementação (Lovable)',   emoji: '🚀' },
+  testes:         { num: '09', title: 'Plano de Testes',                    emoji: '🧪' },
+  deploy:         { num: '10', title: 'Deploy e Infraestrutura',             emoji: '☁️' },
+  designSystem:   { num: '11', title: 'Design System — Tokens & PWA',       emoji: '🎨' },
+  routesCrud:     { num: '12', title: 'Rotas & Especificação Field-Level',   emoji: '📐' },
+  landingPage:    { num: '13', title: 'Landing Page — Copy & Estrutura',    emoji: '🏠' },
+  seedData:       { num: '14', title: 'Seed Data & Usuários Demo',          emoji: '🌱' },
+  checklistDeps:  { num: '15', title: 'Checklist Final & Dependências',     emoji: '✅' },
 };
 
 const PHASE_ORDER: (keyof BuildOutputs)[] = [
   'erd', 'prd', 'rbac', 'roadmap', 'sql',
   'fluxosUx', 'admin', 'prompt', 'testes', 'deploy',
+  'designSystem', 'routesCrud', 'landingPage', 'seedData', 'checklistDeps',
 ];
 
 export function generateBuildMasterDoc(outputs: BuildOutputs, metadata: BuildMetadata = {}): string {
