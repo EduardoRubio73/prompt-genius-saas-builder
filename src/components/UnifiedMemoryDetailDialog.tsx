@@ -45,6 +45,7 @@ import { toast } from "sonner";
 import JSZip from "jszip";
 import type { UnifiedMemoryEntry } from "@/hooks/useUnifiedMemory";
 import type { PromptInputs } from "@/lib/prompt-builder";
+import { generateBuildMasterDoc } from "@/lib/build-master-doc";
 
 interface UnifiedMemoryDetailDialogProps {
   entry: UnifiedMemoryEntry | null;
