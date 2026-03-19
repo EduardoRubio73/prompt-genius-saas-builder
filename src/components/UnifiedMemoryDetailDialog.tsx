@@ -234,6 +234,8 @@ export function UnifiedMemoryDetailDialog({
     if (!entry.outputs) return;
     const zip = new JSZip();
     const docsFolder = zip.folder("docs");
+    const answers = (entry.answers || {}) as Record<string, string>;
+    const o = entry.outputs as Record<string, string>;
 
     Object.entries(entry.outputs)
       .filter(([, v]) => v)
@@ -242,9 +244,29 @@ export function UnifiedMemoryDetailDialog({
         docsFolder?.file(filename, content);
       });
 
+    // Generate and include master doc
+    const masterDoc = generateBuildMasterDoc(
+      {
+        erd: o.erd_md, prd: o.prd_md, rbac: o.rbac_md, roadmap: o.roadmap_md,
+        sql: o.sql_schema, fluxosUx: o.ux_flows_md, admin: o.admin_doc_md,
+        prompt: o.build_prompt, testes: o.test_plan_md, deploy: o.deploy_guide_md,
+      },
+      {
+        appName: answers.productName || answers.appName || entry.title || "Projeto",
+        dor: answers.dor, roles: answers.roles, modelo: answers.modelo,
+        authMethod: answers.authMethod, revenueModel: answers.revenueModel,
+        integrations: answers.integrations, primaryColor: answers.primaryColor,
+        brandName: answers.brandName, stackFrontend: answers.stackFrontend,
+        stackBackend: answers.stackBackend, stackDatabase: answers.stackDatabase,
+        stackHosting: answers.stackHosting, stackIcons: answers.stackIcons,
+        stackStyling: answers.stackStyling,
+      }
+    );
+    zip.file("00-MASTER.md", masterDoc);
+
     zip.file(
       "README.md",
-      `# ${entry.title || "Projeto"}\n\nDocumentação gerada automaticamente.\n\n## Arquivos\n\n${
+      `# ${entry.title || "Projeto"}\n\nDocumentação gerada automaticamente.\n\n## Arquivos\n\n- 00-MASTER.md\n${
         Object.entries(entry.outputs)
           .filter(([, v]) => v)
           .map(([k]) => `- docs/${BUILD_DOC_FILES[k] || `${k}.md`}`)
