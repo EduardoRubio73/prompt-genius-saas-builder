@@ -4,8 +4,8 @@ import { VitePWA } from "vite-plugin-pwa";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
 
-export default defineConfig(() => ({
-  base: "/genius/",
+export default defineConfig(({ mode }) => ({
+  base: mode === "production" ? "/genius/" : "/",
 
   server: {
     host: true,
