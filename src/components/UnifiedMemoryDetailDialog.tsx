@@ -190,67 +190,41 @@ export function UnifiedMemoryDetailDialog({
   const handleCopyAll = async () => {
     if (!entry.outputs) return;
     const answers = (entry.answers || {}) as Record<string, string>;
-    const projectName = answers.productName || answers.appName || entry.title || "Projeto";
+    const o = entry.outputs as Record<string, string>;
 
-    let doc = `# ${projectName} — Documento Mestre de Implementação\n\n`;
-    doc += `Você é um Arquiteto Sênior. Leia este documento COMPLETO antes de escrever qualquer linha de código. Implemente tudo do zero, na ordem das fases abaixo, sem pular etapas.\n\n---\n\n`;
-
-    // Stack section
-    const stackFields = [
-      { key: "stackFrontend", label: "Frontend" },
-      { key: "stackBackend", label: "Backend/Auth/DB" },
-      { key: "stackDatabase", label: "Database" },
-      { key: "stackHosting", label: "Hosting" },
-      { key: "stackIcons", label: "Ícones" },
-      { key: "stackStyling", label: "Estilização" },
-    ];
-    const hasStack = stackFields.some(({ key }) => answers[key]);
-    if (hasStack) {
-      doc += `## STACK OBRIGATÓRIA\n\n`;
-      for (const { key, label } of stackFields) {
-        if (answers[key]) doc += `- ${label}: ${answers[key]}\n`;
+    const doc = generateBuildMasterDoc(
+      {
+        erd: o.erd_md,
+        prd: o.prd_md,
+        rbac: o.rbac_md,
+        roadmap: o.roadmap_md,
+        sql: o.sql_schema,
+        fluxosUx: o.ux_flows_md,
+        admin: o.admin_doc_md,
+        prompt: o.build_prompt,
+        testes: o.test_plan_md,
+        deploy: o.deploy_guide_md,
+      },
+      {
+        appName: answers.productName || answers.appName || entry.title || "Projeto",
+        dor: answers.dor,
+        roles: answers.roles,
+        modelo: answers.modelo,
+        cargo: answers.cargo,
+        tone: answers.tone,
+        authMethod: answers.authMethod,
+        revenueModel: answers.revenueModel,
+        integrations: answers.integrations,
+        primaryColor: answers.primaryColor,
+        brandName: answers.brandName,
+        stackFrontend: answers.stackFrontend,
+        stackBackend: answers.stackBackend,
+        stackDatabase: answers.stackDatabase,
+        stackHosting: answers.stackHosting,
+        stackIcons: answers.stackIcons,
+        stackStyling: answers.stackStyling,
       }
-      if (answers.primaryColor) doc += `- Paleta principal: ${answers.primaryColor}\n`;
-      doc += `\n---\n\n`;
-    }
-
-    // Phases
-    const PHASE_ORDER = [
-      { key: "sql_schema", phase: "BANCO DE DADOS" },
-      { key: "prd_md", phase: "PRD — REQUISITOS DO PRODUTO" },
-      { key: "erd_md", phase: "ERD — MODELO DE DADOS" },
-      { key: "rbac_md", phase: "RBAC — CONTROLE DE ACESSO" },
-      { key: "ux_flows_md", phase: "FLUXOS UX" },
-      { key: "roadmap_md", phase: "ROADMAP" },
-      { key: "admin_doc_md", phase: "PAINEL ADMINISTRATIVO" },
-      { key: "build_prompt", phase: "PROMPTS DE IMPLEMENTAÇÃO" },
-      { key: "test_plan_md", phase: "PLANO DE TESTES" },
-      { key: "deploy_guide_md", phase: "DEPLOY E INFRAESTRUTURA" },
-    ];
-
-    let phaseNum = 1;
-    for (const { key, phase } of PHASE_ORDER) {
-      const content = entry.outputs[key];
-      if (!content) continue;
-      doc += `## FASE ${phaseNum} — ${phase}\n\n${content}\n\n---\n\n`;
-      phaseNum++;
-    }
-
-    // General rules
-    doc += `## REGRAS GERAIS DE IMPLEMENTAÇÃO\n\n`;
-    const rules: string[] = [
-      "Layout responsivo (desktop e tablet)",
-      "Todos os formulários com validação e feedback de erro",
-      "Toda operação assíncrona com loading state",
-      "Não use dados mockados — tudo deve vir do banco em tempo real",
-    ];
-    if (answers.authMethod) rules.push(`Autenticação: ${answers.authMethod}`);
-    if (answers.revenueModel) rules.push(`Modelo de receita: ${answers.revenueModel}`);
-    if (answers.integrations) rules.push(`Integrações: ${answers.integrations}`);
-    if (answers.primaryColor) rules.push(`Cor primária da marca: ${answers.primaryColor}`);
-    if (answers.brandName) rules.push(`Nome da marca: ${answers.brandName}`);
-    for (const r of rules) doc += `- ${r}\n`;
-    doc += `\n`;
+    );
 
     await navigator.clipboard.writeText(doc);
     toast.success("Documento mestre copiado!");
