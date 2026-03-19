@@ -1,45 +1,30 @@
 
 
-## Fix: Admin Credits Not Saving
+# Remodelagem do "Copiar Tudo" no BUILD Mode
 
-### Root Causes
+## Situação Atual
 
-1. **Missing data**: `admin_users_overview` view doesn't include `plan_credits_total`, `bonus_credits_total`, etc. The form defaults to `0` instead of the real values.
-2. **JS falsy bug**: Line 88 uses `form.plan_credits_total || undefined` — when the value is `0`, `0 || undefined` evaluates to `undefined`, so the field is omitted from the update.
+O `handleCopyAll` em `UnifiedMemoryDetailDialog.tsx` (linha 189) já gera um documento mestre estruturado com fases ordenadas, stack, e regras gerais. Porém difere do formato solicitado no documento:
 
-### Solution
+- Falta o cabeçalho `⚠️ ATENÇÃO DESENVOLVEDOR`
+- Falta metadata (dor, roles, modelo de negócio) no header
+- Falta emojis nas fases
+- Falta timestamp de geração
+- As "Regras Gerais" ficam no final em vez de antes das fases
+- O botão ainda diz "Copiar Tudo" em vez de "Copiar Documento Mestre"
+- O ZIP não inclui `00-MASTER.md`
 
-**1. Fetch actual org data when dialog opens**
-- In `UserDetailDialog`, add a query to fetch the organization record directly from `organizations` table using `user.org_id`
-- Initialize `plan_credits_total` and `bonus_credits_total` from the real org data
+## Mudanças
 
-**2. Fix the save logic**
-- Remove `|| undefined` guards — always send `plan_credits_total` and `bonus_credits_total` to the update call
-- This ensures `0` is a valid value that gets saved
+### 1. Criar `src/lib/build-master-doc.ts`
+Utilitário com `generateBuildMasterDoc(outputs, metadata)` conforme o documento — com header `⚠️ ATENÇÃO`, metadata (appName, dor, roles, modelo), regras gerais antes das fases, 10 fases com emojis e numeração, filtro de fases vazias, e timestamp pt-BR.
 
-### Files to Edit
+Mapeamento de keys do banco para o utilitário:
+- `sql_schema` → `sql`, `prd_md` → `prd`, `erd_md` → `erd`, `rbac_md` → `rbac`, `ux_flows_md` → `fluxosUx`, `roadmap_md` → `roadmap`, `admin_doc_md` → `admin`, `build_prompt` → `prompt`, `test_plan_md` → `testes`, `deploy_guide_md` → `deploy`
 
-| File | Change |
-|------|--------|
-| `src/pages/admin/AdminUsers.tsx` | Add org data fetch, fix form init + save logic |
-
-### Details
-
-```tsx
-// Add useEffect to load real org data
-const [orgData, setOrgData] = useState<any>(null);
-useEffect(() => {
-  if (user.org_id) {
-    supabase.from("organizations").select("plan_credits_total, bonus_credits_total, plan_credits_used, bonus_credits_used").eq("id", user.org_id).single()
-      .then(({ data }) => {
-        if (data) {
-          setForm(f => ({ ...f, plan_credits_total: data.plan_credits_total, bonus_credits_total: data.bonus_credits_total }));
-        }
-      });
-  }
-}, [user.org_id]);
-
-// Fix save — no more || undefined
-updates: { plan_tier: form.plan_tier, is_active: form.is_active, plan_credits_total: form.plan_credits_total, bonus_credits_total: form.bonus_credits_total }
-```
+### 2. Atualizar `UnifiedMemoryDetailDialog.tsx`
+- Importar `generateBuildMasterDoc`
+- Substituir `handleCopyAll` (linhas 189-256) para usar o novo utilitário, mapeando as keys do `entry.outputs` para o formato esperado
+- Atualizar `handleDownloadZip` (linha 258+) para incluir `00-MASTER.md` no ZIP
+- Mudar label do botão (linha 523) de "Copiar Tudo" para "Copiar Documento Mestre"
 
