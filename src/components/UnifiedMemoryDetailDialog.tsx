@@ -517,7 +517,7 @@ export function UnifiedMemoryDetailDialog({
           {entry.type === "build" && entry.outputs && (
             <>
               <Button variant="outline" size="sm" className="gap-2" onClick={handleCopyAll}>
-                <ClipboardList className="w-3.5 h-3.5" /> Copiar Tudo
+                <ClipboardList className="w-3.5 h-3.5" /> Copiar Documento Mestre
               </Button>
               <Button variant="outline" size="sm" className="gap-2" onClick={handleDownloadZip}>
                 <FileArchive className="w-3.5 h-3.5" /> Baixar .zip
